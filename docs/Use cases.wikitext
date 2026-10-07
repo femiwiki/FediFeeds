@@ -1,0 +1,11 @@
+Femiwiki needs two feeds.
+
+== A development blog ==
+Each post is a page in the blog's category. A new page in that category becomes a new Fediverse post. This is the [[Feed kinds#category|<code>category</code>]] kind.
+
+== Release notes ==
+Each deploy adds a section to the release notes page, <code>페미위키:업데이트</code>. A new section becomes a new Fediverse post. This is the [[Feed kinds#section|<code>section</code>]] kind.
+
+The section is written by a bot, so a feed of this kind counts bot edits.
+
+{{Prevnext}}

@@ -1,0 +1,1 @@
+A MediaWiki extension for following wiki pages and categories from the Fediverse. AGPL-3.0-or-later.

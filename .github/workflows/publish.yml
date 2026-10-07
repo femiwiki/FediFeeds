@@ -1,0 +1,74 @@
+---
+name: Publish
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: publish
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      deployments: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - id: lay
+        name: Lay the previews over the site
+        run: |
+          echo "at=$(date -u +%FT%TZ)" >> "$GITHUB_OUTPUT"
+          mkdir dist
+          git fetch --quiet --depth 1 origin gh-pages
+          git --work-tree=dist checkout --quiet FETCH_HEAD -- .
+          if git fetch --quiet --depth 1 origin previews 2>/dev/null && [ -n "$(git ls-tree FETCH_HEAD)" ]; then
+            git --work-tree=dist checkout --quiet FETCH_HEAD -- .
+          fi
+
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d  # v6.0.0
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
+        with:
+          path: dist
+
+      - id: deploy
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128  # v5.0.0
+
+      # A deployment created before the previews were fetched is in what went live
+      - name: Mark the published previews as live
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        env:
+          LAID_AT: ${{ steps.lay.outputs.at }}
+        with:
+          script: |
+            const { data: deployments } = await github.rest.repos.listDeployments({
+              ...context.repo,
+              environment: 'preview',
+              per_page: 100,
+            });
+            for (const deployment of deployments) {
+              if (deployment.created_at > process.env.LAID_AT) continue;
+              const { data: [status] } = await github.rest.repos.listDeploymentStatuses({
+                ...context.repo,
+                deployment_id: deployment.id,
+                per_page: 1,
+              });
+              if (status?.state !== 'in_progress') continue;
+              await github.rest.repos.createDeploymentStatus({
+                ...context.repo,
+                deployment_id: deployment.id,
+                state: 'success',
+                environment_url: `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-preview/pr-${deployment.payload.number}/`,
+                auto_inactive: false,
+              });
+            }

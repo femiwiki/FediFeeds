@@ -1,0 +1,40 @@
+---
+name: Required
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions: {}
+jobs:
+  shared-lint:
+    uses: femiwiki/.github/.github/workflows/shared-lint.yml@243836c393e62e7887baad11dd1619dcc1bb0fac
+    permissions:
+      contents: read
+
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: chaotic-ground/wikven/actions/bake@248de7419f63cf3653400adb11425784c10751bc  # v1.3.0
+        with:
+          source: docs
+          output: dist
+
+  # The one check branch protection requires. What has to pass is the
+  # workflows called above, so adding a check does not touch femiwiki/infra.
+  required:
+    needs: [shared-lint, docs]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every workflow above passed or was skipped
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: jq -e 'all(.[]; .result == "success" or .result == "skipped")' <<< "$RESULTS"

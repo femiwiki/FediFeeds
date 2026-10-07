@@ -1,0 +1,87 @@
+---
+name: Preview
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    paths: [docs/**]
+permissions: {}
+concurrency:
+  group: preview-${{ github.event.number }}
+  cancel-in-progress: true
+jobs:
+  preview:
+    # A fork's token cannot write the previews branch
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: write
+      deployments: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - if: github.event.action != 'closed'
+        uses: chaotic-ground/wikven/actions/bake@248de7419f63cf3653400adb11425784c10751bc  # v1.3.0
+        with:
+          source: docs
+          output: dist
+
+      # Writes dist/ to pr-preview/pr-N/ on the previews branch, or removes it on close
+      - uses: rossjrw/pr-preview-action@ffa7509e91a3ec8dfc2e5536c4d5c1acdf7a6de9  # v1.8.1
+        with:
+          source-dir: dist
+          preview-branch: previews
+          umbrella-dir: pr-preview
+          comment: false
+
+      # Created before publish runs, which marks it success once the preview is live
+      - name: Show the preview on the pull request
+        if: github.event.action != 'closed'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const number = context.payload.number;
+            const deployment = await github.rest.repos.createDeployment({
+              ...context.repo,
+              ref: context.payload.pull_request.head.sha,
+              environment: 'preview',
+              transient_environment: true,
+              auto_merge: false,
+              required_contexts: [],
+              payload: { number },
+              description: `Preview for #${number}`,
+            });
+            await github.rest.repos.createDeploymentStatus({
+              ...context.repo,
+              deployment_id: deployment.data.id,
+              state: 'in_progress',
+            });
+
+      # A pull request run may not deploy to github-pages, so the deploy runs on main
+      - name: Publish the site with this preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: gh workflow run publish.yml --repo "$REPO"
+
+      - name: Retire the preview deployment
+        if: github.event.action == 'closed'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const { data: deployments } = await github.rest.repos.listDeployments({
+              ...context.repo,
+              environment: 'preview',
+              ref: context.payload.pull_request.head.sha,
+            });
+            for (const deployment of deployments) {
+              await github.rest.repos.createDeploymentStatus({
+                ...context.repo,
+                deployment_id: deployment.id,
+                state: 'inactive',
+              });
+            }

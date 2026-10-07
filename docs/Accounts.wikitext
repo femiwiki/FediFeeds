@@ -1,0 +1,50 @@
+Every feed is its own actor. Nobody declares or configures an account: the handle names the feed, and the account exists as long as the thing it follows exists. Because an account is a page or a category and never a person, there is nothing to impersonate.
+
+== Handles ==
+<syntaxhighlight lang="text">
+<kind>_<id>@<wiki host>
+</syntaxhighlight>
+
+* <code>&lt;kind&gt;</code> is one or more lowercase ASCII words joined with <code>_</code>, taken from the [[Feed kinds|list of kinds]].
+* <code>&lt;id&gt;</code> is a decimal number. What it numbers depends on the kind; for the kinds in scope it is a page id.
+* To parse a handle, strip the trailing <code>_&lt;digits&gt;</code> and match what is left against the list exactly. Anything that does not match, or whose target does not exist, is not an account.
+
+Examples: <code>category_4521@femiwiki.com</code>, <code>section_88@femiwiki.com</code>.
+
+The title of the page is shown as the actor's <code>name</code>, so readers see <code>분류:개발 블로그</code>, not a number.
+
+=== Why this shape ===
+* Mastodon refuses a remote account whose username does not match <code>[a-z0-9_]+([.-]+[a-z0-9_]+)*</code> ([https://github.com/mastodon/mastodon/blob/1d67e7de9669a65c5f5fe2ee395341b1bbf9ab4c/app/models/account.rb#L73-L76 account.rb]). Page titles can hold Korean, spaces and colons, so a title cannot be a handle.
+* Ids survive a page move. A title would not, and followers would be lost on every rename.
+* <code>_</code> is an ordinary character everywhere, while <code>.</code> and <code>-</code> are separators that some software may treat differently.
+* The kind comes first so that searching for <code>category</code> lists the category feeds together.
+* All feeds share the wiki's own host. Separate hosts per kind would work, but other servers treat each host as a separate instance.
+
+== Actor ==
+{| class="wikitable"
+! Property !! Value
+|-
+| <code>type</code> || <code>Service</code>
+|-
+| <code>id</code> || A URL on the wiki host built from the kind and the id, never from the title
+|-
+| <code>preferredUsername</code> || The handle before the <code>@</code>
+|-
+| <code>name</code> || The title of the page, with namespace
+|-
+| <code>summary</code> || One sentence saying what the feed publishes
+|-
+| <code>url</code> || The page on the wiki
+|-
+| <code>inbox</code>, <code>outbox</code>, <code>followers</code> || Per actor
+|-
+| <code>publicKey</code> || See [[#Keys|Keys]]
+|}
+
+== WebFinger ==
+<code>/.well-known/webfinger?resource=acct:&lt;handle&gt;</code> answers with a <code>self</code> link to the actor. Mastodon fetches the actor and then asks WebFinger again for <code>preferredUsername@host</code>, so both directions must agree.
+
+== Keys ==
+The wiki has one key pair. Each actor publishes it under its own key id, <code>&lt;actor id&gt;#main-key</code>.
+
+{{Prevnext}}
