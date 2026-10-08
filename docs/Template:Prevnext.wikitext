@@ -1,0 +1,3 @@
+<templatestyles src="Prevnext/styles.css" /><div class="fedifeeds-prevnext">{{#invoke:Sequence.lua|row}}</div><noinclude>
+Links to the pages before and after this one in [[MediaWiki:Sidebar]]. Put <code><nowiki>{{Prevnext}}</nowiki></code> at the foot of each page the sidebar lists.
+</noinclude>

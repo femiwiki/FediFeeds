@@ -1,0 +1,47 @@
+== In scope ==
+{| class="wikitable"
+! Kind !! Id !! An item is
+|-
+| <code>category</code> || Page id of the category page || A page created while it is in the category. Pages added to the category later are not items.
+|-
+| <code>section</code> || Page id || A section whose heading was not in the previous revision. Edits by bots count.
+|}
+
+=== section ===
+The headings of the parent revision and the new revision are compared by level and text. An item is identified by the page id and the section's anchor. Renaming a heading therefore removes one item and adds another.
+
+== Reserved ==
+These names are kept so that later kinds do not collide. None of them is planned.
+
+{| class="wikitable"
+! Kind !! An item is
+|-
+| <code>category_added</code> || A page added to the category, including existing pages and pages categorised by a template
+|-
+| <code>category_file</code> || A file added to the category
+|-
+| <code>page</code> || An edit to the page
+|-
+| <code>stable</code> || A newly reviewed revision of the page (FlaggedRevs)
+|-
+| <code>related</code> || An edit to a page the page links to
+|-
+| <code>file</code> || A new version of a file
+|-
+| <code>user_new</code> || A page created by the user
+|-
+| <code>user_upload</code> || A file uploaded by the user
+|-
+| <code>user_achievements</code> || A badge the user receives (AchievementBadges)
+|-
+| <code>namespace_new</code> || A new page in the namespace; the id is the namespace number
+|-
+| <code>topics</code> || A new topic on a talk page (DiscussionTools)
+|-
+| <code>newsletter</code> || A new issue of a newsletter (Newsletter)
+|}
+
+== Never ==
+These would publish something private, or turn a feed into a way to follow a person around: watchlists, notifications, thanks, block and abuse filter logs, CheckUser, the account creation log, and a feed of every edit by one user.
+
+{{Prevnext}}

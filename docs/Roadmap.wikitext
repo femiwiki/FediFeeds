@@ -1,0 +1,6 @@
+These are not in the spec yet.
+
+* Store likes and boosts and show counts.
+* Store replies in their own table, sanitised, and show them on the page from a read API with JavaScript. They are never written into wiki pages, which keeps remote servers from editing the wiki and keeps the parser cache out of it.
+
+{{Prevnext}}

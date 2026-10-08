@@ -1,0 +1,19 @@
+== Sent ==
+* <code>Create</code> with a <code>Note</code> when an item appears.
+* <code>Update</code> when an item that was sent as <code>Create</code> changes.
+* <code>Delete</code> when an item that was sent as <code>Create</code> goes away, for example when the page is deleted or the section removed.
+* Nothing for items that were never sent.
+
+The <code>Note</code> carries the first paragraph as plain HTML and a link to the item, never wikitext. For <code>section</code>, the heading is often a timestamp and says little, so the paragraph leads.
+
+A feed with no followers does nothing. Delivery goes to a server's <code>sharedInbox</code> when it has one, so a server with many followers gets one request.
+
+== Received ==
+* <code>Follow</code> is accepted and stored against the feed it names. <code>Undo</code> of a <code>Follow</code> removes it.
+* <code>Like</code>, <code>Announce</code> and their <code>Undo</code> are accepted and dropped.
+* Replies, meaning a <code>Create</code> whose <code>inReplyTo</code> is one of our notes, are accepted and dropped.
+* A <code>Delete</code> for an actor that follows nothing is dropped before its signature is checked.
+
+Every other request is verified by HTTP signature. Remote keys are cached, because without a cache each request holds a PHP worker while it fetches a key from another server.
+
+{{Prevnext}}

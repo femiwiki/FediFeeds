@@ -1,0 +1,9 @@
+* About
+** index|Overview
+** Use cases|Use cases
+** Roadmap|Roadmap
+* Spec
+** Accounts|Accounts
+** Feed kinds|Feed kinds
+** Activities|Activities
+** Open questions|Open questions

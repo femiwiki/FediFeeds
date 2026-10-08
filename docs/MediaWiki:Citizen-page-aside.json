@@ -1,0 +1,10 @@
+{
+	"panels": {
+		"fedifeeds-nav": {
+			"module": "site",
+			"labelMsg": "navigation",
+			"placement": "sticky",
+			"order": 10
+		}
+	}
+}

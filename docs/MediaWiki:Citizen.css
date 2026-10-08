@@ -1,0 +1,18 @@
+/* The groups from MediaWiki:Sidebar carry their own headings */
+.citizen-page-aside__panel--fedifeeds-nav > .citizen-page-aside__heading {
+	display: none;
+}
+
+/* Room for MediaWiki:Sidebar before MediaWiki:Citizen.js fills it */
+.citizen-page-aside__panel--fedifeeds-nav .citizen-page-aside__body:empty {
+	min-height: 20rem;
+}
+
+.citizen-page-aside__panel--fedifeeds-nav .citizen-menu__content-list {
+	padding-inline: var( --space-xs );
+}
+
+.citizen-page-aside__panel--fedifeeds-nav a[ aria-current='page' ] {
+	color: var( --color-progressive );
+	font-weight: var( --font-weight-semi-bold );
+}

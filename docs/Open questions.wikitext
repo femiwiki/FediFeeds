@@ -1,0 +1,5 @@
+* The path of actor ids.
+* Whether every major implementation accepts one key under many owners, as [[Accounts#Keys|Keys]] has it.
+* Whether a section rename should be an <code>Update</code> rather than a <code>Delete</code> and a <code>Create</code>.
+
+{{Prevnext}}

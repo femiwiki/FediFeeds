@@ -1,0 +1,44 @@
+---
+name: Pages
+on:
+  push:
+    branches: [main]
+    paths: [docs/**, .github/workflows/pages.yml]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  # The site is kept on gh-pages, so that publish can lay the open pull
+  # requests' previews over it without baking it again
+  bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: chaotic-ground/wikven/actions/bake@248de7419f63cf3653400adb11425784c10751bc  # v1.3.0
+        with:
+          source: docs
+          output: dist
+
+      - uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445  # v4.9.0
+        with:
+          branch: gh-pages
+          folder: dist
+          clean: true
+
+  publish:
+    needs: bake
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      deployments: write
+    uses: ./.github/workflows/publish.yml
