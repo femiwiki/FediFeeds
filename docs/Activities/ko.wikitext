@@ -1,0 +1,25 @@
+<!--T:title @4d0076e6-->
+액티비티
+
+<!--T:1 @da84d38f-->
+== 보내는 것 ==
+* 항목이 생기면 <code>Note</code>를 담은 <code>Create</code>
+* <code>Create</code>로 보낸 항목이 바뀌면 <code>Update</code>
+* <code>Create</code>로 보낸 항목이 없어지면 <code>Delete</code>. 문서가 삭제되거나 절이 지워진 경우 등
+* 보낸 적 없는 항목에는 아무것도 보내지 않습니다.
+
+<!--T:2 @47b2db3b-->
+<code>Note</code>에는 첫 문단을 평범한 HTML로 넣고 항목 링크를 붙입니다. 위키텍스트는 넣지 않습니다. <code>section</code>은 제목이 흔히 날짜뿐이라 알려 주는 게 적으니 문단을 앞에 둡니다.
+
+<!--T:3 @0ec263db-->
+팔로어가 없는 피드는 아무 일도 하지 않습니다. 서버에 <code>sharedInbox</code>가 있으면 그리로 보내므로, 팔로어가 많은 서버라도 요청은 한 번만 받습니다.
+
+<!--T:4 @a3d5cbee-->
+== 받는 것 ==
+* <code>Follow</code>는 받아서 그 피드에 저장합니다. <code>Follow</code>의 <code>Undo</code>가 오면 지웁니다.
+* <code>Like</code>, <code>Announce</code>와 그 <code>Undo</code>는 받고 버립니다.
+* 답글, 곧 <code>inReplyTo</code>가 우리 노트인 <code>Create</code>는 받고 버립니다.
+* 아무것도 팔로하지 않는 액터의 <code>Delete</code>는 서명을 확인하기 전에 버립니다.
+
+<!--T:5 @f9d304b8-->
+그 밖의 요청은 모두 HTTP 서명으로 확인합니다. 원격 키는 캐시합니다. 캐시가 없으면 요청마다 PHP 워커 하나가 다른 서버에서 키를 받아 올 때까지 붙잡혀 있게 됩니다.

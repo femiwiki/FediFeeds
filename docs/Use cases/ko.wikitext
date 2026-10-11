@@ -1,0 +1,16 @@
+<!--T:title @ff27a991-->
+쓰임새
+
+<!--T:1 @3d56443d-->
+페미위키에는 피드 두 개가 필요합니다.
+
+<!--T:2 @fb591c6b-->
+== 개발 블로그 ==
+글 하나하나가 블로그 분류에 든 문서입니다. 그 분류에 새 문서가 생기면 연합우주에 새 글이 올라갑니다. [[<tvar name="1">Special:MyLanguage/Feed kinds#category</tvar>|<code>category</code>]] 종류입니다.
+
+<!--T:3 @1f2761d0-->
+== 업데이트 소식 ==
+배포할 때마다 업데이트 소식 문서 <code>페미위키:업데이트</code>에 절이 하나 붙습니다. 새 절이 생기면 연합우주에 새 글이 올라갑니다. [[<tvar name="1">Special:MyLanguage/Feed kinds#section</tvar>|<code>section</code>]] 종류입니다.
+
+<!--T:4 @795da3d8-->
+이 절은 봇이 쓰기 때문에, 이 종류의 피드는 봇 편집도 셉니다.
