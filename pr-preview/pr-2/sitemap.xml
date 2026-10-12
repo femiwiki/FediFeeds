@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url><loc>https://femiwiki.github.io/FediFeeds/Accounts.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Accounts/en.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Accounts/ko.html</loc></url>
 	<url><loc>https://femiwiki.github.io/FediFeeds/Activities.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Activities/en.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Activities/ko.html</loc></url>
 	<url><loc>https://femiwiki.github.io/FediFeeds/Feed_kinds.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Feed_kinds/en.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Feed_kinds/ko.html</loc></url>
 	<url><loc>https://femiwiki.github.io/FediFeeds/Licenses.html</loc></url>
 	<url><loc>https://femiwiki.github.io/FediFeeds/Licenses/ko.html</loc></url>
 	<url><loc>https://femiwiki.github.io/FediFeeds/Open_questions.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Open_questions/en.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Open_questions/ko.html</loc></url>
 	<url><loc>https://femiwiki.github.io/FediFeeds/Roadmap.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Roadmap/en.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Roadmap/ko.html</loc></url>
 	<url><loc>https://femiwiki.github.io/FediFeeds/Settings.html</loc></url>
 	<url><loc>https://femiwiki.github.io/FediFeeds/Use_cases.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Use_cases/en.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/Use_cases/ko.html</loc></url>
 	<url><loc>https://femiwiki.github.io/FediFeeds/index.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/index/en.html</loc></url>
+	<url><loc>https://femiwiki.github.io/FediFeeds/index/ko.html</loc></url>
 </urlset>
