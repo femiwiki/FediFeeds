@@ -1,3 +1,6 @@
+<languages />
+<translate>
+<!--T:1-->
 == In scope ==
 {| class="wikitable"
 ! Kind !! Id !! An item is
@@ -7,12 +10,15 @@
 | <code>section</code> || Page id || A section whose heading was not in the previous revision. Edits by bots count.
 |}
 
+<!--T:2-->
 === section ===
 The headings of the parent revision and the new revision are compared by level and text. An item is identified by the page id and the section's anchor. Renaming a heading therefore removes one item and adds another.
 
+<!--T:3-->
 == Reserved ==
 These names are kept so that later kinds do not collide. None of them is planned.
 
+<!--T:4-->
 {| class="wikitable"
 ! Kind !! An item is
 |-
@@ -41,7 +47,9 @@ These names are kept so that later kinds do not collide. None of them is planned
 | <code>newsletter</code> || A new issue of a newsletter (Newsletter)
 |}
 
+<!--T:5-->
 == Never ==
 These would publish something private, or turn a feed into a way to follow a person around: watchlists, notifications, thanks, block and abuse filter logs, CheckUser, the account creation log, and a feed of every edit by one user.
+</translate>
 
 {{Prevnext}}

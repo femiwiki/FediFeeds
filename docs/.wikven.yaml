@@ -3,6 +3,8 @@ extensions:
   - Scribunto
   - SyntaxHighlight_GeSHi
   - TemplateStyles
+  - Translate
+  - UniversalLanguageSelector
 skins:
   - Citizen
 config:

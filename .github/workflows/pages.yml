@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - uses: chaotic-ground/wikven/actions/bake@248de7419f63cf3653400adb11425784c10751bc  # v1.3.0
+      - uses: chaotic-ground/wikven/actions/bake@75d325babd714624999a29977ec273b0d3e1036c  # v1.4.2
         with:
           source: docs
           output: dist

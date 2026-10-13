@@ -1,0 +1,11 @@
+<!--T:1 @8d45eb71-->
+FediFeeds는 연합우주 사람들이 위키의 좁은 피드 하나를 팔로할 수 있게 해 주는 미디어위키 확장 기능입니다. 모든 편집을 알리는 계정 하나 대신, 이를테면 분류에 모아 둔 블로그의 새 글만 받아 볼 수 있습니다.
+
+<!--T:2 @7211a289-->
+피드마다 계정이 따로 있습니다. 마스토돈 사용자는 사람을 팔로하듯 <code>category_4521@femiwiki.com</code>을 팔로하고, 그 분류에 문서가 새로 만들어질 때마다 글을 받아 봅니다.
+
+<!--T:3 @8e86f583-->
+아직 구현된 것은 없습니다. [[<tvar name="1">Special:MyLanguage/Accounts</tvar>|스펙]]을 먼저 정하고 있고, 어느 부분이든 바뀔 수 있습니다.
+
+<!--T:4 @2814098f-->
+FediFeeds는 [<tvar name="1">https://github.com/femiwiki/FediFeeds/blob/main/LICENSE</tvar> AGPL-3.0-or-later]로 배포합니다.

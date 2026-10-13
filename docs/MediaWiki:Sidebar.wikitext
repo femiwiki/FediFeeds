@@ -1,9 +1,10 @@
-* About
-** index|Overview
-** Use cases|Use cases
-** Roadmap|Roadmap
-* Spec
-** Accounts|Accounts
-** Feed kinds|Feed kinds
-** Activities|Activities
-** Open questions|Open questions
+<!-- Links go through Special:MyLanguage, so a reader on a translated page stays in that language.
+     The labels are messages, translated as MediaWiki:Sidebar-<key>/<lang>. -->
+* sidebar-about
+** Special:MyLanguage/Use cases|sidebar-use-cases
+** Special:MyLanguage/Roadmap|sidebar-roadmap
+* sidebar-spec
+** Special:MyLanguage/Accounts|sidebar-accounts
+** Special:MyLanguage/Feed kinds|sidebar-feed-kinds
+** Special:MyLanguage/Activities|sidebar-activities
+** Special:MyLanguage/Open questions|sidebar-open-questions
