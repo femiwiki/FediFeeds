@@ -6,19 +6,13 @@ extensions:
   - Translate
   - UniversalLanguageSelector
 skins:
-  - Citizen
+  - Vector
 config:
   Sitename: FediFeeds
   DefaultSkin: citizen
-  # Citizen only; the readers have no use for a switcher to Vector 2022
-  WikvenBuildVector: false
   WikvenSiteUrl: https://femiwiki.github.io/FediFeeds/
   SifterSearchBundlePath: /FediFeeds/pagefind/
   WikvenFooterUrl: https://github.com/femiwiki/FediFeeds
   WikvenEditUrl: https://github.com/femiwiki/FediFeeds/edit/main/docs/$1
   WikvenHistoryUrl: https://github.com/femiwiki/FediFeeds/commits/main/docs/$1
   WikvenViewSourceUrl: https://github.com/femiwiki/FediFeeds/blob/main/docs/$1
-  WikvenRepositories:
-    Citizen:
-      repository: https://github.com/StarCitizenTools/mediawiki-skins-Citizen.git
-      reference: v3.24.0
