@@ -1,18 +1,18 @@
 <languages />
 <translate>
 <!--T:1-->
-Femiwiki needs two feeds.
+Two kinds of wiki pages make a good fit for a feed.
 
 <!--T:2-->
-== A development blog ==
-Each post is a page in the blog's category. A new page in that category becomes a new Fediverse post. This is the [[<tvar name="1">Special:MyLanguage/Feed kinds#category</tvar>|<code>category</code>]] kind.
+== A blog ==
+Some wikis run a blog out of a category, with each post as a page in it. A new page in that category becomes a new Fediverse post. This is the [[<tvar name="1">Special:MyLanguage/Feed kinds#category</tvar>|<code>category</code>]] kind.
 
 <!--T:3-->
 == Release notes ==
-Each deploy adds a section to the release notes page, <code>페미위키:업데이트</code>. A new section becomes a new Fediverse post. This is the [[<tvar name="1">Special:MyLanguage/Feed kinds#section</tvar>|<code>section</code>]] kind.
+Some wikis keep a release notes page and add a section to it with each update. A new section becomes a new Fediverse post. This is the [[<tvar name="1">Special:MyLanguage/Feed kinds#section</tvar>|<code>section</code>]] kind.
 
 <!--T:4-->
-The section is written by a bot, so a feed of this kind counts bot edits.
+These sections are often written by a bot, so a feed of this kind counts bot edits.
 </translate>
 
 {{Prevnext}}
