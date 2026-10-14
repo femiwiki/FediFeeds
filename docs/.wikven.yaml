@@ -10,8 +10,6 @@ skins:
 config:
   Sitename: FediFeeds
   DefaultSkin: citizen
-  # Citizen only; the readers have no use for a switcher to Vector 2022
-  WikvenBuildVector: false
   WikvenSiteUrl: https://femiwiki.github.io/FediFeeds/
   SifterSearchBundlePath: /FediFeeds/pagefind/
   WikvenFooterUrl: https://github.com/femiwiki/FediFeeds
