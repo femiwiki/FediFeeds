@@ -9,10 +9,10 @@
 }
 
 .citizen-page-aside__panel--fedifeeds-nav .citizen-menu__content-list {
-	padding-inline: var( --space-xs );
+	padding-inline: var(--space-xs);
 }
 
-.citizen-page-aside__panel--fedifeeds-nav a[ aria-current='page' ] {
-	color: var( --color-progressive );
-	font-weight: var( --font-weight-semi-bold );
+.citizen-page-aside__panel--fedifeeds-nav a[aria-current="page"] {
+	color: var(--color-progressive);
+	font-weight: var(--font-weight-semi-bold);
 }
