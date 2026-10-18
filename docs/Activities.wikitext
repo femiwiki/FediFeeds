@@ -36,6 +36,17 @@ The outbox is an <code>OrderedCollection</code> of <code>Create</code> activitie
 
 <!--T:5-->
 Every other request is verified by HTTP signature. Remote keys are cached, because without a cache each request holds a PHP worker while it fetches a key from another server.
+
+<!--T:10-->
+== Signatures ==
+Requests are signed and verified as Mastodon does, with [<tvar name="1">https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12</tvar> draft-cavage-http-signatures-12]:
+* The algorithm is <code>rsa-sha256</code>; <code>hs2019</code> is accepted as the same.
+* The signed headers include <code>(request-target)</code>, <code>host</code> and <code>date</code>, and for a <code>POST</code> also <code>digest</code>, which must match the SHA-256 of the body.
+* A <code>Date</code> more than an hour ahead or twelve hours behind is refused.
+* The <code>keyId</code> is the URL of a remote actor's <code>publicKey</code>. The key is fetched from it with <code>Accept: application/activity+json</code> and cached for a day. A signature that fails against a cached key is checked once more against a fresh one, since the remote may have changed its key.
+
+<!--T:11-->
+The wiki's own key pair is configured as one private key, and the public key every actor publishes is derived from it.
 </translate>
 
 {{Prevnext}}
