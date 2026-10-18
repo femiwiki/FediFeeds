@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\FediFeeds\Tests;
 
 use MediaWiki\Extension\FediFeeds\Rest\ActorHandler;
 use MediaWiki\Extension\FediFeeds\Rest\WebFingerHandler;
+use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
 use MediaWiki\Rest\LocalizedHttpException;
 use MediaWiki\Rest\RequestData;
 use MediaWiki\Tests\Rest\Handler\HandlerTestTrait;
@@ -15,6 +16,7 @@ use MediaWikiIntegrationTestCase;
  * @covers \MediaWiki\Extension\FediFeeds\Actors
  * @covers \MediaWiki\Extension\FediFeeds\FeedLookup
  * @covers \MediaWiki\Extension\FediFeeds\Hooks
+ * @covers \MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore
  * @group Database
  */
 class HandlersTest extends MediaWikiIntegrationTestCase {
@@ -25,14 +27,17 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		$this->overrideConfigValues( [
 			'CanonicalServer' => 'https://wiki.example.org',
 			'FediFeedsActorBase' => 'https://fedi.example.org/actors/',
-			'FediFeedsPublicKeyPem' => 'PEM',
 		] );
+	}
+
+	private function getLocalKeyStore(): LocalKeyStore {
+		return $this->getServiceContainer()->getService( 'FediFeeds.LocalKeyStore' );
 	}
 
 	private function newActorHandler(): ActorHandler {
 		$services = $this->getServiceContainer();
 		return new ActorHandler( $services->getMainConfig(), $services->getPageStore(),
-			$services->getTitleFormatter(), $services->getPageProps() );
+			$services->getTitleFormatter(), $services->getPageProps(), $this->getLocalKeyStore() );
 	}
 
 	private function newWebFingerHandler(): WebFingerHandler {
@@ -66,7 +71,9 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( "https://fedi.example.org/actors/category_$id/inbox", $actor['inbox'] );
 		$this->assertSame( 'https://fedi.example.org/actors/inbox', $actor['endpoints']['sharedInbox'] );
 		$this->assertSame( "https://fedi.example.org/actors/category_$id#main-key", $actor['publicKey']['id'] );
-		$this->assertSame( 'PEM', $actor['publicKey']['publicKeyPem'] );
+		$this->assertSame( $this->getLocalKeyStore()->getKey()->getPublicKeyPem(),
+			$actor['publicKey']['publicKeyPem'] );
+		$this->assertStringStartsWith( '-----BEGIN PUBLIC KEY-----', $actor['publicKey']['publicKeyPem'] );
 		$this->assertStringStartsWith( 'https://wiki.example.org/', $actor['url'] );
 	}
 
@@ -104,10 +111,12 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( 'Dev blog', $this->getActor( "category_$id" )['name'] );
 	}
 
-	public function testNoPublicKey() {
-		$this->overrideConfigValue( 'FediFeedsPublicKeyPem', null );
+	public function testKeyIsGeneratedOnceAndKept() {
+		$first = $this->getLocalKeyStore()->getKey()->getPublicKeyPem();
+		$this->assertNotNull( $first );
+		$this->assertSame( $first, $this->getLocalKeyStore()->getKey()->getPublicKeyPem() );
 		$id = $this->getExistingTestPage( 'Talk:Updates' )->getId();
-		$this->assertArrayNotHasKey( 'publicKey', $this->getActor( "section_$id" ) );
+		$this->assertSame( $first, $this->getActor( "section_$id" )['publicKey']['publicKeyPem'] );
 	}
 
 	public function testDefaultActorBase() {
