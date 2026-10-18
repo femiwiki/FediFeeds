@@ -3,4 +3,4 @@
 
 <!--T:1 @e5cf23fe-->
 * [[<tvar name="1">Special:MyLanguage/Accounts#Keys</tvar>|키]]에 적은 대로 한 키를 여러 소유자 아래 두는 방식을 주요 구현이 모두 받아들이는지
-* 절 제목을 바꾸면 <code>Delete</code>와 <code>Create</code> 대신 <code>Update</code>를 보내야 하는지
+* 문단 제목을 바꾸면 <code>Delete</code>와 <code>Create</code> 대신 <code>Update</code>를 보내야 하는지
