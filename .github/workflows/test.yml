@@ -5,6 +5,11 @@ on:
 permissions: {}
 jobs:
   quibble:
+    strategy:
+      fail-fast: false
+      matrix:
+        # The list shares one wiki; phan installs none
+        stage: [phan, "composer-test,phpunit-unit,phpunit"]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -14,8 +19,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # phpunit runs core's structure tests on extension.json and i18n
       - uses: femiwiki/quibble-action@2b5f2466dec6f421394630fd653445da1f86b11c  # v3.0.0
         with:
-          stage: phpunit
+          stage: ${{ matrix.stage }}
           mediawiki-version: REL1_46

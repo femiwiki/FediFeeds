@@ -2,5 +2,8 @@
 	"@metadata": {
 		"authors": []
 	},
-	"fedifeeds-desc": "Lets people on the Fediverse follow feeds of the wiki, such as the new pages of a category"
+	"fedifeeds-desc": "Lets people on the Fediverse follow feeds of the wiki, such as the new pages of a category",
+	"fedifeeds-summary-category": "New pages in $1.",
+	"fedifeeds-summary-section": "New sections of $1.",
+	"fedifeeds-rest-no-feed": "There is no feed named $1."
 }

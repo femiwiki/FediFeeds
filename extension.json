@@ -11,5 +11,35 @@
 	"MessagesDirs": {
 		"FediFeeds": ["i18n"]
 	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\FediFeeds\\": "includes/"
+	},
+	"TestAutoloadNamespaces": {
+		"MediaWiki\\Extension\\FediFeeds\\Tests\\": "tests/phpunit/"
+	},
+	"RestRoutes": [
+		{
+			"path": "/fedifeeds/actors/{handle}",
+			"method": "GET",
+			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\ActorHandler",
+			"services": ["MainConfig", "PageStore", "TitleFormatter"]
+		},
+		{
+			"path": "/fedifeeds/webfinger",
+			"method": "GET",
+			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\WebFingerHandler",
+			"services": ["MainConfig", "PageStore", "TitleFormatter"]
+		}
+	],
+	"config": {
+		"FediFeedsActorBase": {
+			"value": null,
+			"description": "URL that a handle is appended to for the actor id, such as \"https://fedi.example.org/actors/\". The web server has to route it to the REST route /fedifeeds/actors/{handle}. Null uses that REST route directly."
+		},
+		"FediFeedsPublicKeyPem": {
+			"value": null,
+			"description": "The PEM of the public key every actor publishes. Null leaves publicKey out."
+		}
+	},
 	"manifest_version": 2
 }

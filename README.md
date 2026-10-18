@@ -6,7 +6,7 @@ instead of a single account that announces every edit.
 
 The spec comes first and lives on the
 [documentation site](https://femiwiki.github.io/FediFeeds/), built from
-[`docs/`](docs) with [wikven](https://github.com/chaotic-ground/wikven). Nothing
-is implemented yet.
+[`docs/`](docs) with [wikven](https://github.com/chaotic-ground/wikven). So
+far the extension only answers discovery: actors and WebFinger.
 
 FediFeeds is licensed under the [AGPL-3.0-or-later](LICENSE).
