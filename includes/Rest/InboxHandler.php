@@ -50,7 +50,7 @@ class InboxHandler extends Handler {
 
 		$headers = [];
 		foreach ( $request->getHeaders() as $name => $values ) {
-			$headers[strtolower( $name )] = implode( ', ', $values );
+			$headers[strtolower( (string)$name )] = implode( ', ', $values );
 		}
 		if ( $this->remoteKeys->verify( 'POST', $this->getSignedTarget(), $headers, $body ) !== $actor ) {
 			return $this->getResponseFactory()->createHttpError( 401, [ 'message' => 'Bad signature' ] );

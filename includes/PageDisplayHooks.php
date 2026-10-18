@@ -24,7 +24,7 @@ class PageDisplayHooks implements BeforePageDisplayHook {
 		}
 		$categories = [];
 		foreach ( $out->getCategories() as $name ) {
-			$category = $this->pageStore->getPageByText( $name, NS_CATEGORY );
+			$category = $this->pageStore->getExistingPageByText( $name, NS_CATEGORY );
 			if ( $category ) {
 				$categories[] = $category;
 			}
