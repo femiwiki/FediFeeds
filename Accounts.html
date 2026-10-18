@@ -409,7 +409,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <ul><li><code>&lt;kind></code> is one or more lowercase ASCII words joined with <code>_</code>, taken from the <a href="./Feed_kinds.html" title="Special:MyLanguage/Feed kinds">list of kinds</a>.</li>
 <li><code>&lt;id></code> is a decimal number. What it numbers depends on the kind; for the kinds in scope it is a page id.</li>
 <li>To parse a handle, strip the trailing <code>_&lt;digits></code> and match what is left against the list exactly. Anything that does not match, or whose target does not exist, is not an account.</li></ul>
-<p>Examples: <code>category_4521@femiwiki.com</code>, <code>section_88@femiwiki.com</code>.
+<p>Examples: <code>category_4521@wiki.example.org</code>, <code>section_88@wiki.example.org</code>.
 </p><p>The title of the page is shown as the actor's <code>name</code>, so readers see <code>분류:개발 블로그</code>, not a number.
 </p>
 <section id="citizen-section-2" class="citizen-section"><div class="mw-heading mw-heading3 citizen-section-heading"><h3 id="Why_this_shape">Why this shape</h3></div><div class="citizen-section-body">
@@ -417,7 +417,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <li>Ids survive a page move. A title would not, and followers would be lost on every rename.</li>
 <li><code>_</code> is an ordinary character everywhere, while <code>.</code> and <code>-</code> are separators that some software may treat differently.</li>
 <li>The kind comes first so that searching for <code>category</code> lists the category feeds together.</li>
-<li>All feeds share the wiki's own host. Separate hosts per kind would work, but other servers treat each host as a separate instance.</li></ul>
+<li>All feeds share one actor host, such as <code>fedi.example.org</code>, while handles keep the wiki's own host. Separate hosts per kind would work, but other servers treat each host as a separate instance. Keeping actors off the wiki host means wiki cookies are never sent with their requests.</li></ul>
 </div></section></div></section><section id="citizen-section-3" class="citizen-section"><div class="mw-heading mw-heading2 citizen-section-heading"><h2 id="Actor">Actor</h2></div><div class="citizen-section-body">
 <table class="wikitable">
 <tbody><tr>
@@ -430,7 +430,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 </td></tr>
 <tr>
 <td><code>id</code></td>
-<td>A URL on the wiki host built from the kind and the id, never from the title
+<td><code>https://&lt;actor host>/actors/&lt;kind>_&lt;id></code>, built from the handle, never from the title
 </td></tr>
 <tr>
 <td><code>preferredUsername</code></td>
@@ -450,14 +450,14 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 </td></tr>
 <tr>
 <td><code>inbox</code>, <code>outbox</code>, <code>followers</code></td>
-<td>Per actor
+<td>Under the actor id, such as <code>&lt;actor id>/inbox</code>
 </td></tr>
 <tr>
 <td><code>publicKey</code></td>
 <td>See <a href="#Keys">Keys</a>
 </td></tr></tbody></table>
 </div></section><section id="citizen-section-4" class="citizen-section"><div class="mw-heading mw-heading2 citizen-section-heading"><h2 id="WebFinger">WebFinger</h2></div><div class="citizen-section-body">
-<p><code>/.well-known/webfinger?resource=acct:&lt;handle></code> answers with a <code>self</code> link to the actor. Mastodon fetches the actor and then asks WebFinger again for <code>preferredUsername@host</code>, so both directions must agree.
+<p><code>/.well-known/webfinger?resource=acct:&lt;handle></code> answers with a <code>self</code> link to the actor, on both the wiki host and the actor host. Mastodon fetches the actor and then asks the actor host's WebFinger for <code>preferredUsername@&lt;actor host></code>, which answers with the handle on the wiki host as its <code>subject</code>, so both directions must agree.
 </p>
 </div></section><section id="citizen-section-5" class="citizen-section"><div class="mw-heading mw-heading2 citizen-section-heading"><h2 id="Keys">Keys</h2></div><div class="citizen-section-body">
 <p>The wiki has one key pair. Each actor publishes it under its own key id, <code>&lt;actor id>#main-key</code>.
@@ -474,9 +474,9 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <div id="citizen-page-aside-lastmod" class="citizen-page-aside__panel citizen-page-aside__panel--lastmod" data-order="10">
 	<div id="citizen-page-aside-lastmod-heading" class="citizen-page-aside__heading">Last modified</div>
 	<div class="citizen-page-aside__body">
-<a class="citizen-page-aside__link cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet" href="https://github.com/femiwiki/FediFeeds/commits/main/docs/Accounts.wikitext" title="This page was last edited on 13 October 2026, at 04:49.">
+<a class="citizen-page-aside__link cdx-button cdx-button--fake-button cdx-button--fake-button--enabled cdx-button--weight-quiet" href="https://github.com/femiwiki/FediFeeds/commits/main/docs/Accounts.wikitext" title="This page was last edited on 18 October 2026, at 01:05.">
 	<span class="citizen-ui-icon mw-ui-icon-history mw-ui-icon-wikimedia-history"></span>
-	<time id="citizen-page-aside-lastmod-time" datetime="2026-10-13T04:49:51Z">13 October 2026</time>
+	<time id="citizen-page-aside-lastmod-time" datetime="2026-10-18T01:05:56Z">18 October 2026</time>
 </a>
 </div>
 </div>
@@ -604,7 +604,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 					<div class="page-info">
 		    <section id="footer-info-lastmod" class="page-info__item">
 		        <div class="page-info__label">Last modified</div>
-		        <div class="page-info__text"> This page was last edited on 13 October 2026, at 04:49.</div>
+		        <div class="page-info__text"> This page was last edited on 18 October 2026, at 01:05.</div>
 		    </section>
 		</div>
 </footer>		</div>
