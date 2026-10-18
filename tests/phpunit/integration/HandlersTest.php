@@ -14,6 +14,7 @@ use MediaWikiIntegrationTestCase;
  * @covers \MediaWiki\Extension\FediFeeds\Rest\WebFingerHandler
  * @covers \MediaWiki\Extension\FediFeeds\Actors
  * @covers \MediaWiki\Extension\FediFeeds\FeedLookup
+ * @covers \MediaWiki\Extension\FediFeeds\Hooks
  * @group Database
  */
 class HandlersTest extends MediaWikiIntegrationTestCase {
@@ -31,13 +32,20 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 	private function newActorHandler(): ActorHandler {
 		$services = $this->getServiceContainer();
 		return new ActorHandler( $services->getMainConfig(), $services->getPageStore(),
-			$services->getTitleFormatter() );
+			$services->getTitleFormatter(), $services->getPageProps() );
 	}
 
 	private function newWebFingerHandler(): WebFingerHandler {
 		$services = $this->getServiceContainer();
 		return new WebFingerHandler( $services->getMainConfig(), $services->getPageStore(),
-			$services->getTitleFormatter() );
+			$services->getTitleFormatter(), $services->getPageProps() );
+	}
+
+	/** Saves the page and returns its id once its page properties are stored. */
+	private function savePage( string $title, string $text ): int {
+		$this->editPage( $title, $text );
+		$this->runDeferredUpdates();
+		return $this->getServiceContainer()->getPageStore()->getPageByText( $title )->getId();
 	}
 
 	private function getActor( string $handle ): array {
@@ -60,6 +68,40 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( "https://fedi.example.org/actors/category_$id#main-key", $actor['publicKey']['id'] );
 		$this->assertSame( 'PEM', $actor['publicKey']['publicKeyPem'] );
 		$this->assertStringStartsWith( 'https://wiki.example.org/', $actor['url'] );
+	}
+
+	public function testDisplayNameForEveryKind() {
+		$id = $this->savePage( 'Category:Named', '{{FEDIFEEDSNAME:Dev blog}}' );
+		$actor = $this->getActor( "category_$id" );
+		$this->assertSame( 'Dev blog', $actor['name'] );
+		$this->assertSame( 'New pages in Category:Named.', $actor['summary'] );
+		$this->assertSame( 'Dev blog', $this->getActor( "section_$id" )['name'] );
+	}
+
+	public function testDisplayNameForOneKindWins() {
+		$id = $this->savePage( 'Category:Named twice',
+			'{{FEDIFEEDSNAME:Dev blog|section}}{{FEDIFEEDSNAME:Dev blog posts}}' );
+		$this->assertSame( 'Dev blog posts', $this->getActor( "category_$id" )['name'] );
+		$this->assertSame( 'Dev blog', $this->getActor( "section_$id" )['name'] );
+	}
+
+	public static function provideIgnoredDisplayName(): iterable {
+		yield 'empty' => [ '{{FEDIFEEDSNAME:}}' ];
+		yield 'only markup' => [ '{{FEDIFEEDSNAME:<b></b>}}' ];
+		yield 'unknown kind' => [ '{{FEDIFEEDSNAME:Dev blog|page}}' ];
+	}
+
+	/**
+	 * @dataProvider provideIgnoredDisplayName
+	 */
+	public function testIgnoredDisplayName( string $text ) {
+		$id = $this->savePage( 'Category:Unnamed', $text );
+		$this->assertSame( 'Category:Unnamed', $this->getActor( "category_$id" )['name'] );
+	}
+
+	public function testDisplayNameDropsMarkupAndLastWins() {
+		$id = $this->savePage( 'Category:Renamed', "{{FEDIFEEDSNAME:Old}}\n{{FEDIFEEDSNAME:'''Dev''' blog}}" );
+		$this->assertSame( 'Dev blog', $this->getActor( "category_$id" )['name'] );
 	}
 
 	public function testNoPublicKey() {

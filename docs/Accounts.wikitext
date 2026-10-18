@@ -21,7 +21,7 @@ Every feed is its own actor. Nobody declares or configures an account: the handl
 Examples: <code>category_4521@wiki.example.org</code>, <code>section_88@wiki.example.org</code>.
 
 <!--T:5-->
-The title of the page is shown as the actor's <code>name</code>, so readers see <code>분류:개발 블로그</code>, not a number.
+The title of the page is shown as the actor's <code>name</code>, so readers see <code>분류:개발 블로그</code>, not a number. The page can set a friendlier [[#Display name|display name]] instead.
 
 <!--T:6-->
 === Why this shape ===
@@ -42,7 +42,7 @@ The title of the page is shown as the actor's <code>name</code>, so readers see 
 |-
 | <code>preferredUsername</code> || The handle before the <code>@</code>
 |-
-| <code>name</code> || The title of the page, with namespace
+| <code>name</code> || The page's [[#Display name|display name]] for the kind, or else its title with namespace
 |-
 | <code>summary</code> || One sentence saying what the feed publishes
 |-
@@ -52,6 +52,16 @@ The title of the page is shown as the actor's <code>name</code>, so readers see 
 |-
 | <code>publicKey</code> || See [[#Keys|Keys]]
 |}
+
+<!--T:10-->
+== Display name ==
+The followed page sets a display name with a magic word in its own wikitext:
+* <code><nowiki>{{FEDIFEEDSNAME:</nowiki>&lt;name&gt;}}</code> applies to every feed of the page.
+* <code><nowiki>{{FEDIFEEDSNAME:</nowiki>&lt;name&gt;|&lt;kind&gt;}}</code> applies to that kind only, and wins over the form without a kind. A category page that is also followed for its sections can name the two feeds apart this way.
+* The name is plain text: markup is dropped. An empty name, or a kind that is not in the [[<tvar name="1">Special:MyLanguage/Feed kinds</tvar>|list of kinds]], sets nothing. When the page sets the same one twice, the last wins.
+
+<!--T:11-->
+The display name changes only <code>name</code>. The handle, the id and the <code>summary</code> keep the page id and the title, so followers stay through a rename and the summary still says where the items come from.
 
 <!--T:8-->
 == WebFinger ==
