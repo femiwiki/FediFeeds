@@ -16,7 +16,8 @@ class Hooks implements ParserFirstCallInitHook {
 
 	/** @inheritDoc */
 	public function onParserFirstCallInit( $parser ) {
-		$parser->setFunctionHook( 'fedifeedsname', [ self::class, 'renderName' ] );
+		// Written {{FEDIFEEDSNAME:...}} like {{DISPLAYTITLE:...}}, without a hash
+		$parser->setFunctionHook( 'fedifeedsname', [ self::class, 'renderName' ], Parser::SFH_NO_HASH );
 	}
 
 	/**
