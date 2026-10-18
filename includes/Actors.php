@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\FediFeeds;
 
 use MediaWiki\Config\Config;
 use MediaWiki\MainConfigNames;
+use MediaWiki\Page\PageProps;
 use MediaWiki\Title\Title;
 use MediaWiki\Title\TitleFormatter;
 use MessageLocalizer;
@@ -22,6 +23,7 @@ class Actors {
 		Config $config,
 		private readonly TitleFormatter $titleFormatter,
 		private readonly MessageLocalizer $messageLocalizer,
+		private readonly PageProps $pageProps,
 	) {
 		$server = $config->get( MainConfigNames::CanonicalServer );
 		$this->actorBase = $config->get( 'FediFeedsActorBase' )
@@ -62,9 +64,20 @@ class Actors {
 		return Title::newFromPageIdentity( $feed->page )->getFullURL( '', false, PROTO_CANONICAL );
 	}
 
+	/**
+	 * The display name the page set for the feed's kind, else for every kind, else its title.
+	 */
+	public function getName( Feed $feed ): string {
+		$forKind = Hooks::NAME_PROPERTY . '-' . $feed->kind;
+		$props = $this->pageProps->getProperties( $feed->page, [ $forKind, Hooks::NAME_PROPERTY ] )
+			[$feed->page->getId()] ?? [];
+		return $props[$forKind] ?? $props[Hooks::NAME_PROPERTY]
+			?? $this->titleFormatter->getPrefixedText( $feed->page );
+	}
+
 	public function getActor( Feed $feed, ?string $publicKeyPem ): array {
 		$id = $this->getActorId( $feed->getHandle() );
-		$name = $this->titleFormatter->getPrefixedText( $feed->page );
+		$title = $this->titleFormatter->getPrefixedText( $feed->page );
 		$actor = [
 			'@context' => [
 				'https://www.w3.org/ns/activitystreams',
@@ -73,11 +86,11 @@ class Actors {
 			'id' => $id,
 			'type' => 'Service',
 			'preferredUsername' => $feed->getHandle(),
-			'name' => $name,
+			'name' => $this->getName( $feed ),
 			// fedifeeds-summary-category, fedifeeds-summary-section
 			'summary' => $this->messageLocalizer->msg( 'fedifeeds-summary-' . $feed->kind )
 				->inContentLanguage()
-				->plaintextParams( $name )
+				->plaintextParams( $title )
 				->escaped(),
 			'url' => $this->getPageUrl( $feed ),
 			'inbox' => "$id/inbox",

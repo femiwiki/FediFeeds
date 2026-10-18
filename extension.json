@@ -11,6 +11,17 @@
 	"MessagesDirs": {
 		"FediFeeds": ["i18n"]
 	},
+	"ExtensionMessagesFiles": {
+		"FediFeedsMagic": "FediFeeds.i18n.magic.php"
+	},
+	"HookHandlers": {
+		"main": {
+			"class": "MediaWiki\\Extension\\FediFeeds\\Hooks"
+		}
+	},
+	"Hooks": {
+		"ParserFirstCallInit": "main"
+	},
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\FediFeeds\\": "includes/"
 	},
@@ -22,13 +33,13 @@
 			"path": "/fedifeeds/actors/{handle}",
 			"method": "GET",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\ActorHandler",
-			"services": ["MainConfig", "PageStore", "TitleFormatter"]
+			"services": ["MainConfig", "PageStore", "TitleFormatter", "PageProps"]
 		},
 		{
 			"path": "/fedifeeds/webfinger",
 			"method": "GET",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\WebFingerHandler",
-			"services": ["MainConfig", "PageStore", "TitleFormatter"]
+			"services": ["MainConfig", "PageStore", "TitleFormatter", "PageProps"]
 		}
 	],
 	"config": {

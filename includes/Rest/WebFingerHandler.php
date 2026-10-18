@@ -7,6 +7,7 @@ use MediaWiki\Context\RequestContext;
 use MediaWiki\Extension\FediFeeds\Actors;
 use MediaWiki\Extension\FediFeeds\FeedLookup;
 use MediaWiki\Page\PageLookup;
+use MediaWiki\Page\PageProps;
 use MediaWiki\Rest\LocalizedHttpException;
 use MediaWiki\Rest\Response;
 use MediaWiki\Rest\SimpleHandler;
@@ -26,8 +27,9 @@ class WebFingerHandler extends SimpleHandler {
 		Config $config,
 		PageLookup $pageLookup,
 		TitleFormatter $titleFormatter,
+		PageProps $pageProps,
 	) {
-		$this->actors = new Actors( $config, $titleFormatter, RequestContext::getMain() );
+		$this->actors = new Actors( $config, $titleFormatter, RequestContext::getMain(), $pageProps );
 		$this->feedLookup = new FeedLookup( $pageLookup );
 	}
 
