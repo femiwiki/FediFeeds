@@ -2,5 +2,8 @@
 	"@metadata": {
 		"authors": []
 	},
-	"fedifeeds-desc": "{{desc|name=FediFeeds|url=https://github.com/femiwiki/FediFeeds}}"
+	"fedifeeds-desc": "{{desc|name=FediFeeds|url=https://github.com/femiwiki/FediFeeds}}",
+	"fedifeeds-summary-category": "Summary of the Fediverse account that follows a category.\n\nParameters:\n* $1 - the category's title, with namespace",
+	"fedifeeds-summary-section": "Summary of the Fediverse account that follows the new sections of a page.\n\nParameters:\n* $1 - the page's title, with namespace",
+	"fedifeeds-rest-no-feed": "Error from the REST API when a handle or WebFinger resource names no feed.\n\nParameters:\n* $1 - the handle or resource asked for"
 }
