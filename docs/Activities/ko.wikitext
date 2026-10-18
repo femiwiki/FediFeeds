@@ -14,6 +14,20 @@
 <!--T:3 @0ec263db-->
 팔로어가 없는 피드는 아무 일도 하지 않습니다. 서버에 <code>sharedInbox</code>가 있으면 그리로 보내므로, 팔로어가 많은 서버라도 요청은 한 번만 받습니다.
 
+<!--T:6 @e4479f32-->
+== 노트 ==
+항목은 저마다 <code>&lt;actor id&gt;/notes/&lt;item&gt;</code>에 있는 <code>Note</code>입니다. 항목이 있는 동안 답하고, 없어지면 404입니다. <code>category</code>에서 항목은 문서 id입니다. <code>attributedTo</code>는 액터, <code>url</code>은 문서, <code>published</code>는 문서의 첫 판이고, 노트는 공개로 보냅니다.
+
+<!--T:7 @54c46208-->
+문서가 [[<tvar name="1">Special:MyLanguage/Accounts#Display name</tvar>|표시 이름]]을 정한 피드만 노트를 내보냅니다. 다른 피드의 액터도 답은 하지만 outbox가 비어 있고 노트가 없으므로, 유지보수용 분류는 아무것도 내보내지 않습니다.
+
+<!--T:8 @dc8cffcd-->
+그런 피드의 항목인 문서는 HTML head에 <code>&lt;link rel="alternate" type="application/activity+json"&gt;</code>로 자기 노트를 걸어 둡니다. 그래서 마스토돈 검색창에 문서 주소를 붙이면 노트를 찾습니다. 그런 피드 여럿이 문서를 담고 있으면 문서의 분류 가운데 첫째를 씁니다.
+
+<!--T:9 @2de4442a-->
+== Outbox ==
+outbox는 최근 항목 20개의 <code>Create</code> 액티비티를 최근 것부터 담은 <code>OrderedCollection</code>입니다. 전달 기능이 항목이 생긴 때를 기록하기 전까지, <code>category</code> 항목은 지금 그 분류에 있는 문서이고 문서 id 순서로 놓습니다.
+
 <!--T:4 @a3d5cbee-->
 == 받는 것 ==
 * <code>Follow</code>는 받아서 그 피드에 저장합니다. <code>Follow</code>의 <code>Undo</code>가 오면 지웁니다.
