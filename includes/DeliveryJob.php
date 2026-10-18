@@ -33,6 +33,11 @@ class DeliveryJob extends Job implements GenericParameterJob {
 		$localKeyStore = $services->getService( 'FediFeeds.LocalKeyStore' );
 		$key = $localKeyStore->getKey();
 		$body = json_encode( $this->params['activity'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		if ( $body === false ) {
+			// Retrying would not encode it either
+			$this->setLastError( 'The activity could not be encoded: ' . json_last_error_msg() );
+			return true;
+		}
 		$target = ( parse_url( $url, PHP_URL_PATH ) ?: '/' )
 			. ( parse_url( $url, PHP_URL_QUERY ) !== null ? '?' . parse_url( $url, PHP_URL_QUERY ) : '' );
 		$headers = [
