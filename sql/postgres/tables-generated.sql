@@ -2,6 +2,14 @@
 -- Source: sql/tables.json
 -- Do not modify this file directly.
 -- See https://www.mediawiki.org/wiki/Manual:Schema_changes
+CREATE TABLE fedifeeds_key (
+  fk_name TEXT NOT NULL,
+  fk_private_key TEXT NOT NULL,
+  fk_timestamp TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY(fk_name)
+);
+
+
 CREATE TABLE fedifeeds_follower (
   ff_id SERIAL NOT NULL,
   ff_feed TEXT NOT NULL,

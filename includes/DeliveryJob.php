@@ -3,7 +3,7 @@
 namespace MediaWiki\Extension\FediFeeds;
 
 use MediaWiki\Extension\FediFeeds\Signatures\HttpSignature;
-use MediaWiki\Extension\FediFeeds\Signatures\LocalKey;
+use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
 use MediaWiki\JobQueue\GenericParameterJob;
 use MediaWiki\JobQueue\Job;
 use MediaWiki\MediaWikiServices;
@@ -25,11 +25,13 @@ class DeliveryJob extends Job implements GenericParameterJob {
 
 	public function run(): bool {
 		$services = MediaWikiServices::getInstance();
-		$key = LocalKey::newFromConfig( $services->getMainConfig() );
 		$url = (string)$this->params['inbox'];
-		if ( !$key || parse_url( $url, PHP_URL_SCHEME ) !== 'https' ) {
+		if ( parse_url( $url, PHP_URL_SCHEME ) !== 'https' ) {
 			return true;
 		}
+		/** @var LocalKeyStore $localKeyStore */
+		$localKeyStore = $services->getService( 'FediFeeds.LocalKeyStore' );
+		$key = $localKeyStore->getKey();
 		$body = json_encode( $this->params['activity'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		$target = ( parse_url( $url, PHP_URL_PATH ) ?: '/' )
 			. ( parse_url( $url, PHP_URL_QUERY ) !== null ? '?' . parse_url( $url, PHP_URL_QUERY ) : '' );

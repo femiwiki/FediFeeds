@@ -1,5 +1,31 @@
 [
 	{
+		"name": "fedifeeds_key",
+		"comment": "The wiki's own key pair, generated the first time it is needed",
+		"columns": [
+			{
+				"name": "fk_name",
+				"comment": "Which key; only main so far",
+				"type": "binary",
+				"options": { "notnull": true, "length": 32 }
+			},
+			{
+				"name": "fk_private_key",
+				"comment": "The private key as PEM",
+				"type": "blob",
+				"options": { "notnull": true, "length": 65530 }
+			},
+			{
+				"name": "fk_timestamp",
+				"comment": "When the key was generated",
+				"type": "mwtimestamp",
+				"options": { "notnull": true }
+			}
+		],
+		"indexes": [],
+		"pk": ["fk_name"]
+	},
+	{
 		"name": "fedifeeds_follower",
 		"comment": "Remote actors that follow a feed",
 		"columns": [

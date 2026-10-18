@@ -4,6 +4,7 @@ use MediaWiki\Context\RequestContext;
 use MediaWiki\Extension\FediFeeds\Actors;
 use MediaWiki\Extension\FediFeeds\Followers;
 use MediaWiki\Extension\FediFeeds\Notes;
+use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
 use MediaWiki\MediaWikiServices;
 
@@ -11,6 +12,9 @@ use MediaWiki\MediaWikiServices;
 return [
 	'FediFeeds.Followers' => static function ( MediaWikiServices $services ): Followers {
 		return new Followers( $services->getConnectionProvider() );
+	},
+	'FediFeeds.LocalKeyStore' => static function ( MediaWikiServices $services ): LocalKeyStore {
+		return new LocalKeyStore( $services->getConnectionProvider() );
 	},
 	'FediFeeds.Notes' => static function ( MediaWikiServices $services ): Notes {
 		return new Notes(

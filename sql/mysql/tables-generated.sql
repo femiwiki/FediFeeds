@@ -2,6 +2,14 @@
 -- Source: sql/tables.json
 -- Do not modify this file directly.
 -- See https://www.mediawiki.org/wiki/Manual:Schema_changes
+CREATE TABLE /*_*/fedifeeds_key (
+  fk_name VARBINARY(32) NOT NULL,
+  fk_private_key BLOB NOT NULL,
+  fk_timestamp BINARY(14) NOT NULL,
+  PRIMARY KEY(fk_name)
+) /*$wgDBTableOptions*/;
+
+
 CREATE TABLE /*_*/fedifeeds_follower (
   ff_id INT UNSIGNED AUTO_INCREMENT NOT NULL,
   ff_feed VARBINARY(255) NOT NULL,
