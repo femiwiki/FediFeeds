@@ -34,7 +34,7 @@ class RemoteKeys {
 		string $method, string $target, array $headers, string $body, ?int $now = null
 	): ?string {
 		$parsed = HttpSignature::parse( $headers['signature'] ?? '' );
-		if ( !$parsed || HttpSignature::check( $parsed, $method, $headers, $body, $now ?? time() ) !== null ) {
+		if ( $parsed === null || HttpSignature::check( $parsed, $method, $headers, $body, $now ?? time() ) !== null ) {
 			return null;
 		}
 		$string = HttpSignature::signingString( $method, $target, $headers, $parsed['headers'] );
