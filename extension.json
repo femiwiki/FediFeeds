@@ -21,11 +21,18 @@
 		"pageDisplay": {
 			"class": "MediaWiki\\Extension\\FediFeeds\\PageDisplayHooks",
 			"services": ["FediFeeds.Notes", "PageStore"]
+		},
+		"schema": {
+			"class": "MediaWiki\\Extension\\FediFeeds\\SchemaHooks"
 		}
 	},
 	"Hooks": {
 		"ParserFirstCallInit": "main",
-		"BeforePageDisplay": "pageDisplay"
+		"BeforePageDisplay": "pageDisplay",
+		"LoadExtensionSchemaUpdates": "schema"
+	},
+	"JobClasses": {
+		"fedifeedsDeliver": "MediaWiki\\Extension\\FediFeeds\\DeliveryJob"
 	},
 	"ServiceWiringFiles": ["includes/ServiceWiring.php"],
 	"AutoloadNamespaces": {
@@ -58,6 +65,24 @@
 			"method": "GET",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\OutboxHandler",
 			"services": ["FediFeeds.Notes", "PageStore"]
+		},
+		{
+			"path": "/fedifeeds/actors/{handle}/followers",
+			"method": "GET",
+			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\FollowersHandler",
+			"services": ["FediFeeds.Notes", "PageStore", "FediFeeds.Followers"]
+		},
+		{
+			"path": "/fedifeeds/actors/{handle}/inbox",
+			"method": "POST",
+			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\InboxHandler",
+			"services": ["FediFeeds.Notes", "PageStore", "FediFeeds.RemoteKeys", "FediFeeds.Followers", "JobQueueGroup"]
+		},
+		{
+			"path": "/fedifeeds/actors/inbox",
+			"method": "POST",
+			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\InboxHandler",
+			"services": ["FediFeeds.Notes", "PageStore", "FediFeeds.RemoteKeys", "FediFeeds.Followers", "JobQueueGroup"]
 		}
 	],
 	"config": {

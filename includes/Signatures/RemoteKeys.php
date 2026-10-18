@@ -62,7 +62,7 @@ class RemoteKeys {
 		}
 		$key = $this->cache->getWithSetCallback( $cacheKey, WANObjectCache::TTL_DAY,
 			function ( $old, &$ttl ) use ( $keyId ) {
-				$key = self::findKey( $this->fetch( $keyId ), $keyId );
+				$key = self::findKey( $this->fetchDocument( $keyId ), $keyId );
 				if ( !$key ) {
 					$ttl = self::MISS_TTL;
 				}
@@ -73,10 +73,10 @@ class RemoteKeys {
 	}
 
 	/**
-	 * The document at the key id, which is an actor or the key itself.
+	 * The ActivityPub document at an https URL, without its fragment: an actor, or a key.
 	 */
-	protected function fetch( string $keyId ): mixed {
-		$url = explode( '#', $keyId, 2 )[0];
+	public function fetchDocument( string $url ): mixed {
+		$url = explode( '#', $url, 2 )[0];
 		if ( parse_url( $url, PHP_URL_SCHEME ) !== 'https' ) {
 			return null;
 		}

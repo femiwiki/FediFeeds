@@ -1,0 +1,42 @@
+[
+	{
+		"name": "fedifeeds_follower",
+		"comment": "Remote actors that follow a feed",
+		"columns": [
+			{
+				"name": "ff_id",
+				"type": "integer",
+				"options": { "unsigned": true, "notnull": true, "autoincrement": true }
+			},
+			{
+				"name": "ff_feed",
+				"comment": "Handle of the feed, such as category_4521",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "ff_actor",
+				"comment": "Id of the remote actor",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "ff_inbox",
+				"comment": "Where to deliver: the actor's shared inbox, or else its inbox",
+				"type": "blob",
+				"options": { "notnull": true, "length": 65530 }
+			},
+			{
+				"name": "ff_timestamp",
+				"comment": "When the follow was accepted",
+				"type": "mwtimestamp",
+				"options": { "notnull": true }
+			}
+		],
+		"indexes": [
+			{ "name": "ff_feed_actor", "columns": ["ff_feed", "ff_actor"], "unique": true },
+			{ "name": "ff_actor", "columns": ["ff_actor"], "unique": false }
+		],
+		"pk": ["ff_id"]
+	}
+]
