@@ -3,7 +3,6 @@
 namespace MediaWiki\Extension\FediFeeds;
 
 use DOMDocument;
-use MediaWiki\Category\Category;
 use MediaWiki\Deferred\LinksUpdate\CategoryLinksTable;
 use MediaWiki\Page\ExistingPageRecord;
 use MediaWiki\Page\PageProps;
@@ -148,8 +147,10 @@ class Notes {
 			'@context' => 'https://www.w3.org/ns/activitystreams',
 			'id' => $this->actors->getActorId( $feed->getHandle() ) . '/outbox',
 			'type' => 'OrderedCollection',
+			// Counted with the same query as the items, not from the category table's counts
 			'totalItems' => $items
-				? Category::newFromTitle( $feed->page )->getPageCount( Category::COUNT_CONTENT_PAGES )
+				? (int)$this->newMembersQuery( $feed )->clearFields()->select( 'COUNT(*)' )
+					->caller( __METHOD__ )->fetchField()
 				: 0,
 			'orderedItems' => array_map( fn ( $item ) => $this->getCreate( $feed, $item ), $items ),
 		];
