@@ -1,0 +1,15 @@
+{
+	"name": "FediFeeds",
+	"author": "Femiwiki Team",
+	"url": "https://github.com/femiwiki/FediFeeds",
+	"descriptionmsg": "fedifeeds-desc",
+	"license-name": "AGPL-3.0-or-later",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.46.0"
+	},
+	"MessagesDirs": {
+		"FediFeeds": ["i18n"]
+	},
+	"manifest_version": 2
+}
