@@ -317,11 +317,23 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 		<ul id="toc-Actor-sublist" class="vector-toc-list">
 		</ul>
 	</li>
+	<li id="toc-Display_name"
+		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="#Display_name">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">3</span>
+				<span>Display name</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Display_name-sublist" class="vector-toc-list">
+		</ul>
+	</li>
 	<li id="toc-WebFinger"
 		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
 		<a class="vector-toc-link" href="#WebFinger">
 			<div class="vector-toc-text">
-				<span class="vector-toc-numb">3</span>
+				<span class="vector-toc-numb">4</span>
 				<span>WebFinger</span>
 			</div>
 		</a>
@@ -333,7 +345,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
 		<a class="vector-toc-link" href="#Keys">
 			<div class="vector-toc-text">
-				<span class="vector-toc-numb">4</span>
+				<span class="vector-toc-numb">5</span>
 				<span>Keys</span>
 			</div>
 		</a>
@@ -545,7 +557,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <li><code>&lt;id&gt;</code> is a decimal number. What it numbers depends on the kind; for the kinds in scope it is a page id.</li>
 <li>To parse a handle, strip the trailing <code>_&lt;digits&gt;</code> and match what is left against the list exactly. Anything that does not match, or whose target does not exist, is not an account.</li></ul>
 <p>Examples: <code>category_4521@wiki.example.org</code>, <code>section_88@wiki.example.org</code>.
-</p><p>The title of the page is shown as the actor's <code>name</code>, so readers see <code>분류:개발 블로그</code>, not a number.
+</p><p>The title of the page is shown as the actor's <code>name</code>, so readers see <code>분류:개발 블로그</code>, not a number. The page can set a friendlier <a href="#Display_name">display name</a> instead.
 </p>
 <div class="mw-heading mw-heading3"><h3 id="Why_this_shape">Why this shape</h3></div>
 <ul><li>Mastodon refuses a remote account whose username does not match <code>[a-z0-9_]+([.-]+[a-z0-9_]+)*</code> (<a rel="nofollow" class="external text" href="https://github.com/mastodon/mastodon/blob/1d67e7de9669a65c5f5fe2ee395341b1bbf9ab4c/app/models/account.rb#L73-L76">account.rb</a>). Page titles can hold Korean, spaces and colons, so a title cannot be a handle.</li>
@@ -573,7 +585,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 </td></tr>
 <tr>
 <td><code>name</code></td>
-<td>The title of the page, with namespace
+<td>The page's <a href="#Display_name">display name</a> for the kind, or else its title with namespace
 </td></tr>
 <tr>
 <td><code>summary</code></td>
@@ -591,6 +603,14 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <td><code>publicKey</code></td>
 <td>See <a href="#Keys">Keys</a>
 </td></tr></tbody></table>
+<div class="mw-heading mw-heading2"><h2 id="Display_name">Display name</h2></div>
+<p>The followed page sets a display name with a magic word in its own wikitext:
+</p>
+<ul><li><code>{{FEDIFEEDSNAME:&lt;name&gt;}}</code> applies to every feed of the page.</li>
+<li><code>{{FEDIFEEDSNAME:&lt;name&gt;|&lt;kind&gt;}}</code> applies to that kind only, and wins over the form without a kind. A category page that is also followed for its sections can name the two feeds apart this way.</li>
+<li>The name is plain text: markup is dropped. An empty name, or a kind that is not in the <a href="../Feed_kinds/en.html" title="Special:MyLanguage/Feed kinds">list of kinds</a>, sets nothing. When the page sets the same one twice, the last wins.</li></ul>
+<p>The display name changes only <code>name</code>. The handle, the id and the <code>summary</code> keep the page id and the title, so followers stay through a rename and the summary still says where the items come from.
+</p>
 <div class="mw-heading mw-heading2"><h2 id="WebFinger">WebFinger</h2></div>
 <p><code>/.well-known/webfinger?resource=acct:&lt;handle&gt;</code> answers with a <code>self</code> link to the actor, on both the wiki host and the actor host. Mastodon fetches the actor and then asks the actor host's WebFinger for <code>preferredUsername@&lt;actor host&gt;</code>, which answers with the handle on the wiki host as its <code>subject</code>, so both directions must agree.
 </p>
@@ -610,7 +630,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 18 October 2026, at 01:05.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 18 October 2026, at 13:17.</li>
 </ul>
 
 	<ul id="footer-places">
