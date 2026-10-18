@@ -20,12 +20,17 @@ use MediaWikiIntegrationTestCase;
 class HandlersTest extends MediaWikiIntegrationTestCase {
 	use HandlerTestTrait;
 
+	private string $publicKeyPem;
+
 	protected function setUp(): void {
 		parent::setUp();
+		$key = openssl_pkey_new( [ 'private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA ] );
+		openssl_pkey_export( $key, $privateKeyPem );
+		$this->publicKeyPem = openssl_pkey_get_details( $key )['key'];
 		$this->overrideConfigValues( [
 			'CanonicalServer' => 'https://wiki.example.org',
 			'FediFeedsActorBase' => 'https://fedi.example.org/actors/',
-			'FediFeedsPublicKeyPem' => 'PEM',
+			'FediFeedsPrivateKeyPem' => $privateKeyPem,
 		] );
 	}
 
@@ -66,7 +71,7 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( "https://fedi.example.org/actors/category_$id/inbox", $actor['inbox'] );
 		$this->assertSame( 'https://fedi.example.org/actors/inbox', $actor['endpoints']['sharedInbox'] );
 		$this->assertSame( "https://fedi.example.org/actors/category_$id#main-key", $actor['publicKey']['id'] );
-		$this->assertSame( 'PEM', $actor['publicKey']['publicKeyPem'] );
+		$this->assertSame( $this->publicKeyPem, $actor['publicKey']['publicKeyPem'] );
 		$this->assertStringStartsWith( 'https://wiki.example.org/', $actor['url'] );
 	}
 
@@ -105,7 +110,7 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 	}
 
 	public function testNoPublicKey() {
-		$this->overrideConfigValue( 'FediFeedsPublicKeyPem', null );
+		$this->overrideConfigValue( 'FediFeedsPrivateKeyPem', null );
 		$id = $this->getExistingTestPage( 'Talk:Updates' )->getId();
 		$this->assertArrayNotHasKey( 'publicKey', $this->getActor( "section_$id" ) );
 	}

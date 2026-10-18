@@ -65,9 +65,9 @@
 			"value": null,
 			"description": "URL that a handle is appended to for the actor id, such as \"https://fedi.example.org/actors/\". The web server has to route it to the REST route /fedifeeds/actors/{handle}. Null uses that REST route directly."
 		},
-		"FediFeedsPublicKeyPem": {
+		"FediFeedsPrivateKeyPem": {
 			"value": null,
-			"description": "The PEM of the public key every actor publishes. Null leaves publicKey out."
+			"description": "The PEM of the private key the wiki signs requests with. Every actor publishes the public key derived from it. Keep it out of version control. Null leaves publicKey out."
 		}
 	},
 	"manifest_version": 2

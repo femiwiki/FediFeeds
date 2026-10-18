@@ -6,6 +6,7 @@ use MediaWiki\Config\Config;
 use MediaWiki\Context\RequestContext;
 use MediaWiki\Extension\FediFeeds\Actors;
 use MediaWiki\Extension\FediFeeds\FeedLookup;
+use MediaWiki\Extension\FediFeeds\Signatures\LocalKey;
 use MediaWiki\Page\PageLookup;
 use MediaWiki\Page\PageProps;
 use MediaWiki\Rest\LocalizedHttpException;
@@ -42,7 +43,7 @@ class ActorHandler extends SimpleHandler {
 			);
 		}
 		return $this->getResponseFactory()->createJson(
-			$this->actors->getActor( $feed, $this->config->get( 'FediFeedsPublicKeyPem' ) ),
+			$this->actors->getActor( $feed, LocalKey::newFromConfig( $this->config )?->getPublicKeyPem() ),
 			Actors::CONTENT_TYPE
 		);
 	}
