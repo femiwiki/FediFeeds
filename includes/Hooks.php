@@ -29,7 +29,8 @@ class Hooks implements ParserFirstCallInitHook {
 	 * @return string
 	 */
 	public static function renderName( Parser $parser, string $name = '', string $kind = '' ): string {
-		$name = trim( Sanitizer::stripAllTags( $parser->killMarkers( $name ) ) );
+		// Parsed first so wikitext such as '''bold''' or [[links]] leaves its text, not its markup
+		$name = trim( Sanitizer::stripAllTags( $parser->killMarkers( $parser->recursiveTagParseFully( $name ) ) ) );
 		$kind = trim( $kind );
 		if ( $name === '' || ( $kind !== '' && !in_array( $kind, FeedLookup::KINDS, true ) ) ) {
 			return '';
