@@ -561,7 +561,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <li>The signed headers include <code>(request-target)</code>, <code>host</code> and <code>date</code>, and for a <code>POST</code> also <code>digest</code>, which must match the SHA-256 of the body.</li>
 <li>A <code>Date</code> more than an hour ahead or twelve hours behind is refused.</li>
 <li>The <code>keyId</code> is the URL of a remote actor's <code>publicKey</code>. The key is fetched from it with <code>Accept: application/activity+json</code> and cached for a day. A signature that fails against a cached key is checked once more against a fresh one, since the remote may have changed its key.</li></ul>
-<p>The wiki's own key pair is configured as one private key, and the public key every actor publishes is derived from it.
+<p>The wiki's own key pair is generated the first time it is needed and stored in the database, so nobody has a secret to keep. The public key every actor publishes is derived from the stored private key.
 </p>
 <style data-mw-deduplicate="TemplateStyles:r37">.mw-parser-output .fedifeeds-prevnext{display:grid;grid-template-columns:1fr 1fr;gap:1em;margin-top:2em}.mw-parser-output .fedifeeds-prevnext a{display:flex;flex-direction:column;gap:0.25em;height:100%;box-sizing:border-box;padding:0.75em 1em;border:1px solid var(--border-color-base);border-radius:8px;text-decoration:none}.mw-parser-output .fedifeeds-prevnext a:hover{border:1px solid var(--color-progressive);background-color:var(--color-surface-2)}.mw-parser-output .fedifeeds-prevnext-next{grid-column:2;text-align:right}.mw-parser-output .fedifeeds-prevnext-label{font-size:0.875em;color:var(--color-subtle)}.mw-parser-output .fedifeeds-prevnext-title{font-weight:600}</style><div class="fedifeeds-prevnext"><div class="fedifeeds-prevnext-prev"><a href="./Feed_kinds.html" title="Special:MyLanguage/Feed kinds"><span class="fedifeeds-prevnext-label">Previous</span><span class="fedifeeds-prevnext-title">Feed kinds</span></a></div><div class="fedifeeds-prevnext-next"><a href="./Open_questions.html" title="Special:MyLanguage/Open questions"><span class="fedifeeds-prevnext-label">Next</span><span class="fedifeeds-prevnext-title">Open questions</span></a></div></div>
 
@@ -576,7 +576,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 18 October 2026, at 13:29.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 18 October 2026, at 13:49.</li>
 </ul>
 
 	<ul id="footer-places">
