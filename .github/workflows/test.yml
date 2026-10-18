@@ -1,0 +1,21 @@
+---
+name: Test
+on:
+  workflow_call:
+permissions: {}
+jobs:
+  quibble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+
+      # phpunit runs core's structure tests on extension.json and i18n
+      - uses: femiwiki/quibble-action@2b5f2466dec6f421394630fd653445da1f86b11c  # v3.0.0
+        with:
+          stage: phpunit
+          mediawiki-version: REL1_46
