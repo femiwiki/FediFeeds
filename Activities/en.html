@@ -8,7 +8,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <script>(RLQ=window.RLQ||[]).push(function(){mw.loader.impl(function(){return["user.options@12s5i",function($,jQuery,require,module){mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
 }];});});</script>
 
-<script src="../assets/startup-static.js"></script><script src="../assets/modules-static.js"></script><script>mw.loader.load(["site","mediawiki.page.ready","skins.vector.js","ext.translate.pagetranslation.uls","ext.Wikven.pinnableState","ext.uls.interface"]);</script>
+<script src="../assets/startup-static.js"></script><script src="../assets/modules-static.js"></script><script>mw.loader.load(["site","mediawiki.page.ready","mediawiki.toc","skins.vector.js","ext.translate.pagetranslation.uls","ext.Wikven.pinnableState","ext.uls.interface"]);</script>
 <meta name="generator" content="MediaWiki 1.46.0">
 <meta name="robots" content="max-image-preview:standard">
 <meta name="format-detection" content="telephone=no">
@@ -287,16 +287,52 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 		<ul id="toc-Sent-sublist" class="vector-toc-list">
 		</ul>
 	</li>
+	<li id="toc-Notes"
+		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="#Notes">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">2</span>
+				<span>Notes</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Notes-sublist" class="vector-toc-list">
+		</ul>
+	</li>
+	<li id="toc-Outbox"
+		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="#Outbox">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">3</span>
+				<span>Outbox</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Outbox-sublist" class="vector-toc-list">
+		</ul>
+	</li>
 	<li id="toc-Received"
 		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
 		<a class="vector-toc-link" href="#Received">
 			<div class="vector-toc-text">
-				<span class="vector-toc-numb">2</span>
+				<span class="vector-toc-numb">4</span>
 				<span>Received</span>
 			</div>
 		</a>
 		
 		<ul id="toc-Received-sublist" class="vector-toc-list">
+		</ul>
+	</li>
+	<li id="toc-Signatures"
+		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="#Signatures">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">5</span>
+				<span>Signatures</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Signatures-sublist" class="vector-toc-list">
 		</ul>
 	</li>
 </ul>
@@ -493,6 +529,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 					
 					<div id="mw-content-text" class="mw-body-content"><div class="mw-pt-translate-header noprint" dir="ltr" lang="en"><a href="https://github.com/femiwiki/FediFeeds/edit/main/docs/Activities/en.wikitext" title="Special:Translate">Translate this page</a></div><div class="mw-content-ltr mw-parser-output" lang="en" dir="ltr"><div class="mw-pt-languages noprint navigation-not-searchable" lang="en" dir="ltr"><div class="mw-pt-languages-label">Other languages:</div><ul class="mw-pt-languages-list"><li><a href="../Activities.html" class="mw-pt-languages-ui mw-pt-progress mw-pt-progress--complete" title="Activities (100% translated)" lang="en" dir="ltr">English</a></li>
 <li><a href="../Activities/ko.html" class="mw-pt-progress mw-pt-progress--complete" title="액티비티 (100% translated)" lang="ko" dir="ltr">한국어</a></li></ul></div>
+<meta property="mw:PageProp/toc" />
 <div class="mw-heading mw-heading2"><h2 id="Sent">Sent</h2></div>
 <ul><li><code>Create</code> with a <code>Note</code> when an item appears.</li>
 <li><code>Update</code> when an item that was sent as <code>Create</code> changes.</li>
@@ -501,12 +538,30 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <p>The <code>Note</code> carries the first paragraph as plain HTML and a link to the item, never wikitext. For <code>section</code>, the heading is often a timestamp and says little, so the paragraph leads.
 </p><p>A feed with no followers does nothing. Delivery goes to a server's <code>sharedInbox</code> when it has one, so a server with many followers gets one request.
 </p>
+<div class="mw-heading mw-heading2"><h2 id="Notes">Notes</h2></div>
+<p>Each item is a <code>Note</code> at <code>&lt;actor id&gt;/notes/&lt;item&gt;</code>, which answers while the item exists and is a 404 once it does not. For <code>category</code> the item is the page id. <code>attributedTo</code> is the actor, <code>url</code> is the page, <code>published</code> is the page's first revision, and the note is addressed to the public.
+</p><p>Only a feed whose page sets a <a href="../Accounts/en.html#Display_name" title="Special:MyLanguage/Accounts">display name</a> publishes notes. Any other feed's actor still answers, with an empty outbox and no notes, so maintenance categories publish nothing.
+</p><p>A page that is an item of such a feed links its note from its HTML head with <code>&lt;link rel="alternate" type="application/activity+json"&gt;</code>, so pasting the page's URL into a Mastodon search finds the note. When several such feeds hold the page, the first of its categories is used.
+</p>
+<div class="mw-heading mw-heading2"><h2 id="Outbox">Outbox</h2></div>
+<p>The outbox is an <code>OrderedCollection</code> of <code>Create</code> activities for the newest 20 items, newest first. Until delivery records when an item appears, a <code>category</code> item is a page that is in the category now, and pages are ordered by page id.
+</p>
 <div class="mw-heading mw-heading2"><h2 id="Received">Received</h2></div>
 <ul><li><code>Follow</code> is accepted and stored against the feed it names. <code>Undo</code> of a <code>Follow</code> removes it.</li>
 <li><code>Like</code>, <code>Announce</code> and their <code>Undo</code> are accepted and dropped.</li>
 <li>Replies, meaning a <code>Create</code> whose <code>inReplyTo</code> is one of our notes, are accepted and dropped.</li>
 <li>A <code>Delete</code> for an actor that follows nothing is dropped before its signature is checked.</li></ul>
 <p>Every other request is verified by HTTP signature. Remote keys are cached, because without a cache each request holds a PHP worker while it fetches a key from another server.
+</p><p>Each actor's inbox and the shared inbox take the same activities. They answer 202 to what they accept and to what they drop alike, and 401 when the signature does not verify or the activity's <code>actor</code> is not the signer. An accepted <code>Follow</code> is answered with an <code>Accept</code> sent to the follower's shared inbox, or else its inbox. The <code>followers</code> collection shows only <code>totalItems</code>, so who follows a feed stays private.
+</p>
+<div class="mw-heading mw-heading2"><h2 id="Signatures">Signatures</h2></div>
+<p>Requests are signed and verified as Mastodon does, with <a rel="nofollow" class="external text" href="https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12">draft-cavage-http-signatures-12</a>:
+</p>
+<ul><li>The algorithm is <code>rsa-sha256</code>; <code>hs2019</code> is accepted as the same.</li>
+<li>The signed headers include <code>(request-target)</code>, <code>host</code> and <code>date</code>, and for a <code>POST</code> also <code>digest</code>, which must match the SHA-256 of the body.</li>
+<li>A <code>Date</code> more than an hour ahead or twelve hours behind is refused.</li>
+<li>The <code>keyId</code> is the URL of a remote actor's <code>publicKey</code>. The key is fetched from it with <code>Accept: application/activity+json</code> and cached for a day. A signature that fails against a cached key is checked once more against a fresh one, since the remote may have changed its key.</li></ul>
+<p>The wiki's own key pair is generated the first time it is needed and stored in the database, so nobody has a secret to keep. The public key every actor publishes is derived from the stored private key.
 </p>
 <style data-mw-deduplicate="TemplateStyles:r37">.mw-parser-output .fedifeeds-prevnext{display:grid;grid-template-columns:1fr 1fr;gap:1em;margin-top:2em}.mw-parser-output .fedifeeds-prevnext a{display:flex;flex-direction:column;gap:0.25em;height:100%;box-sizing:border-box;padding:0.75em 1em;border:1px solid var(--border-color-base);border-radius:8px;text-decoration:none}.mw-parser-output .fedifeeds-prevnext a:hover{border:1px solid var(--color-progressive);background-color:var(--color-surface-2)}.mw-parser-output .fedifeeds-prevnext-next{grid-column:2;text-align:right}.mw-parser-output .fedifeeds-prevnext-label{font-size:0.875em;color:var(--color-subtle)}.mw-parser-output .fedifeeds-prevnext-title{font-weight:600}</style><div class="fedifeeds-prevnext"><div class="fedifeeds-prevnext-prev"><a href="../Feed_kinds/en.html" title="Special:MyLanguage/Feed kinds"><span class="fedifeeds-prevnext-label">Previous</span><span class="fedifeeds-prevnext-title">Feed kinds</span></a></div><div class="fedifeeds-prevnext-next"><a href="../Open_questions/en.html" title="Special:MyLanguage/Open questions"><span class="fedifeeds-prevnext-label">Next</span><span class="fedifeeds-prevnext-title">Open questions</span></a></div></div>
 
@@ -521,7 +576,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 13 October 2026, at 04:49.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 18 October 2026, at 13:56.</li>
 </ul>
 
 	<ul id="footer-places">

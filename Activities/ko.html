@@ -8,7 +8,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <script>(RLQ=window.RLQ||[]).push(function(){mw.loader.impl(function(){return["user.options@12s5i",function($,jQuery,require,module){mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
 }];});});</script>
 
-<script src="../assets/startup-static.js"></script><script src="../assets/modules-static.js"></script><script>mw.loader.load(["site","mediawiki.page.ready","skins.vector.js","ext.translate.pagetranslation.uls","ext.Wikven.pinnableState","ext.uls.interface"]);</script>
+<script src="../assets/startup-static.js"></script><script src="../assets/modules-static.js"></script><script>mw.loader.load(["site","mediawiki.page.ready","mediawiki.toc","skins.vector.js","ext.translate.pagetranslation.uls","ext.Wikven.pinnableState","ext.uls.interface"]);</script>
 <meta name="generator" content="MediaWiki 1.46.0">
 <meta name="robots" content="max-image-preview:standard">
 <meta name="format-detection" content="telephone=no">
@@ -287,16 +287,52 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 		<ul id="toc-보내는_것-sublist" class="vector-toc-list">
 		</ul>
 	</li>
+	<li id="toc-노트"
+		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="#노트">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">2</span>
+				<span>노트</span>
+			</div>
+		</a>
+		
+		<ul id="toc-노트-sublist" class="vector-toc-list">
+		</ul>
+	</li>
+	<li id="toc-Outbox"
+		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="#Outbox">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">3</span>
+				<span>Outbox</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Outbox-sublist" class="vector-toc-list">
+		</ul>
+	</li>
 	<li id="toc-받는_것"
 		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
 		<a class="vector-toc-link" href="#받는_것">
 			<div class="vector-toc-text">
-				<span class="vector-toc-numb">2</span>
+				<span class="vector-toc-numb">4</span>
 				<span>받는 것</span>
 			</div>
 		</a>
 		
 		<ul id="toc-받는_것-sublist" class="vector-toc-list">
+		</ul>
+	</li>
+	<li id="toc-서명"
+		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="#서명">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">5</span>
+				<span>서명</span>
+			</div>
+		</a>
+		
+		<ul id="toc-서명-sublist" class="vector-toc-list">
 		</ul>
 	</li>
 </ul>
@@ -493,6 +529,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 					
 					<div id="mw-content-text" class="mw-body-content"><div class="mw-pt-translate-header noprint" dir="ltr" lang="ko">이 문서는 <a href="../Activities.html" title="Activities">Activities</a> 문서를 <span class="plainlinks"><a rel="nofollow" class="external text" href="https://github.com/femiwiki/FediFeeds/edit/main/docs/Activities/ko.wikitext">번역한 것</a></span>이며 번역은 100% 완료했습니다.</div><div class="mw-content-ltr mw-parser-output" lang="ko" dir="ltr"><div class="mw-pt-languages noprint navigation-not-searchable" lang="ko" dir="ltr"><div class="mw-pt-languages-label">다른 언어:</div><ul class="mw-pt-languages-list"><li><a href="../Activities.html" class="mw-pt-progress mw-pt-progress--complete" title="Activities (100% 번역함)" lang="en" dir="ltr">English</a></li>
 <li><span class="mw-pt-languages-ui mw-pt-languages-selected mw-pt-progress mw-pt-progress--complete" lang="ko" dir="ltr">한국어</span></li></ul></div>
+<meta property="mw:PageProp/toc" />
 <div class="mw-heading mw-heading2"><h2 id="보내는_것"><span id=".EB.B3.B4.EB.82.B4.EB.8A.94_.EA.B2.83"></span>보내는 것</h2></div>
 <ul><li>항목이 생기면 <code>Note</code>를 담은 <code>Create</code></li>
 <li><code>Create</code>로 보낸 항목이 바뀌면 <code>Update</code></li>
@@ -501,12 +538,30 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <p><code>Note</code>에는 첫 문단을 평범한 HTML로 넣고 항목 링크를 붙입니다. 위키텍스트는 넣지 않습니다. <code>section</code>은 제목이 흔히 날짜뿐이라 알려 주는 게 적으니 문단을 앞에 둡니다.
 </p><p>팔로어가 없는 피드는 아무 일도 하지 않습니다. 서버에 <code>sharedInbox</code>가 있으면 그리로 보내므로, 팔로어가 많은 서버라도 요청은 한 번만 받습니다.
 </p>
+<div class="mw-heading mw-heading2"><h2 id="노트"><span id=".EB.85.B8.ED.8A.B8"></span>노트</h2></div>
+<p>항목은 저마다 <code>&lt;actor id&gt;/notes/&lt;item&gt;</code>에 있는 <code>Note</code>입니다. 항목이 있는 동안 답하고, 없어지면 404입니다. <code>category</code>에서 항목은 문서 id입니다. <code>attributedTo</code>는 액터, <code>url</code>은 문서, <code>published</code>는 문서의 첫 판이고, 노트는 공개로 보냅니다.
+</p><p>문서가 <a href="../Accounts/ko.html#Display_name" title="Special:MyLanguage/Accounts">표시 이름</a>을 정한 피드만 노트를 내보냅니다. 다른 피드의 액터도 답은 하지만 outbox가 비어 있고 노트가 없으므로, 유지보수용 분류는 아무것도 내보내지 않습니다.
+</p><p>그런 피드의 항목인 문서는 HTML head에 <code>&lt;link rel="alternate" type="application/activity+json"&gt;</code>로 자기 노트를 걸어 둡니다. 그래서 마스토돈 검색창에 문서 주소를 붙이면 노트를 찾습니다. 그런 피드 여럿이 문서를 담고 있으면 문서의 분류 가운데 첫째를 씁니다.
+</p>
+<div class="mw-heading mw-heading2"><h2 id="Outbox">Outbox</h2></div>
+<p>outbox는 최근 항목 20개의 <code>Create</code> 액티비티를 최근 것부터 담은 <code>OrderedCollection</code>입니다. 전달 기능이 항목이 생긴 때를 기록하기 전까지, <code>category</code> 항목은 지금 그 분류에 있는 문서이고 문서 id 순서로 놓습니다.
+</p>
 <div class="mw-heading mw-heading2"><h2 id="받는_것"><span id=".EB.B0.9B.EB.8A.94_.EA.B2.83"></span>받는 것</h2></div>
 <ul><li><code>Follow</code>는 받아서 그 피드에 저장합니다. <code>Follow</code>의 <code>Undo</code>가 오면 지웁니다.</li>
 <li><code>Like</code>, <code>Announce</code>와 그 <code>Undo</code>는 받고 버립니다.</li>
 <li>답글, 곧 <code>inReplyTo</code>가 우리 노트인 <code>Create</code>는 받고 버립니다.</li>
 <li>아무것도 팔로하지 않는 액터의 <code>Delete</code>는 서명을 확인하기 전에 버립니다.</li></ul>
 <p>그 밖의 요청은 모두 HTTP 서명으로 확인합니다. 원격 키는 캐시합니다. 캐시가 없으면 요청마다 PHP 워커 하나가 다른 서버에서 키를 받아 올 때까지 붙잡혀 있게 됩니다.
+</p><p>액터마다 있는 inbox와 공유 inbox는 같은 액티비티를 받습니다. 받는 것과 버리는 것 모두 202로 답하고, 서명이 맞지 않거나 액티비티의 <code>actor</code>가 서명한 쪽이 아니면 401로 답합니다. 받은 <code>Follow</code>에는 팔로어의 공유 inbox로, 없으면 그 inbox로 <code>Accept</code>를 보냅니다. <code>followers</code> 컬렉션은 <code>totalItems</code>만 보여 주므로 누가 피드를 팔로하는지는 드러나지 않습니다.
+</p>
+<div class="mw-heading mw-heading2"><h2 id="서명"><span id=".EC.84.9C.EB.AA.85"></span>서명</h2></div>
+<p>요청은 마스토돈처럼 <a rel="nofollow" class="external text" href="https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12">draft-cavage-http-signatures-12</a>로 서명하고 확인합니다.
+</p>
+<ul><li>알고리즘은 <code>rsa-sha256</code>입니다. <code>hs2019</code>도 같은 것으로 받습니다.</li>
+<li>서명하는 헤더에는 <code>(request-target)</code>, <code>host</code>, <code>date</code>가 들어가고, <code>POST</code>면 <code>digest</code>도 들어갑니다. <code>digest</code>는 본문의 SHA-256과 같아야 합니다.</li>
+<li><code>Date</code>가 한 시간보다 앞서거나 열두 시간보다 뒤처지면 받지 않습니다.</li>
+<li><code>keyId</code>는 원격 액터의 <code>publicKey</code> 주소입니다. 그 주소에서 <code>Accept: application/activity+json</code>으로 키를 받아 하루 동안 캐시합니다. 캐시한 키로 서명이 맞지 않으면 원격이 키를 바꿨을 수 있으니, 새로 받은 키로 한 번 더 확인합니다.</li></ul>
+<p>위키의 키 쌍은 처음 필요할 때 만들어 데이터베이스에 저장하므로, 따로 지켜야 할 비밀값이 없습니다. 모든 액터가 게시하는 공개 키는 저장한 비공개 키에서 만들어 냅니다.
 </p>
 <style data-mw-deduplicate="TemplateStyles:r37">.mw-parser-output .fedifeeds-prevnext{display:grid;grid-template-columns:1fr 1fr;gap:1em;margin-top:2em}.mw-parser-output .fedifeeds-prevnext a{display:flex;flex-direction:column;gap:0.25em;height:100%;box-sizing:border-box;padding:0.75em 1em;border:1px solid var(--border-color-base);border-radius:8px;text-decoration:none}.mw-parser-output .fedifeeds-prevnext a:hover{border:1px solid var(--color-progressive);background-color:var(--color-surface-2)}.mw-parser-output .fedifeeds-prevnext-next{grid-column:2;text-align:right}.mw-parser-output .fedifeeds-prevnext-label{font-size:0.875em;color:var(--color-subtle)}.mw-parser-output .fedifeeds-prevnext-title{font-weight:600}</style><div class="fedifeeds-prevnext"><div class="fedifeeds-prevnext-prev"><a href="../Feed_kinds/ko.html" title="Special:MyLanguage/Feed kinds"><span class="fedifeeds-prevnext-label">이전</span><span class="fedifeeds-prevnext-title">피드 종류</span></a></div><div class="fedifeeds-prevnext-next"><a href="../Open_questions/ko.html" title="Special:MyLanguage/Open questions"><span class="fedifeeds-prevnext-label">다음</span><span class="fedifeeds-prevnext-title">열린 질문</span></a></div></div>
 
@@ -521,7 +576,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer"  lang="ko" dir="ltr">
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 18일 (일) 02:37에 마지막으로 편집되었습니다.</li>
+	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 18일 (일) 13:56에 마지막으로 편집되었습니다.</li>
 </ul>
 
 	<ul id="footer-places">
