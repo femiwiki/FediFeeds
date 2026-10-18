@@ -10,7 +10,7 @@
 
 <!--T:3 @16d3532a-->
 == 업데이트 소식 ==
-업데이트 소식 문서를 두고 새 버전을 낼 때마다 절을 하나씩 붙이는 위키도 있습니다. 새 절이 생기면 연합우주에 새 글이 올라갑니다. [[<tvar name="1">Special:MyLanguage/Feed kinds#section</tvar>|<code>section</code>]] 종류입니다.
+업데이트 소식 문서를 두고 새 버전을 낼 때마다 문단을 하나씩 붙이는 위키도 있습니다. 새 문단이 생기면 연합우주에 새 글이 올라갑니다. [[<tvar name="1">Special:MyLanguage/Feed kinds#section</tvar>|<code>section</code>]] 종류입니다.
 
 <!--T:4 @7b89dfdf-->
-이런 절은 봇이 쓰는 경우가 많아서, 이 종류의 피드는 봇 편집도 셉니다.
+이런 문단은 봇이 쓰는 경우가 많아서, 이 종류의 피드는 봇 편집도 셉니다.

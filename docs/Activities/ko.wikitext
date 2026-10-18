@@ -5,7 +5,7 @@
 == 보내는 것 ==
 * 항목이 생기면 <code>Note</code>를 담은 <code>Create</code>
 * <code>Create</code>로 보낸 항목이 바뀌면 <code>Update</code>
-* <code>Create</code>로 보낸 항목이 없어지면 <code>Delete</code>. 문서가 삭제되거나 절이 지워진 경우 등
+* <code>Create</code>로 보낸 항목이 없어지면 <code>Delete</code>. 문서가 삭제되거나 문단이 지워진 경우 등
 * 보낸 적 없는 항목에는 아무것도 보내지 않습니다.
 
 <!--T:2 @47b2db3b-->
