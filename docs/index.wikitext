@@ -5,7 +5,7 @@
 FediFeeds is a MediaWiki extension that lets people on the Fediverse follow one narrow feed of a wiki, such as the new posts of a blog kept in a category, instead of a single account that announces every edit.
 
 <!--T:2-->
-Each feed is its own account. A Mastodon user follows <code>category_4521@femiwiki.com</code> the way they follow a person, and sees a post whenever a page is created in that category.
+Each feed is its own account. A Mastodon user follows <code>category_4521@wiki.example.org</code> the way they follow a person, and sees a post whenever a page is created in that category.
 
 <!--T:3-->
 Nothing is implemented yet. The [[<tvar name="1">Special:MyLanguage/Accounts</tvar>|spec]] comes first, and any part of it may change.

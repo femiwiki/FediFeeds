@@ -1,7 +1,6 @@
 <!--T:title @5e0a96ef-->
 열린 질문
 
-<!--T:1 @6d27b2a8-->
-* 액터 id의 경로
+<!--T:1 @e5cf23fe-->
 * [[<tvar name="1">Special:MyLanguage/Accounts#Keys</tvar>|키]]에 적은 대로 한 키를 여러 소유자 아래 두는 방식을 주요 구현이 모두 받아들이는지
 * 절 제목을 바꾸면 <code>Delete</code>와 <code>Create</code> 대신 <code>Update</code>를 보내야 하는지
