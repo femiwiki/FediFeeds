@@ -75,14 +75,26 @@
 		{
 			"path": "/fedifeeds/actors/{handle}/inbox",
 			"method": "POST",
-			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\InboxHandler",
-			"services": ["FediFeeds.Notes", "PageStore", "FediFeeds.RemoteKeys", "FediFeeds.Followers", "JobQueueGroup"]
+			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\FeedInboxHandler",
+			"services": [
+				"FediFeeds.Notes",
+				"PageStore",
+				"FediFeeds.RemoteKeys",
+				"FediFeeds.Followers",
+				"JobQueueGroup"
+			]
 		},
 		{
 			"path": "/fedifeeds/actors/inbox",
 			"method": "POST",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\InboxHandler",
-			"services": ["FediFeeds.Notes", "PageStore", "FediFeeds.RemoteKeys", "FediFeeds.Followers", "JobQueueGroup"]
+			"services": [
+				"FediFeeds.Notes",
+				"PageStore",
+				"FediFeeds.RemoteKeys",
+				"FediFeeds.Followers",
+				"JobQueueGroup"
+			]
 		}
 	],
 	"config": {

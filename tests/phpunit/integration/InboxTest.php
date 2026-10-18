@@ -6,6 +6,7 @@ use GuzzleHttp\Psr7\Uri;
 use MediaWiki\Extension\FediFeeds\DeliveryJob;
 use MediaWiki\Extension\FediFeeds\Feed;
 use MediaWiki\Extension\FediFeeds\Followers;
+use MediaWiki\Extension\FediFeeds\Rest\FeedInboxHandler;
 use MediaWiki\Extension\FediFeeds\Rest\FollowersHandler;
 use MediaWiki\Extension\FediFeeds\Rest\InboxHandler;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
@@ -19,6 +20,7 @@ use Wikimedia\ObjectCache\WANObjectCache;
 
 /**
  * @covers \MediaWiki\Extension\FediFeeds\Rest\InboxHandler
+ * @covers \MediaWiki\Extension\FediFeeds\Rest\FeedInboxHandler
  * @covers \MediaWiki\Extension\FediFeeds\Rest\FollowersHandler
  * @covers \MediaWiki\Extension\FediFeeds\Followers
  * @group Database
@@ -84,8 +86,9 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 	private function post( array $activity, ?string $handle ) {
 		$services = $this->getServiceContainer();
 		$path = $handle === null ? 'inbox' : "$handle/inbox";
+		$class = $handle === null ? InboxHandler::class : FeedInboxHandler::class;
 		return $this->executeHandler(
-			new InboxHandler( $services->getService( 'FediFeeds.Notes' ), $services->getPageStore(),
+			new $class( $services->getService( 'FediFeeds.Notes' ), $services->getPageStore(),
 				$this->newRemoteKeys(), $this->getFollowers(), $services->getJobQueueGroup() ),
 			new RequestData( [
 				'method' => 'POST',

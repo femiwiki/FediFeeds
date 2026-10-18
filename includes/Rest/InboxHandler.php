@@ -37,7 +37,10 @@ class InboxHandler extends Handler {
 		$request = $this->getRequest();
 		$body = $request->getBody()->getContents();
 		$activity = json_decode( $body, true );
-		$actor = is_array( $activity ) ? self::getId( $activity['actor'] ?? null ) : null;
+		if ( !is_array( $activity ) ) {
+			return $this->getResponseFactory()->createHttpError( 400, [ 'message' => 'Not an activity' ] );
+		}
+		$actor = self::getId( $activity['actor'] ?? null );
 		if ( $actor === null || !is_string( $activity['type'] ?? null ) ) {
 			return $this->getResponseFactory()->createHttpError( 400, [ 'message' => 'Not an activity' ] );
 		}
@@ -90,7 +93,7 @@ class InboxHandler extends Handler {
 			'keyId' => "$actorId#main-key",
 			'activity' => [
 				'@context' => 'https://www.w3.org/ns/activitystreams',
-				'id' => "$actorId#accepts/" . sha1( (string)( self::getId( $activity['id'] ?? null ) ?? $actor ) ),
+				'id' => "$actorId#accepts/" . sha1( self::getId( $activity['id'] ?? null ) ?? $actor ),
 				'type' => 'Accept',
 				'actor' => $actorId,
 				'object' => $activity,

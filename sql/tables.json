@@ -34,7 +34,11 @@
 			}
 		],
 		"indexes": [
-			{ "name": "ff_feed_actor", "columns": ["ff_feed", "ff_actor"], "unique": true },
+			{
+				"name": "ff_feed_actor",
+				"columns": ["ff_feed", "ff_actor"],
+				"unique": true
+			},
 			{ "name": "ff_actor", "columns": ["ff_actor"], "unique": false }
 		],
 		"pk": ["ff_id"]
