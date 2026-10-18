@@ -18,7 +18,7 @@ Every feed is its own actor. Nobody declares or configures an account: the handl
 * To parse a handle, strip the trailing <code>_&lt;digits&gt;</code> and match what is left against the list exactly. Anything that does not match, or whose target does not exist, is not an account.
 
 <!--T:4-->
-Examples: <code>category_4521@femiwiki.com</code>, <code>section_88@femiwiki.com</code>.
+Examples: <code>category_4521@wiki.example.org</code>, <code>section_88@wiki.example.org</code>.
 
 <!--T:5-->
 The title of the page is shown as the actor's <code>name</code>, so readers see <code>분류:개발 블로그</code>, not a number.
@@ -29,7 +29,7 @@ The title of the page is shown as the actor's <code>name</code>, so readers see 
 * Ids survive a page move. A title would not, and followers would be lost on every rename.
 * <code>_</code> is an ordinary character everywhere, while <code>.</code> and <code>-</code> are separators that some software may treat differently.
 * The kind comes first so that searching for <code>category</code> lists the category feeds together.
-* All feeds share the wiki's own host. Separate hosts per kind would work, but other servers treat each host as a separate instance.
+* All feeds share one actor host, such as <code>fedi.example.org</code>, while handles keep the wiki's own host. Separate hosts per kind would work, but other servers treat each host as a separate instance. Keeping actors off the wiki host means wiki cookies are never sent with their requests.
 
 <!--T:7-->
 == Actor ==
@@ -38,7 +38,7 @@ The title of the page is shown as the actor's <code>name</code>, so readers see 
 |-
 | <code>type</code> || <code>Service</code>
 |-
-| <code>id</code> || A URL on the wiki host built from the kind and the id, never from the title
+| <code>id</code> || <code>https://&lt;actor host&gt;/actors/&lt;kind&gt;_&lt;id&gt;</code>, built from the handle, never from the title
 |-
 | <code>preferredUsername</code> || The handle before the <code>@</code>
 |-
@@ -48,14 +48,14 @@ The title of the page is shown as the actor's <code>name</code>, so readers see 
 |-
 | <code>url</code> || The page on the wiki
 |-
-| <code>inbox</code>, <code>outbox</code>, <code>followers</code> || Per actor
+| <code>inbox</code>, <code>outbox</code>, <code>followers</code> || Under the actor id, such as <code>&lt;actor id&gt;/inbox</code>
 |-
 | <code>publicKey</code> || See [[#Keys|Keys]]
 |}
 
 <!--T:8-->
 == WebFinger ==
-<code>/.well-known/webfinger?resource=acct:&lt;handle&gt;</code> answers with a <code>self</code> link to the actor. Mastodon fetches the actor and then asks WebFinger again for <code>preferredUsername@host</code>, so both directions must agree.
+<code>/.well-known/webfinger?resource=acct:&lt;handle&gt;</code> answers with a <code>self</code> link to the actor, on both the wiki host and the actor host. Mastodon fetches the actor and then asks the actor host's WebFinger for <code>preferredUsername@&lt;actor host&gt;</code>, which answers with the handle on the wiki host as its <code>subject</code>, so both directions must agree.
 
 <!--T:9-->
 == Keys ==

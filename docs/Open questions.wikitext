@@ -1,7 +1,6 @@
 <languages />
 <translate>
 <!--T:1-->
-* The path of actor ids.
 * Whether every major implementation accepts one key under many owners, as [[<tvar name="1">Special:MyLanguage/Accounts#Keys</tvar>|Keys]] has it.
 * Whether a section rename should be an <code>Update</code> rather than a <code>Delete</code> and a <code>Create</code>.
 </translate>
