@@ -13,6 +13,20 @@ The <code>Note</code> carries the first paragraph as plain HTML and a link to th
 <!--T:3-->
 A feed with no followers does nothing. Delivery goes to a server's <code>sharedInbox</code> when it has one, so a server with many followers gets one request.
 
+<!--T:6-->
+== Notes ==
+Each item is a <code>Note</code> at <code>&lt;actor id&gt;/notes/&lt;item&gt;</code>, which answers while the item exists and is a 404 once it does not. For <code>category</code> the item is the page id. <code>attributedTo</code> is the actor, <code>url</code> is the page, <code>published</code> is the page's first revision, and the note is addressed to the public.
+
+<!--T:7-->
+Only a feed whose page sets a [[<tvar name="1">Special:MyLanguage/Accounts#Display name</tvar>|display name]] publishes notes. Any other feed's actor still answers, with an empty outbox and no notes, so maintenance categories publish nothing.
+
+<!--T:8-->
+A page that is an item of such a feed links its note from its HTML head with <code>&lt;link rel="alternate" type="application/activity+json"&gt;</code>, so pasting the page's URL into a Mastodon search finds the note. When several such feeds hold the page, the first of its categories is used.
+
+<!--T:9-->
+== Outbox ==
+The outbox is an <code>OrderedCollection</code> of <code>Create</code> activities for the newest 20 items, newest first. Until delivery records when an item appears, a <code>category</code> item is a page that is in the category now, and pages are ordered by page id.
+
 <!--T:4-->
 == Received ==
 * <code>Follow</code> is accepted and stored against the feed it names. <code>Undo</code> of a <code>Follow</code> removes it.
