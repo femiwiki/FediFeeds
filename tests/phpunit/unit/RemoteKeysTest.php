@@ -48,7 +48,7 @@ class RemoteKeysTest extends MediaWikiUnitTestCase {
 				parent::__construct( $http, $cache );
 			}
 
-			protected function fetch( string $keyId ): mixed {
+			public function fetchDocument( string $url ): mixed {
 				return $this->documents[$this->fetches++] ?? null;
 			}
 		};
