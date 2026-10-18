@@ -17,11 +17,17 @@
 	"HookHandlers": {
 		"main": {
 			"class": "MediaWiki\\Extension\\FediFeeds\\Hooks"
+		},
+		"pageDisplay": {
+			"class": "MediaWiki\\Extension\\FediFeeds\\PageDisplayHooks",
+			"services": ["FediFeeds.Notes", "PageStore"]
 		}
 	},
 	"Hooks": {
-		"ParserFirstCallInit": "main"
+		"ParserFirstCallInit": "main",
+		"BeforePageDisplay": "pageDisplay"
 	},
+	"ServiceWiringFiles": ["includes/ServiceWiring.php"],
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\FediFeeds\\": "includes/"
 	},
@@ -40,6 +46,18 @@
 			"method": "GET",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\WebFingerHandler",
 			"services": ["MainConfig", "PageStore", "TitleFormatter", "PageProps"]
+		},
+		{
+			"path": "/fedifeeds/actors/{handle}/notes/{item}",
+			"method": "GET",
+			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\NoteHandler",
+			"services": ["FediFeeds.Notes", "PageStore"]
+		},
+		{
+			"path": "/fedifeeds/actors/{handle}/outbox",
+			"method": "GET",
+			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\OutboxHandler",
+			"services": ["FediFeeds.Notes", "PageStore"]
 		}
 	],
 	"config": {
