@@ -2,21 +2,14 @@
 
 namespace MediaWiki\Extension\FediFeeds\Signatures;
 
-use MediaWiki\Config\Config;
-
 /**
- * The wiki's own key pair, from the configured private key
+ * The wiki's own key pair, from its private key; LocalKeyStore keeps it
  */
 class LocalKey {
 
 	public function __construct(
 		private readonly string $privateKeyPem,
 	) {
-	}
-
-	public static function newFromConfig( Config $config ): ?self {
-		$pem = $config->get( 'FediFeedsPrivateKeyPem' );
-		return is_string( $pem ) && $pem !== '' ? new self( $pem ) : null;
 	}
 
 	/**

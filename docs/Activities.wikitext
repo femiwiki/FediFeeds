@@ -46,7 +46,7 @@ Requests are signed and verified as Mastodon does, with [<tvar name="1">https://
 * The <code>keyId</code> is the URL of a remote actor's <code>publicKey</code>. The key is fetched from it with <code>Accept: application/activity+json</code> and cached for a day. A signature that fails against a cached key is checked once more against a fresh one, since the remote may have changed its key.
 
 <!--T:11-->
-The wiki's own key pair is configured as one private key, and the public key every actor publishes is derived from it.
+The wiki's own key pair is generated the first time it is needed and stored in the database, so nobody has a secret to keep. The public key every actor publishes is derived from the stored private key.
 </translate>
 
 {{Prevnext}}
