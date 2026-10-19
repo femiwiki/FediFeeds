@@ -25,9 +25,13 @@ class SpecialFediFeedsReactions extends SpecialPage {
 	/** @inheritDoc */
 	public function execute( $par ) {
 		$this->setHeaders();
-		$this->outputHeader();
 		$out = $this->getOutput();
 		$out->setRobotPolicy( 'noindex,nofollow' );
+		if ( !$this->isListed() ) {
+			$out->addHTML( $this->msg( 'fedifeeds-reactions-off' )->parseAsBlock() );
+			return;
+		}
+		$this->outputHeader();
 
 		$target = $par ?? $this->getRequest()->getText( 'page' );
 		$title = $target !== '' ? Title::newFromText( $target ) : null;
@@ -73,6 +77,14 @@ class SpecialFediFeedsReactions extends SpecialPage {
 			->setSubmitTextMsg( 'fedifeeds-reactions-submit' )
 			->prepareForm()
 			->displayForm( false );
+	}
+
+	/**
+	 * Listed only while interactions are on, as there are no reactions to show otherwise
+	 * @inheritDoc
+	 */
+	public function isListed() {
+		return (bool)$this->getConfig()->get( 'FediFeedsInteractions' );
 	}
 
 	/** @inheritDoc */

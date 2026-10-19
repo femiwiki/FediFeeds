@@ -23,6 +23,7 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		$this->overrideConfigValues( [
 			'CanonicalServer' => 'https://wiki.example.org',
 			'FediFeedsActorBase' => 'https://fedi.example.org/actors/',
+			'FediFeedsInteractions' => true,
 		] );
 	}
 
@@ -94,6 +95,22 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 
 		$outbox = $this->getOutbox( "category_$cat" );
 		self::assertQuotable( $outbox['orderedItems'][0]['object'], $outbox['@context'] );
+	}
+
+	public function testNoteHasNoQuotePolicyWhileInteractionsAreOff() {
+		$this->overrideConfigValue( 'FediFeedsInteractions', false );
+		$cat = $this->savePage( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
+		$post = $this->savePage( 'First post', "Hello.\n\n[[Category:Posts]]" );
+		$response = $this->executeNote( "category_$cat", $post );
+		$this->assertSame( 200, $response->getStatusCode() );
+		$note = json_decode( $response->getBody(), true );
+		// No policy is what Mastodon reads as nobody but the author may quote
+		$this->assertArrayNotHasKey( 'interactionPolicy', $note );
+		$this->assertSame( "https://fedi.example.org/actors/category_$cat/notes/$post", $note['id'] );
+
+		$outbox = $this->getOutbox( "category_$cat" );
+		$this->assertSame( 1, $outbox['totalItems'] ?? count( $outbox['orderedItems'] ) );
+		$this->assertArrayNotHasKey( 'interactionPolicy', $outbox['orderedItems'][0]['object'] );
 	}
 
 	public function testNoNoteFromAFeedWithoutADisplayName() {

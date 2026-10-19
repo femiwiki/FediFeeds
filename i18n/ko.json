@@ -21,6 +21,7 @@
 	"fedifeeds-reactions-submit": "보기",
 	"fedifeeds-reactions-title": "$1에 온 ActivityPub 반응",
 	"fedifeeds-reactions-totals": "ActivityPub로 공유 $1회, 좋아요 $2회를 받았습니다.",
+	"fedifeeds-reactions-off": "이 위키는 반응을 기록하지 않습니다.",
 	"fedifeeds-reactions-none": "이 문서의 노트는 공유나 좋아요를 받지 않았습니다.",
 	"fedifeeds-reactions-no-page": "\"$1\" 문서가 없습니다.",
 	"fedifeeds-reactions-announce": "공유",

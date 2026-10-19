@@ -114,7 +114,8 @@ class InboxHandler extends Handler {
 				}
 				return $this->accepted();
 			default:
-				if ( isset( Reactions::ACTIVITY_TYPES[$activity['type']] ) ) {
+				// Reactions are only kept when interactions are on; until then they are dropped
+				if ( $this->notes->interactions && isset( Reactions::ACTIVITY_TYPES[$activity['type']] ) ) {
 					$this->react( $activity, $actor );
 				}
 				// Replies and the rest are taken and dropped, as are reactions to what is not ours
@@ -203,8 +204,10 @@ class InboxHandler extends Handler {
 
 	/**
 	 * Authorizes a quote of one of our notes, which anyone may quote, and answers with an
-	 * Accept whose result is the QuoteAuthorization (FEP-044f). A request for a note we do not
-	 * have, or one whose ids are not on the actor's server, is dropped.
+	 * Accept whose result is the QuoteAuthorization (FEP-044f). While interactions are off, it
+	 * answers with a Reject instead and stores nothing, so the quoting server does not leave the
+	 * quote pending. A request for a note we do not have, or one whose ids are not on the
+	 * actor's server, is dropped.
 	 */
 	private function quoteRequest( array $activity, string $actor ): Response {
 		$request = self::getId( $activity['id'] ?? null );
@@ -222,27 +225,32 @@ class InboxHandler extends Handler {
 			return $this->getResponseFactory()->createHttpError( 400, [ 'message' => 'The actor has no inbox' ] );
 		}
 		[ $feed, $item ] = $note;
-		$id = $this->quotes->add( $feed, $this->notes->getItemId( $feed, $item ), $actor, $post, $request );
-
 		$actorId = $this->notes->actors->getActorId( $feed->getHandle() );
+		$answer = [
+			'@context' => Notes::CONTEXT,
+			'id' => "$actorId#accepts/quote_requests/" . sha1( $request ),
+			'type' => 'Accept',
+			'actor' => $actorId,
+			'to' => [ $actor ],
+			'object' => [
+				'id' => $request,
+				'type' => 'QuoteRequest',
+				'actor' => $actor,
+				'object' => $this->notes->getNoteId( $feed, $item ),
+				'instrument' => $post,
+			],
+		];
+		if ( $this->notes->interactions ) {
+			$id = $this->quotes->add( $feed, $this->notes->getItemId( $feed, $item ), $actor, $post, $request );
+			$answer['result'] = $this->notes->getQuoteAuthorizationId( $feed, $id );
+		} else {
+			$answer['id'] = "$actorId#rejects/quote_requests/" . sha1( $request );
+			$answer['type'] = 'Reject';
+		}
 		$this->jobQueueGroup->lazyPush( new DeliveryJob( [
 			'inbox' => $inbox,
 			'keyId' => "$actorId#main-key",
-			'activity' => [
-				'@context' => Notes::CONTEXT,
-				'id' => "$actorId#accepts/quote_requests/" . sha1( $request ),
-				'type' => 'Accept',
-				'actor' => $actorId,
-				'to' => [ $actor ],
-				'object' => [
-					'id' => $request,
-					'type' => 'QuoteRequest',
-					'actor' => $actor,
-					'object' => $this->notes->getNoteId( $feed, $item ),
-					'instrument' => $post,
-				],
-				'result' => $this->notes->getQuoteAuthorizationId( $feed, $id ),
-			],
+			'activity' => $answer,
 		] ) );
 		return $this->accepted();
 	}

@@ -25,6 +25,7 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->setUserLang( 'qqx' );
+		$this->overrideConfigValue( 'FediFeedsInteractions', true );
 	}
 
 	private function getItems(): Items {
@@ -115,6 +116,14 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 		$this->runDeferredUpdates();
 		$this->assertSame( [], $this->getTotals( 'Post' ) );
 		$this->assertSame( [], $this->getRows( 'No such page' ) );
+	}
+
+	public function testNoRowsWhileInteractionsAreOff() {
+		[ $category, $pageId ] = $this->newCategoryItem();
+		$this->getReactions()->add( $category, $pageId, '', Reactions::LIKE, $this->cacheActor( 'a', true, 'A' ), '' );
+		$this->assertSame( self::totals( 0, 1 ), $this->getTotals( 'Post' ) );
+		$this->overrideConfigValue( 'FediFeedsInteractions', false );
+		$this->assertSame( [], $this->getRows( 'Post' ) );
 	}
 
 	public function testZerosForAnItemWithNoReactions() {

@@ -21,6 +21,7 @@
 	"fedifeeds-reactions-submit": "{{Identical|Show}}\nSubmit button on [[Special:FediFeedsReactions]].",
 	"fedifeeds-reactions-title": "Page title of [[Special:FediFeedsReactions]] for a page.\n\nParameters:\n* $1 - the page's title",
 	"fedifeeds-reactions-totals": "Totals above the list on [[Special:FediFeedsReactions]].\n\nParameters:\n* $1 - how many Announces\n* $2 - how many Likes",
+	"fedifeeds-reactions-off": "Shown on [[Special:FediFeedsReactions]] instead of the form while $wgFediFeedsInteractions is false.",
 	"fedifeeds-reactions-none": "Shown on [[Special:FediFeedsReactions]] when the page's notes have no reactions.",
 	"fedifeeds-reactions-no-page": "Error on [[Special:FediFeedsReactions]].\n\nParameters:\n* $1 - the title asked for",
 	"fedifeeds-reactions-announce": "Reaction column of a row of [[Special:FediFeedsReactions]] for an Announce.\n\nSee also:\n* {{msg-mw|fedifeeds-reactions-like}}",
