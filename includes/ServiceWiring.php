@@ -33,6 +33,7 @@ return [
 			$services->getRevisionLookup(),
 			$services->getParserOutputAccess(),
 			$services->getTitleFormatter(),
+			(bool)$services->getMainConfig()->get( 'FediFeedsInteractions' ),
 		);
 	},
 	'FediFeeds.Quotes' => static function ( MediaWikiServices $services ): Quotes {

@@ -62,6 +62,8 @@ class Notes {
 		private readonly RevisionLookup $revisionLookup,
 		private readonly ParserOutputAccess $parserOutputAccess,
 		private readonly TitleFormatter $titleFormatter,
+		/** Whether Likes, Announces and quotes of notes are taken ($wgFediFeedsInteractions) */
+		public readonly bool $interactions = false,
 	) {
 	}
 
@@ -232,7 +234,7 @@ class Notes {
 				. '<p><a href="' . htmlspecialchars( $url ) . '">' . htmlspecialchars( $linkText ) . '</a></p>';
 			$published = $this->revisionLookup->getFirstRevision( $item->page )?->getTimestamp();
 		}
-		return [
+		$note = [
 			'id' => $this->getNoteId( $feed, $item ),
 			'type' => 'Note',
 			'attributedTo' => $actorId,
@@ -241,11 +243,15 @@ class Notes {
 			'published' => $published !== null ? wfTimestamp( TS::ISO_8601, $published ) : null,
 			'to' => [ self::PUBLIC ],
 			'cc' => [ "$actorId/followers" ],
-			// Anyone may quote a note, and gets a QuoteAuthorization without waiting (FEP-044f)
-			'interactionPolicy' => [
-				'canQuote' => [ 'automaticApproval' => [ self::PUBLIC ] ],
-			],
 		];
+		// Anyone may quote a note, and gets a QuoteAuthorization without waiting (FEP-044f).
+		// While interactions are off there is no policy, which Mastodon reads as nobody may.
+		if ( $this->interactions ) {
+			$note['interactionPolicy'] = [
+				'canQuote' => [ 'automaticApproval' => [ self::PUBLIC ] ],
+			];
+		}
+		return $note;
 	}
 
 	public function getQuoteAuthorizationId( Feed $feed, int $id ): string {

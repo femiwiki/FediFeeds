@@ -66,6 +66,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->overrideConfigValues( [
 			'CanonicalServer' => 'https://wiki.example.org',
 			'FediFeedsActorBase' => 'https://fedi.example.org/actors/',
+			'FediFeedsInteractions' => true,
 		] );
 		$this->keys = [ 'target' => null, 'signer' => self::REMOTE, 'fetched' => null, 'document' => null ];
 	}
@@ -821,5 +822,102 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 			->newFromTitle( $this->getServiceContainer()->getTitleFactory()->newFromText( 'First post' ) ) );
 		$this->assertSame( 404, $this->getQuoteAuthorization( $url ) );
 		$this->assertSame( 404, $this->getQuoteAuthorization( "{$url}0" ) );
+	}
+
+	private function turnInteractionsOff(): void {
+		$this->overrideConfigValue( 'FediFeedsInteractions', false );
+	}
+
+	private function countRows( string $table ): int {
+		return (int)$this->newSelectQueryBuilder()->select( 'COUNT(*)' )->from( $table )->fetchField();
+	}
+
+	public function testReactionsAreDroppedWhileInteractionsAreOff() {
+		$this->turnInteractionsOff();
+		[ $feed, $pageId, $noteId ] = $this->newItemNote();
+		$this->keys['fetched'] = self::newActorDocument();
+		$activities = [
+			self::newReaction( 'Like', $noteId ),
+			self::newReaction( 'Like', $noteId ) + [ 'content' => '🎉' ],
+			self::newReaction( 'EmojiReact', $noteId ) + [ 'content' => '👍' ],
+			self::newReaction( 'Announce', [ 'id' => $noteId, 'type' => 'Note' ] ),
+		];
+		foreach ( $activities as $activity ) {
+			$this->assertSame( 202, $this->post( $activity, null )->getStatusCode() );
+			$this->assertSame( 202, $this->post( $activity, $feed->getHandle() )->getStatusCode() );
+		}
+		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( 0, $this->countRows( 'fedifeeds_reaction' ) );
+		$this->assertSame( 0, $this->countRows( 'fedifeeds_actor' ) );
+		$this->assertSame( 0, $this->countFetchJobs() );
+		$this->assertFalse( $this->getReactions()->isReactor( self::REMOTE ) );
+	}
+
+	public function testQuoteRequestIsRejectedWhileInteractionsAreOff() {
+		$this->turnInteractionsOff();
+		$feed = $this->newCategory();
+		$note = $this->newNote( $feed );
+		$this->assertSame( 202, $this->post( self::newQuoteRequest( $note ), null )->getStatusCode() );
+		$this->assertFalse( $this->getQuotes()->isQuoter( self::REMOTE ) );
+		$this->assertSame( 0, $this->countRows( 'fedifeeds_quote' ) );
+
+		$deliveries = $this->getDeliveries();
+		$this->assertCount( 1, $deliveries );
+		$this->assertSame( self::SHARED_INBOX, $deliveries[0]['inbox'] );
+		$actor = 'https://fedi.example.org/actors/' . $feed->getHandle();
+		$reject = $deliveries[0]['activity'];
+		$this->assertSame( 'Reject', $reject['type'] );
+		$this->assertSame( $actor, $reject['actor'] );
+		$this->assertStringStartsWith( "$actor#rejects/quote_requests/", $reject['id'] );
+		$this->assertSame( [
+			'id' => self::REQUEST,
+			'type' => 'QuoteRequest',
+			'actor' => self::REMOTE,
+			'object' => $note,
+			'instrument' => self::POST,
+		], $reject['object'] );
+		$this->assertArrayNotHasKey( 'result', $reject );
+	}
+
+	public function testDroppedQuoteRequestIsNotRejectedWhileInteractionsAreOff() {
+		$this->turnInteractionsOff();
+		$feed = $this->newCategory();
+		$note = $this->newNote( $feed );
+		$this->post( [ 'object' => "{$note}0" ] + self::newQuoteRequest( $note ), null );
+		$this->assertSame( [], $this->getDeliveries() );
+	}
+
+	public function testFollowsWorkWhileInteractionsAreOff() {
+		$this->turnInteractionsOff();
+		$feed = $this->newCategory();
+		$this->assertSame( 202, $this->post( self::newFollow( $feed ), $feed->getHandle() )->getStatusCode() );
+		$this->assertSame( 1, $this->getFollowers()->count( $feed ) );
+		$deliveries = $this->getDeliveries();
+		$this->assertCount( 1, $deliveries );
+		$this->assertSame( 'Accept', $deliveries[0]['activity']['type'] );
+		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE, 'object' => self::newFollow( $feed ) ];
+		$this->assertSame( 202, $this->post( $undo, $feed->getHandle() )->getStatusCode() );
+		$this->assertSame( 0, $this->getFollowers()->count( $feed ) );
+	}
+
+	public function testWithdrawalsStillPurgeWhileInteractionsAreOff() {
+		[ $feed, $pageId, $noteId ] = $this->newItemNote();
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		$this->post( self::newReaction( 'Announce', $noteId ), null );
+		[ $note, $url ] = $this->quote( $feed );
+		$this->assertSame( [ 'like' => 1, 'announce' => 1 ], $this->countReactions( $pageId ) );
+
+		$this->turnInteractionsOff();
+		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE, 'object' => self::newReaction( 'Like', $noteId ) ];
+		$this->assertSame( 202, $this->post( $undo, null )->getStatusCode() );
+		$this->assertSame( [ 'like' => 0, 'announce' => 1 ], $this->countReactions( $pageId ) );
+		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE, 'object' => self::newQuoteRequest( $note ) ];
+		$this->assertSame( 202, $this->post( $undo, null )->getStatusCode() );
+		$this->assertSame( 404, $this->getQuoteAuthorization( $url ) );
+
+		// A Delete of the actor purges the rest
+		$this->post( [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ], null );
+		$this->runPurgeJobs();
+		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
 	}
 }

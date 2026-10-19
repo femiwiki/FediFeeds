@@ -21,6 +21,7 @@
 	"fedifeeds-reactions-submit": "Show",
 	"fedifeeds-reactions-title": "ActivityPub reactions to $1",
 	"fedifeeds-reactions-totals": "Announced $1 {{PLURAL:$1|time|times}} and liked $2 {{PLURAL:$2|time|times}} over ActivityPub.",
+	"fedifeeds-reactions-off": "Reactions are not recorded on this wiki.",
 	"fedifeeds-reactions-none": "The notes of this page have no Announces or Likes.",
 	"fedifeeds-reactions-no-page": "There is no page named \"$1\".",
 	"fedifeeds-reactions-announce": "Announce",

@@ -30,7 +30,7 @@ class InfoHooks implements InfoActionHook {
 	public function onInfoAction( $context, &$pageInfo ) {
 		$title = $context->getTitle();
 		$pageId = $title?->getArticleID() ?? 0;
-		if ( !$title || !$pageId ) {
+		if ( !$title || !$pageId || !$context->getConfig()->get( 'FediFeedsInteractions' ) ) {
 			return;
 		}
 		$counts = $this->reactions->countForPage( $pageId );

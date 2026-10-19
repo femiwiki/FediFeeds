@@ -162,6 +162,10 @@
 		"FediFeedsIcon": {
 			"value": null,
 			"description": "URL or path of the image an actor shows as its avatar when its page sets none with {{FEDIFEEDSNAME:<name>|icon=<file>}}, such as \"/images/feed.png\". It must be a raster image such as PNG, since Mastodon does not show SVG avatars. Null uses $wgAppleTouchIcon, else the first non-SVG of $wgLogos['1x'] and $wgLogos['icon'], else no icon."
+		},
+		"FediFeedsInteractions": {
+			"value": false,
+			"description": "Whether Likes, Announces and quotes of notes are taken. False drops Likes, emoji reactions and Announces without storing them or the accounts that sent them, answers a QuoteRequest with a Reject, leaves interactionPolicy out of notes, and hides reactions on action=info and Special:FediFeedsReactions. Follows, and Undos and Deletes of what was stored before, are taken either way."
 		}
 	},
 	"manifest_version": 2

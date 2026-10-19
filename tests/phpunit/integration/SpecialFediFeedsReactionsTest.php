@@ -17,6 +17,11 @@ class SpecialFediFeedsReactionsTest extends SpecialPageTestBase {
 
 	private const REMOTE = 'https://remote.example/users/';
 
+	protected function setUp(): void {
+		parent::setUp();
+		$this->overrideConfigValue( 'FediFeedsInteractions', true );
+	}
+
 	protected function newSpecialPage() {
 		$services = $this->getServiceContainer();
 		return new SpecialFediFeedsReactions( $services->getPageStore(), $services->getConnectionProvider(),
@@ -104,5 +109,19 @@ class SpecialFediFeedsReactionsTest extends SpecialPageTestBase {
 		$this->assertStringContainsString( '(fedifeeds-reactions-no-page: No such page)', $html );
 		[ $html ] = $this->executeSpecialPage( '', null, 'qqx' );
 		$this->assertStringContainsString( '(fedifeeds-reactions-legend)', $html );
+	}
+
+	public function testOffWhileInteractionsAreOff() {
+		$this->setUpReactions();
+		$this->assertTrue( $this->newSpecialPage()->isListed() );
+		$this->overrideConfigValue( 'FediFeedsInteractions', false );
+		$this->assertFalse( $this->newSpecialPage()->isListed() );
+		foreach ( [ 'Post', '' ] as $target ) {
+			[ $html ] = $this->executeSpecialPage( $target, null, 'qqx' );
+			$this->assertStringContainsString( '(fedifeeds-reactions-off)', $html );
+			$this->assertStringNotContainsString( '(fedifeeds-reactions-legend)', $html );
+			$this->assertStringNotContainsString( 'fedifeeds-reactions-totals', $html );
+			$this->assertStringNotContainsString( 'Alice', $html );
+		}
 	}
 }
