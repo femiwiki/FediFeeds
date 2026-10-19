@@ -10,7 +10,7 @@ use MediaWiki\MediaWikiServices;
 
 /**
  * Drops what a remote actor that deleted itself left here: its follows of every feed, its
- * quote authorizations, its Likes and Announces and its cached key
+ * quote authorizations, its Likes and Announces, what is cached about it and its cached key
  */
 class PurgeActorJob extends Job implements GenericParameterJob {
 
@@ -43,6 +43,9 @@ class PurgeActorJob extends Job implements GenericParameterJob {
 		/** @var Reactions $reactions */
 		$reactions = $services->getService( 'FediFeeds.Reactions' );
 		$reactions->removeActor( $actor );
+		/** @var RemoteActors $remoteActors */
+		$remoteActors = $services->getService( 'FediFeeds.RemoteActors' );
+		$remoteActors->remove( $actor );
 		/** @var RemoteKeys $remoteKeys */
 		$remoteKeys = $services->getService( 'FediFeeds.RemoteKeys' );
 		$remoteKeys->forget( (string)( $this->params['keyId'] ?? "$actor#main-key" ) );

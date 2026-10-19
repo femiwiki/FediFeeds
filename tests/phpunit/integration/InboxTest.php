@@ -5,11 +5,13 @@ namespace MediaWiki\Extension\FediFeeds\Tests;
 use GuzzleHttp\Psr7\Uri;
 use MediaWiki\Extension\FediFeeds\DeliveryJob;
 use MediaWiki\Extension\FediFeeds\Feed;
+use MediaWiki\Extension\FediFeeds\FetchActorJob;
 use MediaWiki\Extension\FediFeeds\Followers;
 use MediaWiki\Extension\FediFeeds\Item;
 use MediaWiki\Extension\FediFeeds\PurgeActorJob;
 use MediaWiki\Extension\FediFeeds\Quotes;
 use MediaWiki\Extension\FediFeeds\Reactions;
+use MediaWiki\Extension\FediFeeds\RemoteActors;
 use MediaWiki\Extension\FediFeeds\Rest\FeedInboxHandler;
 use MediaWiki\Extension\FediFeeds\Rest\FollowersHandler;
 use MediaWiki\Extension\FediFeeds\Rest\InboxHandler;
@@ -36,6 +38,8 @@ use Wikimedia\ObjectCache\WANObjectCache;
  * @covers \MediaWiki\Extension\FediFeeds\PurgeActorJob
  * @covers \MediaWiki\Extension\FediFeeds\Quotes
  * @covers \MediaWiki\Extension\FediFeeds\Reactions
+ * @covers \MediaWiki\Extension\FediFeeds\RemoteActors
+ * @covers \MediaWiki\Extension\FediFeeds\FetchActorJob
  * @covers \MediaWiki\Extension\FediFeeds\Notes
  * @covers \MediaWiki\Extension\FediFeeds\Signatures\GoneActors
  * @group Database
@@ -49,7 +53,12 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 	private const REQUEST = 'https://remote.example/users/a/quote_requests/1';
 	public const SHARED_INBOX = 'https://remote.example/inbox';
 
-	/** @var array{target: ?string, signer: ?string} */
+	/**
+	 * What the mock RemoteKeys returns: the signer, the target it was asked about, the actor
+	 * document fetched for the signature, and the one fetchDocument() gives
+	 *
+	 * @var array{target: ?string, signer: ?string, fetched: ?array, document: ?array}
+	 */
 	private array $keys;
 
 	protected function setUp(): void {
@@ -58,7 +67,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 			'CanonicalServer' => 'https://wiki.example.org',
 			'FediFeedsActorBase' => 'https://fedi.example.org/actors/',
 		] );
-		$this->keys = [ 'target' => null, 'signer' => self::REMOTE ];
+		$this->keys = [ 'target' => null, 'signer' => self::REMOTE, 'fetched' => null, 'document' => null ];
 	}
 
 	private function newRemoteKeys(): RemoteKeys {
@@ -81,8 +90,12 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 				return $this->keys['signer'];
 			}
 
+			public function getFetchedDocument( string $url ): mixed {
+				return $this->keys['fetched'];
+			}
+
 			public function fetchDocument( string $url ): mixed {
-				return [
+				return $this->keys['document'] ?? [
 					'id' => $url,
 					'inbox' => "$url/inbox",
 					'endpoints' => [ 'sharedInbox' => InboxTest::SHARED_INBOX ],
@@ -103,6 +116,10 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		return $this->getServiceContainer()->getService( 'FediFeeds.Reactions' );
 	}
 
+	private function getRemoteActors(): RemoteActors {
+		return $this->getServiceContainer()->getService( 'FediFeeds.RemoteActors' );
+	}
+
 	private function newCategory(): Feed {
 		$this->editPage( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
 		$this->runDeferredUpdates();
@@ -116,7 +133,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		return $this->executeHandler(
 			new $class( $services->getService( 'FediFeeds.Notes' ), $services->getPageStore(),
 				$this->newRemoteKeys(), $this->getFollowers(), $this->getQuotes(), $services->getJobQueueGroup(),
-				$this->getReactions() ),
+				$this->getReactions(), $this->getRemoteActors() ),
 			new RequestData( [
 				'method' => 'POST',
 				'uri' => new Uri( "https://fedi.example.org/rest.php/fedifeeds/actors/$path" ),
@@ -438,6 +455,92 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->post( $delete, null );
 		$this->runPurgeJobs();
 		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+	}
+
+	private static function newActorDocument( bool $discoverable = true, string $name = 'A' ): array {
+		return [
+			'id' => self::REMOTE,
+			'type' => 'Person',
+			'preferredUsername' => 'a',
+			'name' => $name,
+			'url' => 'https://remote.example/@a',
+			'discoverable' => $discoverable,
+			'inbox' => self::REMOTE . '/inbox',
+		];
+	}
+
+	private function getCachedActor(): ?array {
+		$row = $this->newSelectQueryBuilder()
+			->select( [ 'fa_handle', 'fa_name', 'fa_url', 'fa_discoverable' ] )
+			->from( 'fedifeeds_actor' )
+			->where( [ 'fa_actor' => self::REMOTE ] )
+			->fetchRow();
+		return $row ? (array)$row : null;
+	}
+
+	private function countFetchJobs(): int {
+		$this->runDeferredUpdates();
+		return $this->getServiceContainer()->getJobQueueGroup()->get( FetchActorJob::TYPE )->getSize();
+	}
+
+	public function testReactionCachesTheActorFromTheDocumentItsKeyCameFrom() {
+		[ , , $noteId ] = $this->newItemNote();
+		$this->keys['fetched'] = self::newActorDocument();
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		$this->assertEquals( [ 'fa_handle' => 'a@remote.example', 'fa_name' => 'A',
+			'fa_url' => 'https://remote.example/@a', 'fa_discoverable' => 1 ], $this->getCachedActor() );
+		$this->assertSame( 0, $this->countFetchJobs() );
+	}
+
+	public function testReactionQueuesAFetchOfAnActorNotCached() {
+		[ , , $noteId ] = $this->newItemNote();
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		$this->assertNull( $this->getCachedActor() );
+		$this->assertSame( 1, $this->countFetchJobs() );
+
+		$this->keys['document'] = self::newActorDocument( false );
+		$this->setService( 'FediFeeds.RemoteKeys', $this->newRemoteKeys() );
+		$this->runJobs( [ 'minJobs' => 1 ], [ 'type' => FetchActorJob::TYPE ] );
+		$this->assertEquals( [ 'fa_handle' => 'a@remote.example', 'fa_name' => 'A',
+			'fa_url' => 'https://remote.example/@a', 'fa_discoverable' => 0 ], $this->getCachedActor() );
+	}
+
+	public function testReactionOfAFreshlyCachedActorFetchesNothing() {
+		[ , , $noteId ] = $this->newItemNote();
+		$this->getRemoteActors()->update( self::REMOTE, self::newActorDocument() );
+		$this->post( self::newReaction( 'Announce', $noteId ), null );
+		$this->assertSame( 0, $this->countFetchJobs() );
+	}
+
+	public function testUpdateRefreshesAKnownActor() {
+		$this->getRemoteActors()->update( self::REMOTE, self::newActorDocument() );
+		$update = [ 'type' => 'Update', 'actor' => self::REMOTE,
+			'object' => self::newActorDocument( false, 'Renamed' ) ];
+		$this->assertSame( 202, $this->post( $update, null )->getStatusCode() );
+		$this->assertEquals( [ 'fa_handle' => 'a@remote.example', 'fa_name' => 'Renamed',
+			'fa_url' => 'https://remote.example/@a', 'fa_discoverable' => 0 ], $this->getCachedActor() );
+
+		// Another actor's document is not taken
+		$update['object'] = [ 'id' => 'https://other.example/users/b' ] + self::newActorDocument();
+		$this->post( $update, null );
+		$this->assertSame( 'Renamed', $this->getCachedActor()['fa_name'] );
+	}
+
+	public function testUpdateOfAnUnknownActorIsDroppedUnverified() {
+		$this->keys['signer'] = 'throw';
+		$update = [ 'type' => 'Update', 'actor' => self::REMOTE, 'object' => self::newActorDocument() ];
+		$this->assertSame( 202, $this->post( $update, null )->getStatusCode() );
+		$this->assertNull( $this->getCachedActor() );
+	}
+
+	public function testDeleteOfAReactorPurgesTheCachedActor() {
+		[ , , $noteId ] = $this->newItemNote();
+		$this->keys['fetched'] = self::newActorDocument();
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		$this->assertNotNull( $this->getCachedActor() );
+		$this->post( [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ], null );
+		$this->runPurgeJobs();
+		$this->assertNull( $this->getCachedActor() );
 	}
 
 	public function testDeleteOfSomethingElseKeepsTheReactions() {

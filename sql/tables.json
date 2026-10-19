@@ -259,5 +259,60 @@
 			}
 		],
 		"pk": ["fr_id"]
+	},
+	{
+		"name": "fedifeeds_actor",
+		"comment": "What a remote actor that liked or shared a note says about itself, so that action=info and Special:FediFeedsReactions can name it when it allows that",
+		"columns": [
+			{
+				"name": "fa_id",
+				"type": "integer",
+				"options": { "unsigned": true, "notnull": true, "autoincrement": true }
+			},
+			{
+				"name": "fa_actor",
+				"comment": "Id of the remote actor",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "fa_handle",
+				"comment": "Its preferredUsername and the host of its id, as user@host; empty when it has no preferredUsername",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255, "default": "" }
+			},
+			{
+				"name": "fa_name",
+				"comment": "Its display name as plain text, cut to fit; empty when it has none",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255, "default": "" }
+			},
+			{
+				"name": "fa_url",
+				"comment": "Its profile page: its url, else its id",
+				"type": "blob",
+				"options": { "notnull": true, "length": 65530 }
+			},
+			{
+				"name": "fa_discoverable",
+				"comment": "1 when the actor sets discoverable to true, which lets it be named; 0 otherwise",
+				"type": "mwtinyint",
+				"options": { "notnull": true, "default": 0 }
+			},
+			{
+				"name": "fa_checked",
+				"comment": "When the actor's document was last read",
+				"type": "mwtimestamp",
+				"options": { "notnull": true }
+			}
+		],
+		"indexes": [
+			{
+				"name": "fa_actor",
+				"columns": ["fa_actor"],
+				"unique": true
+			}
+		],
+		"pk": ["fa_id"]
 	}
 ]
