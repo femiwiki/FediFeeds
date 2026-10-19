@@ -35,7 +35,7 @@ class PageDisplayHooks implements BeforePageDisplayHook {
 			$out->addLink( [
 				'rel' => 'alternate',
 				'type' => Actors::CONTENT_TYPE,
-				'href' => $this->notes->getNoteId( $feed, $page ),
+				'href' => $this->notes->getNoteId( $feed, new Item( $page ) ),
 			] );
 		}
 	}

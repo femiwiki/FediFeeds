@@ -48,12 +48,13 @@
 | <code>publicKey</code> || [[#Keys|키]] 참고
 |}
 
-<!--T:10 @2c05f4cd-->
+<!--T:10 @f6eff555-->
 <span id="Display_name"></span>
 == 표시 이름 ==
 팔로하는 문서는 자기 위키텍스트에 매직 워드를 넣어 표시 이름을 정합니다.
 * <code><nowiki>{{FEDIFEEDSNAME:</nowiki>&lt;name&gt;}}</code>는 그 문서의 모든 피드에 적용됩니다.
 * <code><nowiki>{{FEDIFEEDSNAME:</nowiki>&lt;name&gt;|&lt;kind&gt;}}</code>는 그 종류에만 적용되고, 종류를 적지 않은 형식보다 우선합니다. 문단으로도 팔로하는 분류 문서는 이렇게 두 피드에 이름을 따로 붙일 수 있습니다.
+* n이 1에서 6 사이인 <code>section-unit=&lt;n&gt;</code>은 그 문서 <code>section</code> 피드의 [[<tvar name="2">Special:MyLanguage/Feed kinds#section</tvar>|단위]]를 정합니다. 등호가 이만큼인 제목 하나하나가 노트 하나입니다. 종류 앞에 써도 되고 뒤에 써도 됩니다.
 * 이름은 일반 텍스트이고 마크업은 버립니다. 이름이 비었거나 종류가 [[<tvar name="1">Special:MyLanguage/Feed kinds</tvar>|종류 목록]]에 없으면 아무것도 정하지 않습니다. 문서가 같은 것을 두 번 정하면 뒤의 것을 씁니다.
 
 <!--T:11 @9c509ef3-->

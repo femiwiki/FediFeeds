@@ -37,7 +37,7 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		return $this->getServiceContainer()->getService( 'FediFeeds.Notes' );
 	}
 
-	private function executeNote( string $handle, int $item ) {
+	private function executeNote( string $handle, int|string $item ) {
 		return $this->executeHandler(
 			new NoteHandler( $this->getNotes(), $this->getServiceContainer()->getPageStore() ),
 			new RequestData( [ 'pathParams' => [ 'handle' => $handle, 'item' => (string)$item ] ] )
@@ -120,5 +120,54 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( 'Named', $feed->page->getDBkey() );
 		$unnamedOnly = [ $pageStore->getPageByText( 'Category:Unnamed' ) ];
 		$this->assertNull( $this->getNotes()->getPublishingFeed( $unnamedOnly ) );
+	}
+
+	public function testSectionNote() {
+		$text = "{{FEDIFEEDSNAME:Releases|section}}\n\nAbout the releases.\n";
+		$page = $this->savePage( 'Release notes', $text );
+		$this->savePage( 'Release notes', "$text\n== 2026 ==\n=== 1.0 ===\nThe '''first''' release.\n" );
+		$this->savePage( 'Release notes', "$text\n== 2026 ==\n=== 1.0 ===\nThe '''first''' release.\n"
+			. "=== 1.1 ===\n* A list\n\n== Café & co. ==\nDone.\n" );
+		$actor = "https://fedi.example.org/actors/section_$page";
+
+		$response = $this->executeNote( "section_$page", 'MjAyNg' );
+		$this->assertSame( 200, $response->getStatusCode() );
+		$note = json_decode( $response->getBody(), true );
+		$this->assertSame( "$actor/notes/MjAyNg", $note['id'] );
+		$this->assertStringStartsWith( '<p><strong>2026</strong></p><p><strong>1.0</strong></p>'
+			. '<p>The first release.</p><p><strong>1.1</strong></p><ul><li>A list</li></ul><p><a href=',
+			$note['content'] );
+		$this->assertStringContainsString( '&oldid=', $note['url'] );
+		$this->assertStringEndsWith( 'utm_source=fediverse#2026', $note['url'] );
+		$this->assertNotNull( $note['published'] );
+
+		$outbox = $this->getOutbox( "section_$page" );
+		$this->assertSame( 2, $outbox['totalItems'] );
+		$this->assertSame( [ "$actor/notes/Q2Fmw6kgJiBjby4", "$actor/notes/MjAyNg" ],
+			array_map( static fn ( $create ) => $create['object']['id'], $outbox['orderedItems'] ) );
+
+		// A section removed from the page has no note
+		$this->savePage( 'Release notes', "$text\n== 2026 ==\nNothing yet.\n" );
+		$ex = $this->executeHandlerAndGetHttpException(
+			new NoteHandler( $this->getNotes(), $this->getServiceContainer()->getPageStore() ),
+			new RequestData( [ 'pathParams' => [ 'handle' => "section_$page", 'item' => 'Q2Fmw6kgJiBjby4' ] ] )
+		);
+		$this->assertSame( 404, $ex->getCode() );
+		$this->assertCount( 1, $this->getOutbox( "section_$page" )['orderedItems'] );
+	}
+
+	public function testNoSectionNoteForAnUnrecordedOrMisspelledItem() {
+		$text = "{{FEDIFEEDSNAME:Releases}}\n\n== 1.0 ==\nThe first release.\n";
+		$page = $this->savePage( 'Release notes', $text );
+		$this->savePage( 'Release notes', "$text\n== 1.1 ==\nThe second release.\n" );
+		$this->assertSame( 200, $this->executeNote( "section_$page", 'MS4x' )->getStatusCode() );
+		// 1.0 was there when the page was created; the others are not the one spelling of 1.1
+		foreach ( [ 'MS4w', 'MS4x=', 'MS4x.', (string)$page ] as $item ) {
+			$ex = $this->executeHandlerAndGetHttpException(
+				new NoteHandler( $this->getNotes(), $this->getServiceContainer()->getPageStore() ),
+				new RequestData( [ 'pathParams' => [ 'handle' => "section_$page", 'item' => $item ] ] )
+			);
+			$this->assertSame( 404, $ex->getCode(), $item );
+		}
 	}
 }

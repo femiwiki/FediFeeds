@@ -3,8 +3,10 @@
 -- Do not modify this file directly.
 -- See https://www.mediawiki.org/wiki/Manual:Schema_changes
 CREATE TABLE /*_*/fedifeeds_key (
-  fk_name BLOB NOT NULL, fk_private_key BLOB NOT NULL,
-  fk_timestamp BLOB NOT NULL, PRIMARY KEY(fk_name)
+  fk_name BLOB NOT NULL,
+  fk_private_key BLOB NOT NULL,
+  fk_timestamp BLOB NOT NULL,
+  PRIMARY KEY(fk_name)
 );
 
 
@@ -22,9 +24,11 @@ CREATE INDEX ff_actor ON /*_*/fedifeeds_follower (ff_actor);
 CREATE TABLE /*_*/fedifeeds_item (
   fi_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   fi_feed BLOB NOT NULL, fi_page INTEGER UNSIGNED NOT NULL,
+  fi_key BLOB DEFAULT '' NOT NULL, fi_rev INTEGER UNSIGNED DEFAULT 0 NOT NULL,
+  fi_anchor BLOB DEFAULT '' NOT NULL,
   fi_timestamp BLOB NOT NULL
 );
 
-CREATE UNIQUE INDEX fi_feed_page ON /*_*/fedifeeds_item (fi_feed, fi_page);
+CREATE UNIQUE INDEX fi_feed_page_key ON /*_*/fedifeeds_item (fi_feed, fi_page, fi_key);
 
 CREATE INDEX fi_feed_timestamp ON /*_*/fedifeeds_item (fi_feed, fi_timestamp);
