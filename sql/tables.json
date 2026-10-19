@@ -68,5 +68,47 @@
 			{ "name": "ff_actor", "columns": ["ff_actor"], "unique": false }
 		],
 		"pk": ["ff_id"]
+	},
+	{
+		"name": "fedifeeds_item",
+		"comment": "Items of a feed as they appeared. Only items recorded here were sent, so only they get Update or Delete",
+		"columns": [
+			{
+				"name": "fi_id",
+				"type": "integer",
+				"options": { "unsigned": true, "notnull": true, "autoincrement": true }
+			},
+			{
+				"name": "fi_feed",
+				"comment": "Handle of the feed, such as category_4521",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "fi_page",
+				"comment": "Page id of the item",
+				"type": "integer",
+				"options": { "unsigned": true, "notnull": true }
+			},
+			{
+				"name": "fi_timestamp",
+				"comment": "When the item appeared",
+				"type": "mwtimestamp",
+				"options": { "notnull": true }
+			}
+		],
+		"indexes": [
+			{
+				"name": "fi_feed_page",
+				"columns": ["fi_feed", "fi_page"],
+				"unique": true
+			},
+			{
+				"name": "fi_feed_timestamp",
+				"columns": ["fi_feed", "fi_timestamp"],
+				"unique": false
+			}
+		],
+		"pk": ["fi_id"]
 	}
 ]

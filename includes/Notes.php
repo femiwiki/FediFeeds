@@ -3,7 +3,6 @@
 namespace MediaWiki\Extension\FediFeeds;
 
 use DOMDocument;
-use MediaWiki\Deferred\LinksUpdate\CategoryLinksTable;
 use MediaWiki\Page\ExistingPageRecord;
 use MediaWiki\Page\PageProps;
 use MediaWiki\Page\PageStore;
@@ -12,8 +11,6 @@ use MediaWiki\Parser\ParserOptions;
 use MediaWiki\Revision\RevisionLookup;
 use MediaWiki\Title\Title;
 use MediaWiki\Title\TitleFormatter;
-use Wikimedia\Rdbms\IConnectionProvider;
-use Wikimedia\Rdbms\SelectQueryBuilder;
 use Wikimedia\Timestamp\TimestampFormat as TS;
 
 /**
@@ -26,7 +23,7 @@ class Notes {
 
 	public function __construct(
 		public readonly Actors $actors,
-		private readonly IConnectionProvider $dbProvider,
+		private readonly Items $items,
 		private readonly PageStore $pageStore,
 		private readonly PageProps $pageProps,
 		private readonly RevisionLookup $revisionLookup,
@@ -43,35 +40,37 @@ class Notes {
 	}
 
 	/**
-	 * The first of the category pages, in order, whose category feed publishes notes.
+	 * The first of the category pages, in order, whose category feed publishes notes and, if
+	 * an item is given, has it.
 	 *
 	 * @param ExistingPageRecord[] $categoryPages
+	 * @param int|null $itemId Page id of the item
 	 */
-	public function getPublishingFeed( array $categoryPages ): ?Feed {
+	public function getPublishingFeed( array $categoryPages, ?int $itemId = null ): ?Feed {
 		if ( !$categoryPages ) {
 			return null;
 		}
 		$props = $this->pageProps->getProperties( $categoryPages,
 			[ Hooks::NAME_PROPERTY, Hooks::NAME_PROPERTY . '-category' ] );
 		foreach ( $categoryPages as $page ) {
-			if ( $page->getNamespace() === NS_CATEGORY && ( $props[$page->getId()] ?? [] ) ) {
-				return new Feed( 'category', $page );
+			$feed = new Feed( 'category', $page );
+			if ( $page->getNamespace() === NS_CATEGORY && ( $props[$page->getId()] ?? [] )
+				&& ( $itemId === null || $this->items->has( $feed, $itemId ) )
+			) {
+				return $feed;
 			}
 		}
 		return null;
 	}
 
 	/**
-	 * The item the id names, if the feed publishes and the page is in its category now.
+	 * The item the id names, if the feed publishes, recorded the item and the page exists.
 	 */
 	public function getItem( Feed $feed, int $pageId ): ?ExistingPageRecord {
-		if ( !$this->publishes( $feed ) ) {
+		if ( !$this->publishes( $feed ) || !$this->items->has( $feed, $pageId ) ) {
 			return null;
 		}
-		$found = $this->newMembersQuery( $feed )
-			->andWhere( [ 'cl_from' => $pageId ] )
-			->caller( __METHOD__ )->fetchField();
-		return $found === false ? null : $this->pageStore->getPageById( $pageId );
+		return $this->pageStore->getPageById( $pageId );
 	}
 
 	/**
@@ -83,26 +82,9 @@ class Notes {
 		if ( !$this->publishes( $feed ) ) {
 			return [];
 		}
-		$ids = $this->newMembersQuery( $feed )
-			->orderBy( 'page_id', SelectQueryBuilder::SORT_DESC )
-			->limit( self::LIMIT )
-			->caller( __METHOD__ )->fetchFieldValues();
+		$ids = $this->items->getRecent( $feed, self::LIMIT );
 		return array_values( array_filter( array_map(
-			fn ( $id ) => $this->pageStore->getPageById( (int)$id ), $ids ) ) );
-	}
-
-	private function newMembersQuery( Feed $feed ): SelectQueryBuilder {
-		return $this->dbProvider->getReplicaDatabase( CategoryLinksTable::VIRTUAL_DOMAIN )
-			->newSelectQueryBuilder()
-			->select( 'page_id' )
-			->from( 'categorylinks' )
-			->join( 'page', null, 'cl_from = page_id' )
-			->join( 'linktarget', null, 'cl_target_id = lt_id' )
-			->where( [
-				'lt_namespace' => NS_CATEGORY,
-				'lt_title' => $feed->page->getDBkey(),
-				'cl_type' => 'page',
-			] );
+			fn ( $id ) => $this->pageStore->getPageById( $id ), $ids ) ) );
 	}
 
 	public function getNoteId( Feed $feed, ExistingPageRecord $item ): string {
@@ -111,7 +93,8 @@ class Notes {
 
 	public function getNote( Feed $feed, ExistingPageRecord $item ): array {
 		$actorId = $this->actors->getActorId( $feed->getHandle() );
-		$url = Title::newFromPageIdentity( $item )->getFullURL( '', false, PROTO_CANONICAL );
+		$url = Title::newFromPageIdentity( $item )
+			->getFullURL( [ 'utm_source' => 'fediverse' ], false, PROTO_CANONICAL );
 		$link = '<p><a href="' . htmlspecialchars( $url ) . '">'
 			. htmlspecialchars( $this->titleFormatter->getPrefixedText( $item ) ) . '</a></p>';
 		$paragraph = $this->getFirstParagraph( $item );
@@ -147,11 +130,7 @@ class Notes {
 			'@context' => 'https://www.w3.org/ns/activitystreams',
 			'id' => $this->actors->getActorId( $feed->getHandle() ) . '/outbox',
 			'type' => 'OrderedCollection',
-			// Counted with the same query as the items, not from the category table's counts
-			'totalItems' => $items
-				? (int)$this->newMembersQuery( $feed )->clearFields()->select( 'COUNT(*)' )
-					->caller( __METHOD__ )->fetchField()
-				: 0,
+			'totalItems' => $items ? $this->items->count( $feed ) : 0,
 			'orderedItems' => array_map( fn ( $item ) => $this->getCreate( $feed, $item ), $items ),
 		];
 	}

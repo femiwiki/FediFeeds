@@ -45,6 +45,21 @@ class Followers {
 	}
 
 	/**
+	 * Where to deliver the feed's activities, each inbox once, so a server's shared inbox
+	 * gets one request however many of its actors follow.
+	 *
+	 * @return string[]
+	 */
+	public function getInboxes( Feed $feed ): array {
+		return $this->dbProvider->getReplicaDatabase()->newSelectQueryBuilder()
+			->select( 'ff_inbox' )
+			->distinct()
+			->from( 'fedifeeds_follower' )
+			->where( [ 'ff_feed' => $feed->getHandle() ] )
+			->caller( __METHOD__ )->fetchFieldValues();
+	}
+
+	/**
 	 * Whether the actor follows any feed, which decides if its Delete is worth verifying.
 	 */
 	public function isFollower( string $actor ): bool {

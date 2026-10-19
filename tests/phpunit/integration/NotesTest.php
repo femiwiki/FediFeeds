@@ -67,6 +67,8 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		$this->assertStringStartsWith( '<p>Hello world.</p><p><a href="https://wiki.example.org/', $note['content'] );
 		$this->assertStringEndsWith( '">First post</a></p>', $note['content'] );
 		$this->assertStringStartsWith( 'https://wiki.example.org/', $note['url'] );
+		$this->assertStringEndsWith( 'utm_source=fediverse', $note['url'] );
+		$this->assertStringContainsString( 'href="' . htmlspecialchars( $note['url'] ) . '"', $note['content'] );
 		$this->assertSame( [ 'https://www.w3.org/ns/activitystreams#Public' ], $note['to'] );
 		$this->assertNotNull( $note['published'] );
 	}

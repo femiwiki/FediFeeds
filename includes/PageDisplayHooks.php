@@ -29,8 +29,8 @@ class PageDisplayHooks implements BeforePageDisplayHook {
 				$categories[] = $category;
 			}
 		}
-		$feed = $this->notes->getPublishingFeed( $categories );
 		$page = $this->pageStore->getPageById( $title->getArticleID() );
+		$feed = $page ? $this->notes->getPublishingFeed( $categories, $page->getId() ) : null;
 		if ( $feed && $page ) {
 			$out->addLink( [
 				'rel' => 'alternate',

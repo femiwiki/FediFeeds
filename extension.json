@@ -18,6 +18,17 @@
 		"main": {
 			"class": "MediaWiki\\Extension\\FediFeeds\\Hooks"
 		},
+		"delivery": {
+			"class": "MediaWiki\\Extension\\FediFeeds\\DeliveryHooks",
+			"services": [
+				"FediFeeds.Notes",
+				"FediFeeds.Items",
+				"FediFeeds.Followers",
+				"PageStore",
+				"ParserOutputAccess",
+				"JobQueueGroup"
+			]
+		},
 		"pageDisplay": {
 			"class": "MediaWiki\\Extension\\FediFeeds\\PageDisplayHooks",
 			"services": ["FediFeeds.Notes", "PageStore"]
@@ -29,6 +40,7 @@
 	"Hooks": {
 		"ParserFirstCallInit": "main",
 		"BeforePageDisplay": "pageDisplay",
+		"PageSaveComplete": "delivery",
 		"LoadExtensionSchemaUpdates": "schema"
 	},
 	"JobClasses": {
