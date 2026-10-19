@@ -109,6 +109,23 @@ class Notes {
 	 * @param string $itemId As in a note id, from getItemId()
 	 */
 	public function getItem( Feed $feed, string $itemId ): ?Item {
+		$recorded = $this->publishes( $feed ) ? $this->getRecordedItem( $feed, $itemId ) : null;
+		if ( $recorded === null ) {
+			return null;
+		}
+		$page = $this->pageStore->getPageById( $recorded['page'] );
+		return $page ? $this->getExistingItem( new Item( $page, $recorded['key'] ) ) : null;
+	}
+
+	/**
+	 * The page id and key of the item the id names, if the feed recorded it, whether or not the
+	 * item still exists or the feed still publishes.
+	 *
+	 * @param Feed $feed
+	 * @param string $itemId As in a note id, from getItemId()
+	 * @return array{page: int, key: string}|null
+	 */
+	public function getRecordedItem( Feed $feed, string $itemId ): ?array {
 		if ( $feed->kind === 'section' ) {
 			$key = self::decodeKey( $itemId );
 			$pageId = $feed->page->getId();
@@ -116,13 +133,10 @@ class Notes {
 			$key = '';
 			$pageId = preg_match( '/^[1-9][0-9]*$/D', $itemId ) ? (int)$itemId : null;
 		}
-		if ( $key === null || $pageId === null
-			|| !$this->publishes( $feed ) || !$this->items->has( $feed, $pageId, $key )
-		) {
+		if ( $key === null || $pageId === null || !$this->items->has( $feed, $pageId, $key ) ) {
 			return null;
 		}
-		$page = $this->pageStore->getPageById( $pageId );
-		return $page ? $this->getExistingItem( new Item( $page, $key ) ) : null;
+		return [ 'page' => $pageId, 'key' => $key ];
 	}
 
 	/**
@@ -169,13 +183,34 @@ class Notes {
 	 * @return array{0: Feed, 1: Item}|null
 	 */
 	public function findNote( string $noteId ): ?array {
+		[ $feed, $itemId ] = $this->parseNoteId( $noteId ) ?? [ null, '' ];
+		$item = $feed ? $this->getItem( $feed, $itemId ) : null;
+		return $feed && $item ? [ $feed, $item ] : null;
+	}
+
+	/**
+	 * The feed and the recorded item that a note id of this wiki names, as getRecordedItem().
+	 *
+	 * @return array{feed: Feed, page: int, key: string}|null
+	 */
+	public function resolveNoteId( string $noteId ): ?array {
+		[ $feed, $itemId ] = $this->parseNoteId( $noteId ) ?? [ null, '' ];
+		$recorded = $feed ? $this->getRecordedItem( $feed, $itemId ) : null;
+		return $feed && $recorded ? [ 'feed' => $feed ] + $recorded : null;
+	}
+
+	/**
+	 * The existing feed of a note id of this wiki, and the id's last part, from getItemId().
+	 *
+	 * @return array{0: Feed, 1: string}|null
+	 */
+	private function parseNoteId( string $noteId ): ?array {
 		if ( !preg_match( '#^(.+)/notes/([^/]+)$#D', $noteId, $m ) ) {
 			return null;
 		}
 		$handle = $this->actors->getHandleFromActorId( $m[1] );
 		$feed = $handle === null ? null : ( new FeedLookup( $this->pageStore ) )->getFeed( $handle );
-		$item = $feed ? $this->getItem( $feed, $m[2] ) : null;
-		return $feed && $item ? [ $feed, $item ] : null;
+		return $feed ? [ $feed, $m[2] ] : null;
 	}
 
 	public function getNote( Feed $feed, Item $item ): array {

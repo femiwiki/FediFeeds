@@ -9,6 +9,7 @@ use MediaWiki\Extension\FediFeeds\Followers;
 use MediaWiki\Extension\FediFeeds\Notes;
 use MediaWiki\Extension\FediFeeds\PurgeActorJob;
 use MediaWiki\Extension\FediFeeds\Quotes;
+use MediaWiki\Extension\FediFeeds\Reactions;
 use MediaWiki\Extension\FediFeeds\Signatures\HttpSignature;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
 use MediaWiki\JobQueue\JobQueueGroup;
@@ -33,6 +34,7 @@ class InboxHandler extends Handler {
 		private readonly Followers $followers,
 		private readonly Quotes $quotes,
 		private readonly JobQueueGroup $jobQueueGroup,
+		private readonly Reactions $reactions,
 	) {
 		$this->feedLookup = new FeedLookup( $pageLookup );
 	}
@@ -73,17 +75,21 @@ class InboxHandler extends Handler {
 				return $this->quoteRequest( $activity, $actor );
 			case 'Undo':
 				$object = $activity['object'] ?? null;
-				$feed = is_array( $object ) && ( $object['type'] ?? null ) === 'Follow'
-					? $this->getFeed( $object['object'] ?? null ) : null;
+				$objectType = is_array( $object ) ? ( $object['type'] ?? null ) : null;
+				$feed = $objectType === 'Follow' ? $this->getFeed( $object['object'] ?? null ) : null;
 				if ( $feed ) {
 					$this->followers->remove( $feed, $actor );
 				}
 				// A withdrawn quote request, given as itself or by its id
 				$request = self::getId( $object );
 				if ( !$feed && $request !== null
-					&& ( !is_array( $object ) || ( $object['type'] ?? null ) === 'QuoteRequest' )
+					&& ( !is_array( $object ) || $objectType === 'QuoteRequest' )
 				) {
 					$this->quotes->removeByRequest( $actor, $request );
+				}
+				// A withdrawn Like or Announce, given as itself or by its id
+				if ( !$feed && ( $objectType === null || isset( Reactions::ACTIVITY_TYPES[$objectType] ) ) ) {
+					$this->undoReaction( $object, $actor );
 				}
 				return $this->accepted();
 			case 'Delete':
@@ -94,9 +100,56 @@ class InboxHandler extends Handler {
 				}
 				return $this->accepted();
 			default:
-				// Likes, boosts, replies and the rest are taken and dropped
+				if ( isset( Reactions::ACTIVITY_TYPES[$activity['type']] ) ) {
+					$this->react( $activity, $actor );
+				}
+				// Replies and the rest are taken and dropped, as are reactions to what is not ours
 				return $this->accepted();
 		}
+	}
+
+	/**
+	 * Records the signer's Like or Announce of one of our notes.
+	 *
+	 * @param array $activity A Like, an emoji reaction or an Announce
+	 * @param string $actor The signer
+	 */
+	private function react( array $activity, string $actor ): void {
+		$item = $this->getReactedItem( $activity );
+		if ( $item ) {
+			$this->reactions->add( $item['feed'], $item['page'], $item['key'],
+				Reactions::ACTIVITY_TYPES[$activity['type']], $actor, self::getId( $activity['id'] ?? null ) ?? '' );
+		}
+	}
+
+	/**
+	 * Removes the signer's reaction that an Undo names, by the activity's id, or else by its
+	 * kind and object when the Undo carries them.
+	 *
+	 * @param mixed $undone The undone activity or its id
+	 * @param string $actor The signer, which is the only actor whose reaction this can touch
+	 */
+	private function undoReaction( mixed $undone, string $actor ): void {
+		$activityId = self::getId( $undone );
+		if ( $activityId !== null && $this->reactions->removeByActivity( $actor, $activityId ) ) {
+			return;
+		}
+		$type = is_array( $undone ) ? Reactions::ACTIVITY_TYPES[$undone['type'] ?? ''] ?? null : null;
+		$item = $type !== null ? $this->getReactedItem( $undone ) : null;
+		if ( $item && $type !== null ) {
+			$this->reactions->remove( $item['feed'], $item['page'], $item['key'], $type, $actor );
+		}
+	}
+
+	/**
+	 * The recorded item whose note a reaction is to, if it is ours.
+	 *
+	 * @param array $activity
+	 * @return array{feed: Feed, page: int, key: string}|null
+	 */
+	private function getReactedItem( array $activity ): ?array {
+		$noteId = self::getId( $activity['object'] ?? null );
+		return $noteId === null ? null : $this->notes->resolveNoteId( $noteId );
 	}
 
 	private function follow( array $activity, string $actor ): Response {
@@ -192,7 +245,8 @@ class InboxHandler extends Handler {
 	 * Delete is worth verifying.
 	 */
 	private function isKnown( string $actor ): bool {
-		return $this->followers->isFollower( $actor ) || $this->quotes->isQuoter( $actor );
+		return $this->followers->isFollower( $actor ) || $this->quotes->isQuoter( $actor )
+			|| $this->reactions->isReactor( $actor );
 	}
 
 	private function purgeActor( string $actor, string $signature, bool $check ): Response {

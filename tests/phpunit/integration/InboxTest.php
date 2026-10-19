@@ -6,8 +6,10 @@ use GuzzleHttp\Psr7\Uri;
 use MediaWiki\Extension\FediFeeds\DeliveryJob;
 use MediaWiki\Extension\FediFeeds\Feed;
 use MediaWiki\Extension\FediFeeds\Followers;
+use MediaWiki\Extension\FediFeeds\Item;
 use MediaWiki\Extension\FediFeeds\PurgeActorJob;
 use MediaWiki\Extension\FediFeeds\Quotes;
+use MediaWiki\Extension\FediFeeds\Reactions;
 use MediaWiki\Extension\FediFeeds\Rest\FeedInboxHandler;
 use MediaWiki\Extension\FediFeeds\Rest\FollowersHandler;
 use MediaWiki\Extension\FediFeeds\Rest\InboxHandler;
@@ -19,6 +21,7 @@ use MediaWiki\Rest\LocalizedHttpException;
 use MediaWiki\Rest\RequestData;
 use MediaWiki\Tests\Rest\Handler\HandlerTestTrait;
 use MediaWikiIntegrationTestCase;
+use MockHttpTrait;
 use RuntimeException;
 use StatusValue;
 use Wikimedia\ObjectCache\HashBagOStuff;
@@ -32,11 +35,14 @@ use Wikimedia\ObjectCache\WANObjectCache;
  * @covers \MediaWiki\Extension\FediFeeds\Followers
  * @covers \MediaWiki\Extension\FediFeeds\PurgeActorJob
  * @covers \MediaWiki\Extension\FediFeeds\Quotes
+ * @covers \MediaWiki\Extension\FediFeeds\Reactions
+ * @covers \MediaWiki\Extension\FediFeeds\Notes
  * @covers \MediaWiki\Extension\FediFeeds\Signatures\GoneActors
  * @group Database
  */
 class InboxTest extends MediaWikiIntegrationTestCase {
 	use HandlerTestTrait;
+	use MockHttpTrait;
 
 	private const REMOTE = 'https://remote.example/users/a';
 	private const POST = 'https://remote.example/users/a/statuses/1';
@@ -93,6 +99,10 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		return $this->getServiceContainer()->getService( 'FediFeeds.Quotes' );
 	}
 
+	private function getReactions(): Reactions {
+		return $this->getServiceContainer()->getService( 'FediFeeds.Reactions' );
+	}
+
 	private function newCategory(): Feed {
 		$this->editPage( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
 		$this->runDeferredUpdates();
@@ -105,7 +115,8 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$class = $handle === null ? InboxHandler::class : FeedInboxHandler::class;
 		return $this->executeHandler(
 			new $class( $services->getService( 'FediFeeds.Notes' ), $services->getPageStore(),
-				$this->newRemoteKeys(), $this->getFollowers(), $this->getQuotes(), $services->getJobQueueGroup() ),
+				$this->newRemoteKeys(), $this->getFollowers(), $this->getQuotes(), $services->getJobQueueGroup(),
+				$this->getReactions() ),
 			new RequestData( [
 				'method' => 'POST',
 				'uri' => new Uri( "https://fedi.example.org/rest.php/fedifeeds/actors/$path" ),
@@ -269,6 +280,174 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$like = [ 'type' => 'Like', 'actor' => self::REMOTE, 'object' => 'https://fedi.example.org/actors/x/notes/1' ];
 		$this->assertSame( 202, $this->post( $like, $feed->getHandle() )->getStatusCode() );
 		$this->assertSame( 0, $this->getFollowers()->count( $feed ) );
+	}
+
+	/**
+	 * A category feed with one recorded item, and the item's note id.
+	 *
+	 * @return array{0: Feed, 1: int, 2: string}
+	 */
+	private function newItemNote(): array {
+		$feed = $this->newCategory();
+		$page = $this->getExistingTestPage( 'Post' );
+		$services = $this->getServiceContainer();
+		$services->getService( 'FediFeeds.Items' )->add( $feed, $page->getId(), '20261019000000' );
+		$noteId = $services->getService( 'FediFeeds.Notes' )->getNoteId(
+			$feed, new Item( $services->getPageStore()->getPageById( $page->getId() ) ) );
+		return [ $feed, $page->getId(), $noteId ];
+	}
+
+	private static function newReaction( string $type, mixed $object, string $actor = self::REMOTE ): array {
+		return [
+			'id' => "$actor#" . strtolower( $type ) . '/1',
+			'type' => $type,
+			'actor' => $actor,
+			'object' => $object,
+		];
+	}
+
+	private function countReactions( int $pageId ): array {
+		return $this->getReactions()->countForPage( $pageId );
+	}
+
+	public function testLikeAndAnnounceAreRecorded() {
+		[ $feed, $pageId, $noteId ] = $this->newItemNote();
+		$this->assertSame( 202, $this->post( self::newReaction( 'Like', $noteId ), null )->getStatusCode() );
+		// An Announce may embed the note rather than name it
+		$announce = self::newReaction( 'Announce', [ 'id' => $noteId, 'type' => 'Note' ] );
+		$this->assertSame( 202, $this->post( $announce, $feed->getHandle() )->getStatusCode() );
+		$this->assertSame( [ 'like' => 1, 'announce' => 1 ], $this->countReactions( $pageId ) );
+		$this->newSelectQueryBuilder()
+			->select( [ 'fr_actor', 'fr_activity' ] )
+			->from( 'fedifeeds_reaction' )
+			->orderBy( 'fr_activity' )
+			->assertResultSet( [
+				[ self::REMOTE, self::REMOTE . '#announce/1' ],
+				[ self::REMOTE, self::REMOTE . '#like/1' ],
+			] );
+	}
+
+	public function testEmojiReactionsCountAsLikes() {
+		[ , $pageId, $noteId ] = $this->newItemNote();
+		// A Like with content, and an EmojiReact
+		$this->post( self::newReaction( 'Like', $noteId ) + [ 'content' => '🎉' ], null );
+		$this->keys['signer'] = 'https://other.example/users/b';
+		$this->post( self::newReaction( 'EmojiReact', $noteId, 'https://other.example/users/b' )
+			+ [ 'content' => '👍' ], null );
+		$this->assertSame( [ 'like' => 2, 'announce' => 0 ], $this->countReactions( $pageId ) );
+	}
+
+	public function testDuplicatesCountOnce() {
+		[ , $pageId, $noteId ] = $this->newItemNote();
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		$this->post( self::newReaction( 'EmojiReact', $noteId ) + [ 'content' => '👍' ], null );
+		$this->post( self::newReaction( 'Announce', $noteId ), null );
+		$this->post( self::newReaction( 'Announce', $noteId ), null );
+		$this->assertSame( [ 'like' => 1, 'announce' => 1 ], $this->countReactions( $pageId ) );
+	}
+
+	public function testUndoRemovesTheReaction() {
+		[ , $pageId, $noteId ] = $this->newItemNote();
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		$this->post( self::newReaction( 'Announce', $noteId ), null );
+		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE, 'object' => self::newReaction( 'Like', $noteId ) ];
+		$this->assertSame( 202, $this->post( $undo, null )->getStatusCode() );
+		$this->assertSame( [ 'like' => 0, 'announce' => 1 ], $this->countReactions( $pageId ) );
+		// Named by its id only
+		$undo['object'] = self::REMOTE . '#announce/1';
+		$this->post( $undo, null );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+	}
+
+	public function testUndoFallsBackToTheKindAndObject() {
+		[ , $pageId, $noteId ] = $this->newItemNote();
+		$like = self::newReaction( 'Like', $noteId );
+		unset( $like['id'] );
+		$this->post( $like, null );
+		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE,
+			'object' => [ 'id' => self::REMOTE . '#other', 'type' => 'Like', 'object' => $noteId ] ];
+		$this->post( $undo, null );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+	}
+
+	public function testUndoTouchesOnlyTheSignersReaction() {
+		[ , $pageId, $noteId ] = $this->newItemNote();
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		$this->keys['signer'] = 'https://other.example/users/b';
+		$undo = [
+			'type' => 'Undo',
+			'actor' => 'https://other.example/users/b',
+			'object' => self::newReaction( 'Like', $noteId ),
+		];
+		$this->post( $undo, null );
+		$this->assertSame( [ 'like' => 1, 'announce' => 0 ], $this->countReactions( $pageId ) );
+	}
+
+	public function testReactionsToWhatIsNotOursAreDropped() {
+		[ $feed, $pageId, $noteId ] = $this->newItemNote();
+		$objects = [
+			'https://remote.example/notes/1',
+			// Our actor, but no item it recorded
+			'https://fedi.example.org/actors/' . $feed->getHandle() . '/notes/' . ( $pageId + 1000 ),
+			'https://fedi.example.org/actors/category_999999/notes/' . $pageId,
+			$noteId . '/activity',
+			null,
+		];
+		foreach ( $objects as $object ) {
+			$this->assertSame( 202, $this->post( self::newReaction( 'Like', $object ), null )->getStatusCode() );
+		}
+		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+	}
+
+	public function testReactionWithABadSignature() {
+		[ , $pageId, $noteId ] = $this->newItemNote();
+		$this->keys['signer'] = 'https://other.example/users/b';
+		$this->assertSame( 401, $this->post( self::newReaction( 'Like', $noteId ), null )->getStatusCode() );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+	}
+
+	private function runPurgeJobs(): void {
+		$this->runDeferredUpdates();
+		$this->runJobs( [ 'minJobs' => 0 ], [ 'type' => PurgeActorJob::TYPE ] );
+	}
+
+	public function testDeleteOfAReactorPurgesItsReactions() {
+		[ , $pageId, $noteId ] = $this->newItemNote();
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		$this->post( self::newReaction( 'Like', $noteId, 'https://other.example/users/b' ), null );
+		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ];
+		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
+		$this->runPurgeJobs();
+		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+	}
+
+	public function testUnverifiedDeleteOfAReactorPurgesOnlyWhenTheActorIsGone() {
+		[ , $pageId, $noteId ] = $this->newItemNote();
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		// The key went with the actor
+		$this->keys['signer'] = null;
+		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ];
+
+		$this->installMockHttp( $this->makeFakeHttpRequest( '{}', 200 ) );
+		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
+		$this->runPurgeJobs();
+		$this->assertSame( [ 'like' => 1, 'announce' => 0 ], $this->countReactions( $pageId ) );
+
+		$this->installMockHttp( $this->makeFakeHttpRequest( '', 410 ) );
+		$this->post( $delete, null );
+		$this->runPurgeJobs();
+		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+	}
+
+	public function testDeleteOfSomethingElseKeepsTheReactions() {
+		[ , $pageId, $noteId ] = $this->newItemNote();
+		$this->post( self::newReaction( 'Like', $noteId ), null );
+		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE,
+			'object' => [ 'id' => 'https://remote.example/notes/9', 'type' => 'Tombstone' ] ];
+		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
+		$this->runPurgeJobs();
+		$this->assertSame( [ 'like' => 1, 'announce' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	public function testFollowOfNoFeed() {

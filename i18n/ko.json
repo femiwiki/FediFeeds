@@ -7,5 +7,8 @@
 	"fedifeeds-summary-section": "$1에 새로 생기는 문단",
 	"fedifeeds-rest-no-feed": "$1(이)라는 피드가 없습니다.",
 	"fedifeeds-rest-no-note": "$1에 노트가 없습니다.",
-	"fedifeeds-rest-no-quote-authorization": "$1에 인용 허가가 없습니다."
+	"fedifeeds-rest-no-quote-authorization": "$1에 인용 허가가 없습니다.",
+	"fedifeeds-info-announces": "연합우주에서 공유",
+	"fedifeeds-info-likes": "연합우주에서 좋아요",
+	"fedifeeds-info-times": "$1회"
 }

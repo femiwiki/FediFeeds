@@ -188,5 +188,76 @@
 			}
 		],
 		"pk": ["fq_id"]
+	},
+	{
+		"name": "fedifeeds_reaction",
+		"comment": "Likes and Announces of the notes of a feed's items, one per remote actor, item and kind",
+		"columns": [
+			{
+				"name": "fr_id",
+				"type": "integer",
+				"options": { "unsigned": true, "notnull": true, "autoincrement": true }
+			},
+			{
+				"name": "fr_feed",
+				"comment": "Handle of the feed, such as category_4521",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "fr_page",
+				"comment": "Page id of the item",
+				"type": "integer",
+				"options": { "unsigned": true, "notnull": true }
+			},
+			{
+				"name": "fr_key",
+				"comment": "The item's key, as fi_key: empty for a category item",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255, "default": "" }
+			},
+			{
+				"name": "fr_type",
+				"comment": "like, for a Like or an emoji reaction, or announce, for an Announce",
+				"type": "binary",
+				"options": { "notnull": true, "length": 16 }
+			},
+			{
+				"name": "fr_actor",
+				"comment": "Id of the remote actor, so that each actor counts once and its Undo or Delete finds its rows",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "fr_activity",
+				"comment": "Id of the Like or Announce, which an Undo may name it by; empty when it had none that fits",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255, "default": "" }
+			},
+			{
+				"name": "fr_timestamp",
+				"comment": "When the reaction was received",
+				"type": "mwtimestamp",
+				"options": { "notnull": true }
+			}
+		],
+		"indexes": [
+			{
+				"name": "fr_feed_page_key_type_actor",
+				"columns": ["fr_feed", "fr_page", "fr_key", "fr_type", "fr_actor"],
+				"unique": true
+			},
+			{
+				"name": "fr_actor_activity",
+				"columns": ["fr_actor", "fr_activity"],
+				"unique": false
+			},
+			{
+				"name": "fr_page_type",
+				"columns": ["fr_page", "fr_type"],
+				"unique": false
+			}
+		],
+		"pk": ["fr_id"]
 	}
 ]

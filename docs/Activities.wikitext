@@ -47,11 +47,14 @@ The outbox is an <code>OrderedCollection</code> of <code>Create</code> activitie
 <!--T:4-->
 == Received ==
 * <code>Follow</code> is accepted and stored against the feed it names. <code>Undo</code> of a <code>Follow</code> removes it.
-* <code>Like</code>, <code>Announce</code> and their <code>Undo</code> are accepted and dropped.
+* <code>Like</code> and <code>Announce</code> of one of our notes are stored against its item, once per actor, item and kind. A <code>Like</code> with <code>content</code> and an <code>EmojiReact</code> count as likes. <code>Undo</code> of one removes it. Those of anything else are accepted and dropped.
 * Replies, meaning a <code>Create</code> whose <code>inReplyTo</code> is one of our notes, are accepted and dropped.
 * <code>QuoteRequest</code> for one of our notes is authorized. <code>Undo</code> of it, or <code>Delete</code> of the quoting post, removes the authorization.
-* A <code>Delete</code> for an actor that neither follows nor quotes anything is dropped before its signature is checked.
-* A <code>Delete</code> of the actor itself, given by its id or as a <code>Tombstone</code> with that id, removes what the actor left: its follows of every feed, its quote authorizations and its cached key. A job does it after the answer. An account that deleted itself no longer serves its key, so when the signature does not verify, the job first fetches the actor and goes ahead only if that answers 404 or 410, as Mastodon does.
+* A <code>Delete</code> for an actor that neither follows, quotes, likes nor shares anything is dropped before its signature is checked.
+* A <code>Delete</code> of the actor itself, given by its id or as a <code>Tombstone</code> with that id, removes what the actor left: its follows of every feed, its quote authorizations, its likes and shares and its cached key. A job does it after the answer. An account that deleted itself no longer serves its key, so when the signature does not verify, the job first fetches the actor and goes ahead only if that answers 404 or 410, as Mastodon does.
+
+<!--T:18-->
+A stored like or share keeps the feed, the item, the actor's id and the activity's id, so that each actor counts once and an <code>Undo</code> or <code>Delete</code> finds it. An <code>Undo</code> is matched by the undone activity's id, or else by its kind and object. Only totals are shown: a page with any item shows on its <code>action=info</code>, such as <code>https://wiki.example.org/index.php?title=Post&action=info</code>, how many times the notes of all its items were announced and liked.
 
 <!--T:5-->
 Every other request is verified by HTTP signature. Remote keys are cached, because without a cache each request holds a PHP worker while it fetches a key from another server.

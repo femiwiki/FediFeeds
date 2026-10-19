@@ -44,3 +44,21 @@ CREATE TABLE /*_*/fedifeeds_quote (
 CREATE UNIQUE INDEX fq_post_feed ON /*_*/fedifeeds_quote (fq_post, fq_feed);
 
 CREATE INDEX fq_actor_request ON /*_*/fedifeeds_quote (fq_actor, fq_request);
+
+
+CREATE TABLE /*_*/fedifeeds_reaction (
+  fr_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  fr_feed BLOB NOT NULL, fr_page INTEGER UNSIGNED NOT NULL,
+  fr_key BLOB DEFAULT '' NOT NULL, fr_type BLOB NOT NULL,
+  fr_actor BLOB NOT NULL, fr_activity BLOB DEFAULT '' NOT NULL,
+  fr_timestamp BLOB NOT NULL
+);
+
+CREATE UNIQUE INDEX fr_feed_page_key_type_actor ON /*_*/fedifeeds_reaction (
+  fr_feed, fr_page, fr_key, fr_type,
+  fr_actor
+);
+
+CREATE INDEX fr_actor_activity ON /*_*/fedifeeds_reaction (fr_actor, fr_activity);
+
+CREATE INDEX fr_page_type ON /*_*/fedifeeds_reaction (fr_page, fr_type);

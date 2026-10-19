@@ -7,5 +7,8 @@
 	"fedifeeds-summary-section": "New sections of $1.",
 	"fedifeeds-rest-no-feed": "There is no feed named $1.",
 	"fedifeeds-rest-no-note": "There is no note at $1.",
-	"fedifeeds-rest-no-quote-authorization": "There is no quote authorization at $1."
+	"fedifeeds-rest-no-quote-authorization": "There is no quote authorization at $1.",
+	"fedifeeds-info-announces": "Announced in the fediverse",
+	"fedifeeds-info-likes": "Liked in the fediverse",
+	"fedifeeds-info-times": "$1 {{PLURAL:$1|time|times}}"
 }

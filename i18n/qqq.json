@@ -7,5 +7,8 @@
 	"fedifeeds-summary-section": "Summary of the Fediverse account that follows the new sections of a page.\n\nParameters:\n* $1 - the page's title, with namespace",
 	"fedifeeds-rest-no-feed": "Error from the REST API when a handle or WebFinger resource names no feed.\n\nParameters:\n* $1 - the handle or resource asked for",
 	"fedifeeds-rest-no-note": "Error from the REST API when a note path names no item of a feed that publishes notes.\n\nParameters:\n* $1 - the path asked for, such as category_4521/notes/88",
-	"fedifeeds-rest-no-quote-authorization": "Error from the REST API when a path names no quote authorization of a feed, for example because the quote was withdrawn.\n\nParameters:\n* $1 - the path asked for, such as category_4521/quote_authorizations/3"
+	"fedifeeds-rest-no-quote-authorization": "Error from the REST API when a path names no quote authorization of a feed, for example because the quote was withdrawn.\n\nParameters:\n* $1 - the path asked for, such as category_4521/quote_authorizations/3",
+	"fedifeeds-info-announces": "Label on action=info of a page that is an item of a feed. Its value, {{msg-mw|fedifeeds-info-times}}, is how many Announces the notes of the page's items got from remote actors, across every feed.\n\nSee also:\n* {{msg-mw|fedifeeds-info-likes}}",
+	"fedifeeds-info-likes": "Label on action=info of a page that is an item of a feed. Its value, {{msg-mw|fedifeeds-info-times}}, is how many Likes, emoji reactions included, the notes of the page's items got from remote actors, across every feed.\n\nSee also:\n* {{msg-mw|fedifeeds-info-announces}}",
+	"fedifeeds-info-times": "Value of {{msg-mw|fedifeeds-info-announces}} and {{msg-mw|fedifeeds-info-likes}} on action=info.\n\nParameters:\n* $1 - the number, formatted"
 }
