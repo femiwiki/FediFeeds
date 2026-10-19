@@ -336,11 +336,23 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 		<ul id="toc-Received-sublist" class="vector-toc-list">
 		</ul>
 	</li>
+	<li id="toc-Turning_interactions_off"
+		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="#Turning_interactions_off">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">6</span>
+				<span>Turning interactions off</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Turning_interactions_off-sublist" class="vector-toc-list">
+		</ul>
+	</li>
 	<li id="toc-Signatures"
 		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
 		<a class="vector-toc-link" href="#Signatures">
 			<div class="vector-toc-text">
-				<span class="vector-toc-numb">6</span>
+				<span class="vector-toc-numb">7</span>
 				<span>Signatures</span>
 			</div>
 		</a>
@@ -580,6 +592,13 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 </p><p>Every other request is verified by HTTP signature. Remote keys are cached, because without a cache each request holds a PHP worker while it fetches a key from another server.
 </p><p>Each actor's inbox and the shared inbox take the same activities. They answer 202 to what they accept and to what they drop alike, and 401 when the signature does not verify or the activity's <code>actor</code> is not the signer, except to a <code>Delete</code> of the actor itself. An accepted <code>Follow</code> or <code>QuoteRequest</code> is answered with an <code>Accept</code> sent to the sender's shared inbox, or else its inbox. The <code>followers</code> collection shows only <code>totalItems</code>, so who follows a feed stays private.
 </p>
+<div class="mw-heading mw-heading2"><h2 id="Turning_interactions_off">Turning interactions off</h2></div>
+<p>Likes, shares and quotes are taken only when <code>$wgFediFeedsInteractions</code> is true. It is false by default, so a wiki can publish feeds before its privacy policy covers the accounts that interact with notes. While it is false:
+</p>
+<ul><li><code>Like</code>, <code>EmojiReact</code> and <code>Announce</code> are answered with 202 and dropped. Nothing about them or their actors is stored, and no actor is fetched for them.</li>
+<li>Notes have no <code>interactionPolicy</code>, which Mastodon reads as nobody but the author may quote. A <code>QuoteRequest</code> for one of our notes is answered with a <code>Reject</code>, so the quoting server does not leave the quote pending, and nothing is stored.</li>
+<li><code>action=info</code> shows no reactions, and <code>Special:FediFeedsReactions</code> only says that reactions are not recorded.</li>
+<li>Follows, deliveries, notes, the outbox and the feeds work as they do when it is true. An <code>Undo</code> or <code>Delete</code> still removes a like, a share or a quote authorization stored while it was true.</li></ul>
 <div class="mw-heading mw-heading2"><h2 id="Signatures">Signatures</h2></div>
 <p>Requests are signed and verified as Mastodon does, with <a rel="nofollow" class="external text" href="https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12">draft-cavage-http-signatures-12</a>:
 </p>
@@ -602,7 +621,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 19 October 2026, at 17:41.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 19 October 2026, at 23:05.</li>
 </ul>
 
 	<ul id="footer-places">
