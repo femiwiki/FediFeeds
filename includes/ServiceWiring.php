@@ -23,7 +23,7 @@ return [
 	'FediFeeds.Notes' => static function ( MediaWikiServices $services ): Notes {
 		return new Notes(
 			new Actors( $services->getMainConfig(), $services->getTitleFormatter(),
-				RequestContext::getMain(), $services->getPageProps() ),
+				RequestContext::getMain(), $services->getPageProps(), $services->getRepoGroup() ),
 			$services->getService( 'FediFeeds.Items' ),
 			$services->getPageStore(),
 			$services->getPageProps(),

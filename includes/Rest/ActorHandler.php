@@ -7,6 +7,7 @@ use MediaWiki\Context\RequestContext;
 use MediaWiki\Extension\FediFeeds\Actors;
 use MediaWiki\Extension\FediFeeds\FeedLookup;
 use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
+use MediaWiki\FileRepo\RepoGroup;
 use MediaWiki\Page\PageLookup;
 use MediaWiki\Page\PageProps;
 use MediaWiki\Rest\LocalizedHttpException;
@@ -30,8 +31,9 @@ class ActorHandler extends SimpleHandler {
 		TitleFormatter $titleFormatter,
 		PageProps $pageProps,
 		private readonly LocalKeyStore $localKeyStore,
+		RepoGroup $repoGroup,
 	) {
-		$this->actors = new Actors( $config, $titleFormatter, RequestContext::getMain(), $pageProps );
+		$this->actors = new Actors( $config, $titleFormatter, RequestContext::getMain(), $pageProps, $repoGroup );
 		$this->feedLookup = new FeedLookup( $pageLookup );
 	}
 

@@ -26,7 +26,7 @@
 * 종류를 앞에 두었기 때문에 <code>category</code>로 검색하면 분류 피드가 한데 모여 나옵니다.
 * 핸들은 위키의 호스트를 쓰고, 액터는 모든 피드가 <code>fedi.example.org</code> 같은 호스트 한 곳을 함께 씁니다. 종류마다 호스트를 따로 두어도 되기는 하지만, 다른 서버는 호스트 하나하나를 별개의 인스턴스로 봅니다. 액터를 위키 호스트 밖에 두면 위키 쿠키가 그 요청에 실리지 않습니다.
 
-<!--T:7 @8c9e90cf-->
+<!--T:7 @6c76959b-->
 == 액터 ==
 {| class="wikitable"
 ! 속성 !! 값
@@ -43,20 +43,21 @@
 |-
 | <code>url</code> || 위키의 해당 문서
 |-
-| <code>icon</code> || 위키를 나타내는 <code>Image</code>로, 터치 아이콘이나 로고처럼 모든 피드가 같은 것을 씁니다. 마스토돈은 SVG 아바타를 보여 주지 않으므로 PNG 같은 래스터 이미지만 씁니다. 위키에 그런 이미지가 없으면 넣지 않습니다
+| <code>icon</code> || <code>Image</code>. 문서가 그 종류에 정한 [[#Display name|아이콘]]의 래스터 섬네일이고, 없으면 모든 종류에 정한 아이콘의 섬네일입니다. 정한 아이콘이 없거나 그 파일이 없거나 섬네일을 만들 수 없으면, 터치 아이콘이나 로고처럼 위키를 나타내는 이미지를 모든 피드가 함께 씁니다. 이때는 마스토돈이 SVG 아바타를 보여 주지 않으므로 PNG 같은 래스터 이미지만 씁니다. 위키에 그런 이미지가 없으면 넣지 않습니다
 |-
 | <code>inbox</code>, <code>outbox</code>, <code>followers</code> || 액터 id 아래. 예: <code>&lt;actor id&gt;/inbox</code>
 |-
 | <code>publicKey</code> || [[#Keys|키]] 참고
 |}
 
-<!--T:10 @f6eff555-->
+<!--T:10 @6f85a672-->
 <span id="Display_name"></span>
 == 표시 이름 ==
 팔로하는 문서는 자기 위키텍스트에 매직 워드를 넣어 표시 이름을 정합니다.
 * <code><nowiki>{{FEDIFEEDSNAME:</nowiki>&lt;name&gt;}}</code>는 그 문서의 모든 피드에 적용됩니다.
 * <code><nowiki>{{FEDIFEEDSNAME:</nowiki>&lt;name&gt;|&lt;kind&gt;}}</code>는 그 종류에만 적용되고, 종류를 적지 않은 형식보다 우선합니다. 문단으로도 팔로하는 분류 문서는 이렇게 두 피드에 이름을 따로 붙일 수 있습니다.
 * n이 1에서 6 사이인 <code>section-unit=&lt;n&gt;</code>은 그 문서 <code>section</code> 피드의 [[<tvar name="2">Special:MyLanguage/Feed kinds#section</tvar>|단위]]를 정합니다. 등호가 이만큼인 제목 하나하나가 노트 하나입니다. 종류 앞에 써도 되고 뒤에 써도 됩니다.
+* <code>icon=&lt;file&gt;</code>은 액터의 <code>icon</code>을 그 파일의 너비 400픽셀 섬네일로 정합니다. 파일 이름공간은 붙여도 되고 빼도 됩니다. 예: <code><nowiki>{{FEDIFEEDSNAME:Dev blog|icon=File:Example.png}}</nowiki></code>. SVG 파일의 섬네일은 PNG이므로 SVG 파일도 쓸 수 있습니다. 이름과 같은 피드에 적용되고, 어느 자리에 써도 되며, 파일의 사용 목록에 그 문서가 나옵니다. 이름을 정하지 않는 호출은 아이콘도 정하지 않습니다.
 * 이름은 일반 텍스트이고 마크업은 버립니다. 이름이 비었거나 종류가 [[<tvar name="1">Special:MyLanguage/Feed kinds</tvar>|종류 목록]]에 없으면 아무것도 정하지 않습니다. 문서가 같은 것을 두 번 정하면 뒤의 것을 씁니다.
 
 <!--T:11 @9c509ef3-->
