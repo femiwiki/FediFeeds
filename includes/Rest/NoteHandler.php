@@ -40,7 +40,7 @@ class NoteHandler extends SimpleHandler {
 			);
 		}
 		return $this->getResponseFactory()->createJson(
-			[ '@context' => 'https://www.w3.org/ns/activitystreams' ] + $this->notes->getNote( $feed, $found ),
+			[ '@context' => Notes::CONTEXT ] + $this->notes->getNote( $feed, $found ),
 			Actors::CONTENT_TYPE
 		);
 	}

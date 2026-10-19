@@ -113,7 +113,7 @@ class DeliveryHooks implements PageSaveCompleteHook {
 			return;
 		}
 		$actorId = $this->notes->actors->getActorId( $feed->getHandle() );
-		$activity = [ '@context' => 'https://www.w3.org/ns/activitystreams' ]
+		$activity = [ '@context' => Notes::CONTEXT ]
 			+ $this->notes->getCreate( $feed, $item );
 		$jobs = [];
 		foreach ( $inboxes as $inbox ) {

@@ -80,6 +80,12 @@
 			"services": ["FediFeeds.Notes", "PageStore"]
 		},
 		{
+			"path": "/fedifeeds/actors/{handle}/quote_authorizations/{id}",
+			"method": "GET",
+			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\QuoteAuthorizationHandler",
+			"services": ["FediFeeds.Notes", "PageStore", "FediFeeds.Quotes"]
+		},
+		{
 			"path": "/fedifeeds/actors/{handle}/outbox",
 			"method": "GET",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\OutboxHandler",
@@ -100,6 +106,7 @@
 				"PageStore",
 				"FediFeeds.RemoteKeys",
 				"FediFeeds.Followers",
+				"FediFeeds.Quotes",
 				"JobQueueGroup"
 			]
 		},
@@ -112,6 +119,7 @@
 				"PageStore",
 				"FediFeeds.RemoteKeys",
 				"FediFeeds.Followers",
+				"FediFeeds.Quotes",
 				"JobQueueGroup"
 			]
 		}

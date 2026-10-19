@@ -73,6 +73,29 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		$this->assertNotNull( $note['published'] );
 	}
 
+	private static function assertQuotable( array $note, array $context ) {
+		// The shape Mastodon reads: anyone may quote, approved automatically
+		self::assertSame(
+			[ 'canQuote' => [ 'automaticApproval' => [ 'https://www.w3.org/ns/activitystreams#Public' ] ] ],
+			$note['interactionPolicy']
+		);
+		self::assertSame( 'https://www.w3.org/ns/activitystreams', $context[0] );
+		self::assertSame( 'https://gotosocial.org/ns#', $context[1]['gts'] );
+		foreach ( [ 'interactionPolicy', 'canQuote', 'automaticApproval' ] as $term ) {
+			self::assertSame( [ '@id' => "gts:$term", '@type' => '@id' ], $context[1][$term] );
+		}
+	}
+
+	public function testNoteMayBeQuoted() {
+		$cat = $this->savePage( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
+		$post = $this->savePage( 'First post', "Hello.\n\n[[Category:Posts]]" );
+		$note = json_decode( $this->executeNote( "category_$cat", $post )->getBody(), true );
+		self::assertQuotable( $note, $note['@context'] );
+
+		$outbox = $this->getOutbox( "category_$cat" );
+		self::assertQuotable( $outbox['orderedItems'][0]['object'], $outbox['@context'] );
+	}
+
 	public function testNoNoteFromAFeedWithoutADisplayName() {
 		$cat = $this->savePage( 'Category:Maintenance', 'Pages to fix.' );
 		$post = $this->savePage( 'Broken page', "Text.\n\n[[Category:Maintenance]]" );

@@ -7,6 +7,7 @@ use MediaWiki\Extension\FediFeeds\Feed;
 use MediaWiki\Extension\FediFeeds\FeedLookup;
 use MediaWiki\Extension\FediFeeds\Followers;
 use MediaWiki\Extension\FediFeeds\Notes;
+use MediaWiki\Extension\FediFeeds\Quotes;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
 use MediaWiki\JobQueue\JobQueueGroup;
 use MediaWiki\Page\PageLookup;
@@ -28,6 +29,7 @@ class InboxHandler extends Handler {
 		PageLookup $pageLookup,
 		private readonly RemoteKeys $remoteKeys,
 		private readonly Followers $followers,
+		private readonly Quotes $quotes,
 		private readonly JobQueueGroup $jobQueueGroup,
 	) {
 		$this->feedLookup = new FeedLookup( $pageLookup );
@@ -44,7 +46,9 @@ class InboxHandler extends Handler {
 		if ( $actor === null || !is_string( $activity['type'] ?? null ) ) {
 			return $this->getResponseFactory()->createHttpError( 400, [ 'message' => 'Not an activity' ] );
 		}
-		if ( $activity['type'] === 'Delete' && !$this->followers->isFollower( $actor ) ) {
+		if ( $activity['type'] === 'Delete'
+			&& !$this->followers->isFollower( $actor ) && !$this->quotes->isQuoter( $actor )
+		) {
 			return $this->accepted();
 		}
 
@@ -59,12 +63,30 @@ class InboxHandler extends Handler {
 		switch ( $activity['type'] ) {
 			case 'Follow':
 				return $this->follow( $activity, $actor );
+			case 'QuoteRequest':
+				return $this->quoteRequest( $activity, $actor );
 			case 'Undo':
-				$follow = $activity['object'] ?? null;
-				$feed = is_array( $follow ) && ( $follow['type'] ?? null ) === 'Follow'
-					? $this->getFeed( $follow['object'] ?? null ) : null;
+				$object = $activity['object'] ?? null;
+				$feed = is_array( $object ) && ( $object['type'] ?? null ) === 'Follow'
+					? $this->getFeed( $object['object'] ?? null ) : null;
 				if ( $feed ) {
 					$this->followers->remove( $feed, $actor );
+				}
+				// A withdrawn quote request, given as itself or by its id
+				$request = self::getId( $object );
+				if ( !$feed && $request !== null
+					&& ( !is_array( $object ) || ( $object['type'] ?? null ) === 'QuoteRequest' )
+				) {
+					$this->quotes->removeByRequest( $actor, $request );
+				}
+				return $this->accepted();
+			case 'Delete':
+				// A deleted quoting post loses its authorization, and a deleted actor all of its
+				$object = self::getId( $activity['object'] ?? null );
+				if ( $object === $actor ) {
+					$this->quotes->removeByActor( $actor );
+				} elseif ( $object !== null ) {
+					$this->quotes->removeByPost( $actor, $object );
 				}
 				return $this->accepted();
 			default:
@@ -78,11 +100,8 @@ class InboxHandler extends Handler {
 		if ( !$feed ) {
 			return $this->getResponseFactory()->createHttpError( 404, [ 'message' => 'No such feed' ] );
 		}
-		$document = $this->remoteKeys->fetchDocument( $actor );
-		$inbox = is_array( $document )
-			? ( $document['endpoints']['sharedInbox'] ?? $document['inbox'] ?? null )
-			: null;
-		if ( !is_string( $inbox ) ) {
+		$inbox = $this->getInbox( $actor );
+		if ( $inbox === null ) {
 			return $this->getResponseFactory()->createHttpError( 400, [ 'message' => 'The actor has no inbox' ] );
 		}
 		$this->followers->add( $feed, $actor, $inbox );
@@ -100,6 +119,68 @@ class InboxHandler extends Handler {
 			],
 		] ) );
 		return $this->accepted();
+	}
+
+	/**
+	 * Authorizes a quote of one of our notes, which anyone may quote, and answers with an
+	 * Accept whose result is the QuoteAuthorization (FEP-044f). A request for a note we do not
+	 * have, or one whose ids are not on the actor's server, is dropped.
+	 */
+	private function quoteRequest( array $activity, string $actor ): Response {
+		$request = self::getId( $activity['id'] ?? null );
+		$post = self::getId( $activity['instrument'] ?? null );
+		$note = $this->notes->findNote( (string)self::getId( $activity['object'] ?? null ) );
+		// The ids are stored in 255-byte columns, which the ids of real servers fit
+		if ( $request === null || $post === null || !$note
+			|| !self::sameHost( $request, $actor ) || !self::sameHost( $post, $actor )
+			|| strlen( $request ) > 255 || strlen( $post ) > 255 || strlen( $actor ) > 255
+		) {
+			return $this->accepted();
+		}
+		$inbox = $this->getInbox( $actor );
+		if ( $inbox === null ) {
+			return $this->getResponseFactory()->createHttpError( 400, [ 'message' => 'The actor has no inbox' ] );
+		}
+		[ $feed, $item ] = $note;
+		$id = $this->quotes->add( $feed, $this->notes->getItemId( $feed, $item ), $actor, $post, $request );
+
+		$actorId = $this->notes->actors->getActorId( $feed->getHandle() );
+		$this->jobQueueGroup->lazyPush( new DeliveryJob( [
+			'inbox' => $inbox,
+			'keyId' => "$actorId#main-key",
+			'activity' => [
+				'@context' => Notes::CONTEXT,
+				'id' => "$actorId#accepts/quote_requests/" . sha1( $request ),
+				'type' => 'Accept',
+				'actor' => $actorId,
+				'to' => [ $actor ],
+				'object' => [
+					'id' => $request,
+					'type' => 'QuoteRequest',
+					'actor' => $actor,
+					'object' => $this->notes->getNoteId( $feed, $item ),
+					'instrument' => $post,
+				],
+				'result' => $this->notes->getQuoteAuthorizationId( $feed, $id ),
+			],
+		] ) );
+		return $this->accepted();
+	}
+
+	/**
+	 * Where to deliver to the actor: its shared inbox, or else its inbox.
+	 */
+	private function getInbox( string $actor ): ?string {
+		$document = $this->remoteKeys->fetchDocument( $actor );
+		$inbox = is_array( $document )
+			? ( $document['endpoints']['sharedInbox'] ?? $document['inbox'] ?? null )
+			: null;
+		return is_string( $inbox ) ? $inbox : null;
+	}
+
+	private static function sameHost( string $url, string $other ): bool {
+		$host = parse_url( $url, PHP_URL_HOST );
+		return is_string( $host ) && $host === parse_url( $other, PHP_URL_HOST );
 	}
 
 	private function getFeed( mixed $object ): ?Feed {

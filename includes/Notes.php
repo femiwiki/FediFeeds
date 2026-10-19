@@ -29,6 +29,22 @@ class Notes {
 	/** How many characters of a section's text a note carries */
 	public const CONTENT_LENGTH = 500;
 	private const PUBLIC = 'https://www.w3.org/ns/activitystreams#Public';
+	private const FEP_044F = 'https://w3id.org/fep/044f#';
+
+	/** The JSON-LD context of notes and of quoting them, with the terms of FEP-044f */
+	public const CONTEXT = [
+		'https://www.w3.org/ns/activitystreams',
+		[
+			'gts' => 'https://gotosocial.org/ns#',
+			'interactionPolicy' => [ '@id' => 'gts:interactionPolicy', '@type' => '@id' ],
+			'canQuote' => [ '@id' => 'gts:canQuote', '@type' => '@id' ],
+			'automaticApproval' => [ '@id' => 'gts:automaticApproval', '@type' => '@id' ],
+			'interactingObject' => [ '@id' => 'gts:interactingObject', '@type' => '@id' ],
+			'interactionTarget' => [ '@id' => 'gts:interactionTarget', '@type' => '@id' ],
+			'QuoteRequest' => self::FEP_044F . 'QuoteRequest',
+			'QuoteAuthorization' => self::FEP_044F . 'QuoteAuthorization',
+		],
+	];
 
 	/**
 	 * The current rendering of the page read last, kept because an outbox reads one page's
@@ -147,6 +163,21 @@ class Notes {
 		return $this->actors->getActorId( $feed->getHandle() ) . '/notes/' . $this->getItemId( $feed, $item );
 	}
 
+	/**
+	 * The feed and item of a note id of this wiki, if getItem() has the item.
+	 *
+	 * @return array{0: Feed, 1: Item}|null
+	 */
+	public function findNote( string $noteId ): ?array {
+		if ( !preg_match( '#^(.+)/notes/([^/]+)$#D', $noteId, $m ) ) {
+			return null;
+		}
+		$handle = $this->actors->getHandleFromActorId( $m[1] );
+		$feed = $handle === null ? null : ( new FeedLookup( $this->pageStore ) )->getFeed( $handle );
+		$item = $feed ? $this->getItem( $feed, $m[2] ) : null;
+		return $feed && $item ? [ $feed, $item ] : null;
+	}
+
 	public function getNote( Feed $feed, Item $item ): array {
 		$actorId = $this->actors->getActorId( $feed->getHandle() );
 		$title = Title::newFromPageIdentity( $item->page );
@@ -175,6 +206,35 @@ class Notes {
 			'published' => $published !== null ? wfTimestamp( TS::ISO_8601, $published ) : null,
 			'to' => [ self::PUBLIC ],
 			'cc' => [ "$actorId/followers" ],
+			// Anyone may quote a note, and gets a QuoteAuthorization without waiting (FEP-044f)
+			'interactionPolicy' => [
+				'canQuote' => [ 'automaticApproval' => [ self::PUBLIC ] ],
+			],
+		];
+	}
+
+	public function getQuoteAuthorizationId( Feed $feed, int $id ): string {
+		return $this->actors->getActorId( $feed->getHandle() ) . "/quote_authorizations/$id";
+	}
+
+	/**
+	 * The proof that a post may quote the item's note, which the quoting server and others
+	 * fetch to check the quote.
+	 *
+	 * @param Feed $feed
+	 * @param Item $item
+	 * @param int $id Of the authorization
+	 * @param string $post Id of the quoting post
+	 * @return array
+	 */
+	public function getQuoteAuthorization( Feed $feed, Item $item, int $id, string $post ): array {
+		return [
+			'@context' => self::CONTEXT,
+			'id' => $this->getQuoteAuthorizationId( $feed, $id ),
+			'type' => 'QuoteAuthorization',
+			'attributedTo' => $this->actors->getActorId( $feed->getHandle() ),
+			'interactingObject' => $post,
+			'interactionTarget' => $this->getNoteId( $feed, $item ),
 		];
 	}
 
@@ -223,7 +283,7 @@ class Notes {
 	public function getOutbox( Feed $feed ): array {
 		$items = $this->getRecentItems( $feed );
 		return [
-			'@context' => 'https://www.w3.org/ns/activitystreams',
+			'@context' => self::CONTEXT,
 			'id' => $this->actors->getActorId( $feed->getHandle() ) . '/outbox',
 			'type' => 'OrderedCollection',
 			'totalItems' => $items ? $this->items->count( $feed ) : 0,
