@@ -119,6 +119,10 @@
 		"FediFeedsActorBase": {
 			"value": null,
 			"description": "URL that a handle is appended to for the actor id, such as \"https://fedi.example.org/actors/\". The web server has to route it to the REST route /fedifeeds/actors/{handle}. Null uses that REST route directly."
+		},
+		"FediFeedsIcon": {
+			"value": null,
+			"description": "URL or path of the image every actor shows as its avatar, such as \"/images/feed.png\". It must be a raster image such as PNG, since Mastodon does not show SVG avatars. Null uses $wgAppleTouchIcon, else the first non-SVG of $wgLogos['1x'] and $wgLogos['icon'], else no icon."
 		}
 	},
 	"manifest_version": 2

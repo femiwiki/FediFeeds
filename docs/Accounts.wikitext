@@ -48,6 +48,8 @@ The title of the page is shown as the actor's <code>name</code>, so readers see 
 |-
 | <code>url</code> || The page on the wiki
 |-
+| <code>icon</code> || An <code>Image</code> of the wiki, the same for every feed, such as its touch icon or logo. Only a raster image such as PNG is used, since Mastodon does not show SVG avatars. Left out when the wiki has none
+|-
 | <code>inbox</code>, <code>outbox</code>, <code>followers</code> || Under the actor id, such as <code>&lt;actor id&gt;/inbox</code>
 |-
 | <code>publicKey</code> || See [[#Keys|Keys]]

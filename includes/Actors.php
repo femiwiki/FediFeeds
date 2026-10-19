@@ -7,6 +7,7 @@ use MediaWiki\MainConfigNames;
 use MediaWiki\Page\PageProps;
 use MediaWiki\Title\Title;
 use MediaWiki\Title\TitleFormatter;
+use MediaWiki\Utils\UrlUtils;
 use MessageLocalizer;
 
 /**
@@ -16,8 +17,18 @@ class Actors {
 
 	public const CONTENT_TYPE = 'application/activity+json';
 
+	/** Media types of the raster images an icon may be, by extension */
+	private const ICON_TYPES = [
+		'png' => 'image/png',
+		'jpg' => 'image/jpeg',
+		'jpeg' => 'image/jpeg',
+		'gif' => 'image/gif',
+		'webp' => 'image/webp',
+	];
+
 	private string $actorBase;
 	private string $wikiHost;
+	private ?array $icon;
 
 	public function __construct(
 		Config $config,
@@ -29,6 +40,45 @@ class Actors {
 		$this->actorBase = $config->get( 'FediFeedsActorBase' )
 			?? $server . $config->get( MainConfigNames::RestPath ) . '/fedifeeds/actors/';
 		$this->wikiHost = (string)parse_url( $server, PHP_URL_HOST );
+		$this->icon = self::findIcon( $config, $server );
+	}
+
+	/**
+	 * The image every actor shows as its avatar: FediFeedsIcon, else the Apple touch icon,
+	 * else a logo of the wiki. SVG is skipped, since Mastodon takes only raster avatars.
+	 */
+	private static function findIcon( Config $config, string $server ): ?array {
+		$logos = $config->get( MainConfigNames::Logos );
+		$candidates = [
+			$config->get( 'FediFeedsIcon' ),
+			$config->get( MainConfigNames::AppleTouchIcon ),
+			$logos['1x'] ?? null,
+			$logos['icon'] ?? null,
+		];
+		$urlUtils = new UrlUtils( [
+			UrlUtils::SERVER => $server,
+			UrlUtils::CANONICAL_SERVER => $server,
+		] );
+		foreach ( $candidates as $candidate ) {
+			if ( !is_string( $candidate ) || $candidate === '' ) {
+				continue;
+			}
+			$url = $urlUtils->expand( $candidate, PROTO_CANONICAL );
+			if ( $url === null ) {
+				continue;
+			}
+			$extension = strtolower( pathinfo( (string)parse_url( $url, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+			if ( $extension === 'svg' || $extension === 'svgz' ) {
+				continue;
+			}
+			$icon = [ 'type' => 'Image' ];
+			if ( isset( self::ICON_TYPES[$extension] ) ) {
+				$icon['mediaType'] = self::ICON_TYPES[$extension];
+			}
+			$icon['url'] = $url;
+			return $icon;
+		}
+		return null;
 	}
 
 	/**
@@ -102,6 +152,9 @@ class Actors {
 			'manuallyApprovesFollowers' => false,
 			'discoverable' => true,
 		];
+		if ( $this->icon !== null ) {
+			$actor['icon'] = $this->icon;
+		}
 		if ( $publicKeyPem !== null ) {
 			$actor['publicKey'] = [
 				'id' => "$id#main-key",

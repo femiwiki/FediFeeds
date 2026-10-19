@@ -27,6 +27,9 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		$this->overrideConfigValues( [
 			'CanonicalServer' => 'https://wiki.example.org',
 			'FediFeedsActorBase' => 'https://fedi.example.org/actors/',
+			'FediFeedsIcon' => null,
+			'AppleTouchIcon' => false,
+			'Logos' => false,
 		] );
 	}
 
@@ -117,6 +120,52 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( $first, $this->getLocalKeyStore()->getKey()->getPublicKeyPem() );
 		$id = $this->getExistingTestPage( 'Talk:Updates' )->getId();
 		$this->assertSame( $first, $this->getActor( "section_$id" )['publicKey']['publicKeyPem'] );
+	}
+
+	public static function provideIcon() {
+		yield 'config wins' => [
+			[
+				'FediFeedsIcon' => '/images/feed.jpg',
+				'AppleTouchIcon' => '/favicon-180.png',
+				'Logos' => [ '1x' => '/logo.png' ],
+			],
+			[ 'type' => 'Image', 'mediaType' => 'image/jpeg', 'url' => 'https://wiki.example.org/images/feed.jpg' ],
+		];
+		yield 'Apple touch icon' => [
+			[ 'AppleTouchIcon' => '/favicon-180.png', 'Logos' => [ '1x' => '/logo.png' ] ],
+			[ 'type' => 'Image', 'mediaType' => 'image/png', 'url' => 'https://wiki.example.org/favicon-180.png' ],
+		];
+		yield 'SVG skipped' => [
+			[
+				'FediFeedsIcon' => '/images/feed.svg',
+				'AppleTouchIcon' => '/touch.SVG',
+				'Logos' => [ '1x' => '/logo.svg', 'icon' => '//cdn.example.org/icon.webp?1' ],
+			],
+			[ 'type' => 'Image', 'mediaType' => 'image/webp', 'url' => 'https://cdn.example.org/icon.webp?1' ],
+		];
+		yield 'logos' => [
+			[ 'Logos' => [ '1x' => '/logo.png', 'icon' => '/icon.gif' ] ],
+			[ 'type' => 'Image', 'mediaType' => 'image/png', 'url' => 'https://wiki.example.org/logo.png' ],
+		];
+		yield 'unknown media type' => [
+			[ 'FediFeedsIcon' => 'https://img.example.org/avatar' ],
+			[ 'type' => 'Image', 'url' => 'https://img.example.org/avatar' ],
+		];
+	}
+
+	/**
+	 * @dataProvider provideIcon
+	 */
+	public function testIcon( array $config, array $expected ) {
+		$this->overrideConfigValues( $config );
+		$id = $this->getExistingTestPage( 'Category:Blog' )->getId();
+		$this->assertSame( $expected, $this->getActor( "category_$id" )['icon'] );
+	}
+
+	public function testNoIcon() {
+		$this->overrideConfigValues( [ 'Logos' => [ 'icon' => '/icon.svg' ] ] );
+		$id = $this->getExistingTestPage( 'Category:Blog' )->getId();
+		$this->assertArrayNotHasKey( 'icon', $this->getActor( "category_$id" ) );
 	}
 
 	public function testDefaultActorBase() {

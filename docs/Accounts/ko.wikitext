@@ -26,7 +26,7 @@
 * 종류를 앞에 두었기 때문에 <code>category</code>로 검색하면 분류 피드가 한데 모여 나옵니다.
 * 핸들은 위키의 호스트를 쓰고, 액터는 모든 피드가 <code>fedi.example.org</code> 같은 호스트 한 곳을 함께 씁니다. 종류마다 호스트를 따로 두어도 되기는 하지만, 다른 서버는 호스트 하나하나를 별개의 인스턴스로 봅니다. 액터를 위키 호스트 밖에 두면 위키 쿠키가 그 요청에 실리지 않습니다.
 
-<!--T:7 @22ddcd2c-->
+<!--T:7 @8c9e90cf-->
 == 액터 ==
 {| class="wikitable"
 ! 속성 !! 값
@@ -42,6 +42,8 @@
 | <code>summary</code> || 피드가 무엇을 내보내는지 한 문장으로
 |-
 | <code>url</code> || 위키의 해당 문서
+|-
+| <code>icon</code> || 위키를 나타내는 <code>Image</code>로, 터치 아이콘이나 로고처럼 모든 피드가 같은 것을 씁니다. 마스토돈은 SVG 아바타를 보여 주지 않으므로 PNG 같은 래스터 이미지만 씁니다. 위키에 그런 이미지가 없으면 넣지 않습니다
 |-
 | <code>inbox</code>, <code>outbox</code>, <code>followers</code> || 액터 id 아래. 예: <code>&lt;actor id&gt;/inbox</code>
 |-
