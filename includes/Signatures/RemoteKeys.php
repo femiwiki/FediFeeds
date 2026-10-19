@@ -56,7 +56,7 @@ class RemoteKeys {
 	 * @return array{pem: string, owner: string}|null
 	 */
 	public function getKey( string $keyId, bool $fresh = false ): ?array {
-		$cacheKey = $this->cache->makeGlobalKey( 'fedifeeds-remote-key', sha1( $keyId ) );
+		$cacheKey = $this->makeCacheKey( $keyId );
 		if ( $fresh ) {
 			$this->cache->delete( $cacheKey );
 		}
@@ -70,6 +70,17 @@ class RemoteKeys {
 			}
 		);
 		return is_array( $key ) ? $key : null;
+	}
+
+	/**
+	 * Drops a cached key, for an actor that was deleted.
+	 */
+	public function forget( string $keyId ): void {
+		$this->cache->delete( $this->makeCacheKey( $keyId ) );
+	}
+
+	private function makeCacheKey( string $keyId ): string {
+		return $this->cache->makeGlobalKey( 'fedifeeds-remote-key', sha1( $keyId ) );
 	}
 
 	/**
