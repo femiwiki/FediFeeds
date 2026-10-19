@@ -4,17 +4,18 @@
 <meta charset="UTF-8">
 <title>Feed kinds - FediFeeds</title>
 <script>(function(){var className="client-js vector-feature-language-in-header-enabled vector-feature-language-in-main-menu-disabled vector-feature-language-in-main-page-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled vector-feature-custom-font-size-clientpref-0 vector-feature-appearance-pinned-clientpref-1 skin-theme-clientpref-day vector-sticky-header-enabled vector-toc-available skin-theme-clientpref-thumb-standard";var cookie=document.cookie.match(/(?:^|; )my_wikimwclientpreferences=([^;]+)/);if(cookie){cookie[1].split('%2C').forEach(function(pref){className=className.replace(new RegExp('(^| )'+pref.replace(/-clientpref-\w+$|[^\w-]+/g,'')+'-clientpref-\\w+( |$)'),'$1'+pref+'$2');});}document.documentElement.className=className;}());RLCONF={"wgBreakFrames":false,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgRequestId":"","wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Feed_kinds","wgTitle":"Feed kinds","wgCurRevisionId":0,"wgRevisionId":0,"wgArticleId":0,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgPageViewLanguage":"en","wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgRelevantPageName":"Feed_kinds","wgRelevantArticleId":0,"wgIsProbablyEditable":true,"wgRelevantPageIsProbablyEditable":true,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgULSAcceptLanguageList":[],"wgTranslatePageTranslation":"source","wgTranslatePageTranslationGroup":"page-Feed kinds","wgTranslatePriorityLanguages":[],"wgULSPosition":"personal","wgULSisCompactLinksEnabled":false,"wgVector2022LanguageInHeader":true,"wgULSisLanguageSelectorEmpty":false,"wgULSLanguageSelectorV2Enabled":false};
-RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.options":"loading","ext.translate.tag.languages":"ready","skins.vector.search.codex.styles":"ready","skins.vector.styles":"ready","skins.vector.icons":"ready","ext.translate.edit.documentation.styles":"ready","ext.translate":"ready","ext.Wikven.styles":"ready","ext.Wikven.emptyToolbox":"ready","ext.uls.pt":"ready"};RLPAGEMODULES=[];</script>
+RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.options":"loading","ext.translate.tag.languages":"ready","ext.pygments":"ready","skins.vector.search.codex.styles":"ready","skins.vector.styles":"ready","skins.vector.icons":"ready","ext.translate.edit.documentation.styles":"ready","ext.translate":"ready","ext.Wikven.styles":"ready","ext.Wikven.emptyToolbox":"ready","ext.uls.pt":"ready"};RLPAGEMODULES=[];</script>
 <script>(RLQ=window.RLQ||[]).push(function(){mw.loader.impl(function(){return["user.options@12s5i",function($,jQuery,require,module){mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
 }];});});</script>
 
-<script src="./assets/startup-static.js"></script><script src="./assets/modules-static.js"></script><script>mw.loader.load(["site","mediawiki.page.ready","mediawiki.toc","skins.vector.js","ext.translate.pagetranslation.uls","ext.Wikven.pinnableState","ext.uls.interface"]);</script>
+<script src="./assets/startup-static.js"></script><script src="./assets/modules-static.js"></script><script>mw.loader.load(["ext.pygments.view","site","mediawiki.page.ready","mediawiki.toc","skins.vector.js","ext.translate.pagetranslation.uls","ext.Wikven.pinnableState","ext.uls.interface"]);</script>
 <meta name="generator" content="MediaWiki 1.46.0">
 <meta name="robots" content="max-image-preview:standard">
 <meta name="format-detection" content="telephone=no">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.25, maximum-scale=5.0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%226%22%20fill%3D%22%23157f93%22%2F%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EW%3C%2Ftext%3E%3C%2Fsvg%3E">
 <link rel="stylesheet" href="./assets/ext.translate.tag.languages.css">
+<link rel="stylesheet" href="./assets/ext.pygments.css">
 <link rel="stylesheet" href="./assets/skins.vector.search.codex.styles.css">
 <link rel="stylesheet" href="./assets/skins.vector.styles.css">
 <link rel="stylesheet" href="./assets/skins.vector.icons.css">
@@ -539,11 +540,29 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <tr>
 <td><code>section</code></td>
 <td>Page id</td>
-<td>A section whose heading was not in the previous revision. Edits by bots count.
+<td>A section at the page's unit level whose heading path was not in the previous revision. Edits by bots count.
 </td></tr></tbody></table>
 <div class="mw-heading mw-heading3"><h3 id="section">section</h3></div>
-<p>The headings of the parent revision and the new revision are compared by level and text. An item is identified by the page id and the section's anchor. Renaming a heading therefore removes one item and adds another.
-</p><p>Only a save to an existing page is compared. The headings of a page's first revision are not items, because it has no parent revision. A null edit adds nothing, and neither does a revert, which brings back headings that were there before. A section whose anchor is longer than 255 bytes is not an item.
+<p>The page sets its unit with <code>{{FEDIFEEDSNAME:&lt;name&gt;|section-unit=&lt;n&gt;}}</code>: each heading with this many equals signs is one note. The default is 2, so each <code>== heading ==</code> is one note. A heading with more equals signs belongs to the note above it, and a heading with fewer is context for the notes below it.
+</p><p>An item is identified by the page id and its heading path: the texts of the headings above it and its own. The paths of the parent revision and the new revision are compared. Renaming the heading or any heading above it therefore removes one item and adds another.
+</p><p>A path can occur more than once, as when two sections under the same heading have the same title. Paths are then counted: when the new revision has a path more times than the parent, each extra occurrence is a new item, numbered in the order they appeared. An item exists while the page has its path at least as many times as its number.
+</p><p>For example, a log of updates where each day is a section and each update a section in it, both newest first, sets <code>section-unit=3</code>:
+</p>
+<div class="mw-highlight mw-highlight-lang-text mw-content-ltr" dir="ltr"><pre><span></span>{{FEDIFEEDSNAME:Updates|section|section-unit=3}}
+== 19 October ==
+=== 14:10 ===
+[https://example.org/changes/2 Change 2]
+* Updated the search
+==== Added ====
+* A new page
+=== 09:00 ===
+[https://example.org/changes/1 Change 1]
+== 18 October ==
+=== 14:10 ===
+[https://example.org/changes/0 Change 0]
+</pre></div>
+<p>Each update is an item, with a path such as "19 October / 14:10". Adding a new day with its first update makes one item, the update, and the day is its context. The <code>14:10</code> under 19 October is a different item from the one under 18 October. <code>==== Added ====</code> is part of its update's note. Two updates in the same minute make the path "19 October / 14:10" twice, and the second is item number 2 of that path.
+</p><p>Only a save to an existing page is compared. The headings of a page's first revision are not items, because it has no parent revision. A null edit adds nothing, and neither does a revert, which brings back headings that were there before.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="Reserved">Reserved</h2></div>
 <p>These names are kept so that later kinds do not collide. None of them is planned.
@@ -617,7 +636,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 19 October 2026, at 15:08.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 19 October 2026, at 15:41.</li>
 </ul>
 
 	<ul id="footer-places">

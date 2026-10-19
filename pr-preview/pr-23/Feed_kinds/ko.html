@@ -4,17 +4,18 @@
 <meta charset="UTF-8">
 <title>피드 종류 - FediFeeds</title>
 <script>(function(){var className="client-js vector-feature-language-in-header-enabled vector-feature-language-in-main-menu-disabled vector-feature-language-in-main-page-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled vector-feature-custom-font-size-clientpref-0 vector-feature-appearance-pinned-clientpref-1 skin-theme-clientpref-day vector-sticky-header-enabled vector-toc-available skin-theme-clientpref-thumb-standard";var cookie=document.cookie.match(/(?:^|; )my_wikimwclientpreferences=([^;]+)/);if(cookie){cookie[1].split('%2C').forEach(function(pref){className=className.replace(new RegExp('(^| )'+pref.replace(/-clientpref-\w+$|[^\w-]+/g,'')+'-clientpref-\\w+( |$)'),'$1'+pref+'$2');});}document.documentElement.className=className;}());RLCONF={"wgBreakFrames":false,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"ko","wgMonthNames":["","1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"],"wgRequestId":"","wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Feed_kinds/ko","wgTitle":"Feed kinds/ko","wgCurRevisionId":0,"wgRevisionId":0,"wgArticleId":0,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgPageViewLanguage":"ko","wgPageContentLanguage":"ko","wgPageContentModel":"wikitext","wgRelevantPageName":"Feed_kinds/ko","wgRelevantArticleId":0,"wgIsProbablyEditable":true,"wgRelevantPageIsProbablyEditable":true,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgULSAcceptLanguageList":[],"wgTranslatePageTranslation":"translation","wgTranslatePageTranslationGroup":"page-Feed kinds/ko","wgTranslatePriorityLanguages":[],"wgULSPosition":"personal","wgULSisCompactLinksEnabled":false,"wgVector2022LanguageInHeader":true,"wgULSisLanguageSelectorEmpty":false,"wgULSLanguageSelectorV2Enabled":false};
-RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.options":"loading","ext.translate.tag.languages":"ready","skins.vector.search.codex.styles":"ready","skins.vector.styles":"ready","skins.vector.icons":"ready","ext.translate":"ready","ext.Wikven.styles":"ready","ext.Wikven.emptyToolbox":"ready","ext.uls.pt":"ready"};RLPAGEMODULES=[];</script>
+RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.options":"loading","ext.translate.tag.languages":"ready","ext.pygments":"ready","skins.vector.search.codex.styles":"ready","skins.vector.styles":"ready","skins.vector.icons":"ready","ext.translate":"ready","ext.Wikven.styles":"ready","ext.Wikven.emptyToolbox":"ready","ext.uls.pt":"ready"};RLPAGEMODULES=[];</script>
 <script>(RLQ=window.RLQ||[]).push(function(){mw.loader.impl(function(){return["user.options@12s5i",function($,jQuery,require,module){mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
 }];});});</script>
 
-<script src="../assets/startup-static.js"></script><script src="../assets/modules-static.js"></script><script>mw.loader.load(["site","mediawiki.page.ready","mediawiki.toc","skins.vector.js","ext.translate.pagetranslation.uls","ext.Wikven.pinnableState","ext.uls.interface"]);</script>
+<script src="../assets/startup-static.js"></script><script src="../assets/modules-static.js"></script><script>mw.loader.load(["ext.pygments.view","site","mediawiki.page.ready","mediawiki.toc","skins.vector.js","ext.translate.pagetranslation.uls","ext.Wikven.pinnableState","ext.uls.interface"]);</script>
 <meta name="generator" content="MediaWiki 1.46.0">
 <meta name="robots" content="max-image-preview:standard">
 <meta name="format-detection" content="telephone=no">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.25, maximum-scale=5.0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%226%22%20fill%3D%22%23157f93%22%2F%3E%3Ctext%20x%3D%2216%22%20y%3D%2223%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EW%3C%2Ftext%3E%3C%2Fsvg%3E">
 <link rel="stylesheet" href="../assets/ext.translate.tag.languages.css">
+<link rel="stylesheet" href="../assets/ext.pygments.css">
 <link rel="stylesheet" href="../assets/skins.vector.search.codex.styles.css">
 <link rel="stylesheet" href="../assets/skins.vector.styles.css">
 <link rel="stylesheet" href="../assets/skins.vector.icons.css">
@@ -538,11 +539,29 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <tr>
 <td><code>section</code></td>
 <td>문서 id</td>
-<td>이전 판에 없던 제목의 문단. 봇 편집도 셉니다.
+<td>문서의 단위 수준에 있는 문단 가운데 제목 경로가 이전 판에 없던 것. 봇 편집도 셉니다.
 </td></tr></tbody></table>
 <div class="mw-heading mw-heading3"><h3 id="section">section</h3></div>
-<p>부모 판과 새 판의 제목을 수준과 글자로 비교합니다. 항목은 문서 id와 문단의 앵커로 구별합니다. 따라서 제목을 바꾸면 항목 하나가 사라지고 다른 하나가 생깁니다.
-</p><p>이미 있는 문서를 저장할 때만 비교합니다. 문서의 첫 판에는 부모 판이 없으므로 그 제목들은 항목이 아닙니다. 널 편집은 아무것도 더하지 않고, 되돌리기도 마찬가지입니다. 되돌리기는 전에 있던 제목을 되살릴 뿐이기 때문입니다. 앵커가 255바이트보다 긴 문단은 항목이 아닙니다.
+<p>문서는 <code>{{FEDIFEEDSNAME:&lt;name&gt;|section-unit=&lt;n&gt;}}</code>로 단위를 정합니다. 등호가 이만큼인 제목 하나하나가 노트 하나입니다. 기본값은 2이므로 <code>== 제목 ==</code> 하나가 노트 하나입니다. 등호가 더 많은 제목은 위에 있는 노트에 속하고, 더 적은 제목은 아래 노트들의 맥락이 됩니다.
+</p><p>항목은 문서 id와 제목 경로로 구별합니다. 제목 경로는 위에 있는 제목들의 글자와 자기 제목의 글자입니다. 부모 판과 새 판의 경로를 비교합니다. 따라서 그 제목이나 위에 있는 제목 하나를 바꾸면 항목 하나가 사라지고 다른 하나가 생깁니다.
+</p><p>같은 제목 아래 두 문단의 제목이 같을 때처럼, 경로 하나가 여러 번 나올 수 있습니다. 그러면 경로를 셉니다. 새 판에 어떤 경로가 부모 판보다 많이 나오면 더 나온 것 하나하나가 새 항목이고, 나타난 차례로 번호를 붙입니다. 항목은 문서에 그 경로가 자기 번호만큼 이상 있는 동안 있습니다.
+</p><p>예를 들어 날마다 문단을 두고 그 안에 업데이트마다 문단을 두며, 둘 다 최근 것을 위에 쓰는 업데이트 기록은 <code>section-unit=3</code>을 씁니다.
+</p>
+<div class="mw-highlight mw-highlight-lang-text mw-content-ltr" dir="ltr"><pre><span></span>{{FEDIFEEDSNAME:업데이트|section|section-unit=3}}
+== 10월 19일 ==
+=== 14:10 ===
+[https://example.org/changes/2 변경 2]
+* 검색을 업데이트함
+==== 추가 ====
+* 새 문서
+=== 09:00 ===
+[https://example.org/changes/1 변경 1]
+== 10월 18일 ==
+=== 14:10 ===
+[https://example.org/changes/0 변경 0]
+</pre></div>
+<p>업데이트 하나하나가 항목이고, 경로는 "10월 19일 / 14:10" 같은 꼴입니다. 새 날짜를 첫 업데이트와 함께 더하면 항목은 업데이트 하나만 생기고, 날짜는 그 맥락입니다. 10월 19일 아래의 <code>14:10</code>은 10월 18일 아래의 것과 다른 항목입니다. <code>==== 추가 ====</code>는 그 업데이트 노트의 일부입니다. 같은 분에 업데이트가 두 번 있으면 "10월 19일 / 14:10" 경로가 두 번 나오고, 두 번째는 그 경로의 2번 항목입니다.
+</p><p>이미 있는 문서를 저장할 때만 비교합니다. 문서의 첫 판에는 부모 판이 없으므로 그 제목들은 항목이 아닙니다. 널 편집은 아무것도 더하지 않고, 되돌리기도 마찬가지입니다. 되돌리기는 전에 있던 제목을 되살릴 뿐이기 때문입니다.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="예약한_이름"><span id=".EC.98.88.EC.95.BD.ED.95.9C_.EC.9D.B4.EB.A6.84"></span>예약한 이름</h2></div>
 <p>나중에 생길 종류와 겹치지 않도록 남겨 둔 이름들입니다. 만들 계획이 있는 것은 아닙니다.
@@ -616,7 +635,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer"  lang="ko" dir="ltr">
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 19일 (월) 15:08에 마지막으로 편집되었습니다.</li>
+	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 19일 (월) 15:41에 마지막으로 편집되었습니다.</li>
 </ul>
 
 	<ul id="footer-places">
