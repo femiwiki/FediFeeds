@@ -94,6 +94,20 @@ class Items {
 		return $items;
 	}
 
+	/**
+	 * Whether any of the feeds recorded an item of the page.
+	 *
+	 * @param int $pageId
+	 * @param string[] $handles
+	 */
+	public function hasPage( int $pageId, array $handles ): bool {
+		return $handles && $this->dbProvider->getReplicaDatabase()->newSelectQueryBuilder()
+			->select( '1' )
+			->from( 'fedifeeds_item' )
+			->where( [ 'fi_feed' => $handles, 'fi_page' => $pageId ] )
+			->caller( __METHOD__ )->fetchField();
+	}
+
 	public function count( Feed $feed ): int {
 		return (int)$this->newQuery( $feed )
 			->select( 'COUNT(*)' )

@@ -6,6 +6,7 @@ use MediaWiki\Extension\FediFeeds\Followers;
 use MediaWiki\Extension\FediFeeds\Items;
 use MediaWiki\Extension\FediFeeds\Notes;
 use MediaWiki\Extension\FediFeeds\Quotes;
+use MediaWiki\Extension\FediFeeds\Reactions;
 use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
 use MediaWiki\MediaWikiServices;
@@ -35,6 +36,9 @@ return [
 	},
 	'FediFeeds.Quotes' => static function ( MediaWikiServices $services ): Quotes {
 		return new Quotes( $services->getConnectionProvider() );
+	},
+	'FediFeeds.Reactions' => static function ( MediaWikiServices $services ): Reactions {
+		return new Reactions( $services->getConnectionProvider() );
 	},
 	'FediFeeds.RemoteKeys' => static function ( MediaWikiServices $services ): RemoteKeys {
 		return new RemoteKeys( $services->getHttpRequestFactory(), $services->getMainWANObjectCache() );

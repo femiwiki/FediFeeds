@@ -34,6 +34,10 @@
 			"class": "MediaWiki\\Extension\\FediFeeds\\PageDisplayHooks",
 			"services": ["FediFeeds.Notes", "PageStore"]
 		},
+		"info": {
+			"class": "MediaWiki\\Extension\\FediFeeds\\InfoHooks",
+			"services": ["FediFeeds.Items", "FediFeeds.Reactions"]
+		},
 		"schema": {
 			"class": "MediaWiki\\Extension\\FediFeeds\\SchemaHooks"
 		}
@@ -42,6 +46,7 @@
 		"ParserFirstCallInit": "main",
 		"BeforePageDisplay": "pageDisplay",
 		"PageSaveComplete": "delivery",
+		"InfoAction": "info",
 		"LoadExtensionSchemaUpdates": "schema"
 	},
 	"JobClasses": {
@@ -115,7 +120,8 @@
 				"FediFeeds.RemoteKeys",
 				"FediFeeds.Followers",
 				"FediFeeds.Quotes",
-				"JobQueueGroup"
+				"JobQueueGroup",
+				"FediFeeds.Reactions"
 			]
 		},
 		{
@@ -128,7 +134,8 @@
 				"FediFeeds.RemoteKeys",
 				"FediFeeds.Followers",
 				"FediFeeds.Quotes",
-				"JobQueueGroup"
+				"JobQueueGroup",
+				"FediFeeds.Reactions"
 			]
 		}
 	],
