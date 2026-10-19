@@ -3,6 +3,7 @@
 namespace MediaWiki\Extension\FediFeeds;
 
 use MediaWiki\Config\Config;
+use MediaWiki\FileRepo\RepoGroup;
 use MediaWiki\MainConfigNames;
 use MediaWiki\Page\PageProps;
 use MediaWiki\Title\Title;
@@ -26,28 +27,71 @@ class Actors {
 		'webp' => 'image/webp',
 	];
 
+	/** Width in pixels of the thumbnail of a file the page set as a feed's icon */
+	public const ICON_WIDTH = 400;
+
 	private string $actorBase;
 	private string $wikiHost;
-	private ?array $icon;
+	private UrlUtils $urlUtils;
+	private ?array $wikiIcon;
 
 	public function __construct(
 		Config $config,
 		private readonly TitleFormatter $titleFormatter,
 		private readonly MessageLocalizer $messageLocalizer,
 		private readonly PageProps $pageProps,
+		private readonly RepoGroup $repoGroup,
 	) {
 		$server = $config->get( MainConfigNames::CanonicalServer );
 		$this->actorBase = $config->get( 'FediFeedsActorBase' )
 			?? $server . $config->get( MainConfigNames::RestPath ) . '/fedifeeds/actors/';
 		$this->wikiHost = (string)parse_url( $server, PHP_URL_HOST );
-		$this->icon = self::findIcon( $config, $server );
+		$this->urlUtils = new UrlUtils( [
+			UrlUtils::SERVER => $server,
+			UrlUtils::CANONICAL_SERVER => $server,
+		] );
+		$this->wikiIcon = $this->findWikiIcon( $config );
 	}
 
 	/**
-	 * The image every actor shows as its avatar: FediFeedsIcon, else the Apple touch icon,
-	 * else a logo of the wiki. SVG is skipped, since Mastodon takes only raster avatars.
+	 * The icon of the feed: a thumbnail of the file its page set, else the wiki's.
 	 */
-	private static function findIcon( Config $config, string $server ): ?array {
+	public function getIcon( Feed $feed ): ?array {
+		$forKind = Hooks::ICON_PROPERTY . '-' . $feed->kind;
+		$props = $this->pageProps->getProperties( $feed->page, [ $forKind, Hooks::ICON_PROPERTY ] )
+			[$feed->page->getId()] ?? [];
+		$name = $props[$forKind] ?? $props[Hooks::ICON_PROPERTY] ?? null;
+		return ( is_string( $name ) ? $this->getFileIcon( $name ) : null ) ?? $this->wikiIcon;
+	}
+
+	/**
+	 * A raster thumbnail of the file, which MediaWiki renders from SVG too, or null when the
+	 * file is missing or cannot be thumbnailed.
+	 */
+	private function getFileIcon( string $name ): ?array {
+		$file = $this->repoGroup->findFile( $name );
+		if ( !$file || !$file->exists() || !$file->canRender() ) {
+			return null;
+		}
+		$params = [ 'width' => self::ICON_WIDTH ];
+		$thumb = $file->transform( $params );
+		$url = $thumb && !$thumb->isError() ? $thumb->getUrl() : false;
+		$url = $url === false ? null : $this->urlUtils->expand( $url, PROTO_CANONICAL );
+		if ( $url === null ) {
+			return null;
+		}
+		$handler = $file->getHandler();
+		$mime = $handler ? $handler->getThumbType( $file->getExtension(), $file->getMimeType(), $params )[1] : null;
+		return self::makeIcon( $url, is_string( $mime ) && in_array( $mime, self::ICON_TYPES, true )
+			? $mime : self::getMediaType( $url ) );
+	}
+
+	/**
+	 * The image an actor shows as its avatar unless its page sets one: FediFeedsIcon, else the
+	 * Apple touch icon, else a logo of the wiki. SVG is skipped, since Mastodon takes only raster
+	 * avatars.
+	 */
+	private function findWikiIcon( Config $config ): ?array {
 		$logos = $config->get( MainConfigNames::Logos );
 		$candidates = [
 			$config->get( 'FediFeedsIcon' ),
@@ -55,30 +99,38 @@ class Actors {
 			$logos['1x'] ?? null,
 			$logos['icon'] ?? null,
 		];
-		$urlUtils = new UrlUtils( [
-			UrlUtils::SERVER => $server,
-			UrlUtils::CANONICAL_SERVER => $server,
-		] );
 		foreach ( $candidates as $candidate ) {
 			if ( !is_string( $candidate ) || $candidate === '' ) {
 				continue;
 			}
-			$url = $urlUtils->expand( $candidate, PROTO_CANONICAL );
-			if ( $url === null ) {
+			$url = $this->urlUtils->expand( $candidate, PROTO_CANONICAL );
+			$extension = $url === null ? '' : self::getExtension( $url );
+			if ( $url === null || $extension === 'svg' || $extension === 'svgz' ) {
 				continue;
 			}
-			$extension = strtolower( pathinfo( (string)parse_url( $url, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
-			if ( $extension === 'svg' || $extension === 'svgz' ) {
-				continue;
-			}
-			$icon = [ 'type' => 'Image' ];
-			if ( isset( self::ICON_TYPES[$extension] ) ) {
-				$icon['mediaType'] = self::ICON_TYPES[$extension];
-			}
-			$icon['url'] = $url;
-			return $icon;
+			return self::makeIcon( $url, self::getMediaType( $url ) );
 		}
 		return null;
+	}
+
+	private static function getExtension( string $url ): string {
+		return strtolower( pathinfo( (string)parse_url( $url, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+	}
+
+	/**
+	 * The media type of a raster image by its extension, or null when it is not one of them
+	 */
+	private static function getMediaType( string $url ): ?string {
+		return self::ICON_TYPES[self::getExtension( $url )] ?? null;
+	}
+
+	private static function makeIcon( string $url, ?string $mediaType ): array {
+		$icon = [ 'type' => 'Image' ];
+		if ( $mediaType !== null ) {
+			$icon['mediaType'] = $mediaType;
+		}
+		$icon['url'] = $url;
+		return $icon;
 	}
 
 	/**
@@ -152,8 +204,9 @@ class Actors {
 			'manuallyApprovesFollowers' => false,
 			'discoverable' => true,
 		];
-		if ( $this->icon !== null ) {
-			$actor['icon'] = $this->icon;
+		$icon = $this->getIcon( $feed );
+		if ( $icon !== null ) {
+			$actor['icon'] = $icon;
 		}
 		if ( $publicKeyPem !== null ) {
 			$actor['publicKey'] = [

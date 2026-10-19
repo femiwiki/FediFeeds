@@ -2,12 +2,21 @@
 
 namespace MediaWiki\Extension\FediFeeds\Tests;
 
+use MediaWiki\Extension\FediFeeds\Hooks;
 use MediaWiki\Extension\FediFeeds\Rest\ActorHandler;
 use MediaWiki\Extension\FediFeeds\Rest\WebFingerHandler;
 use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
+use MediaWiki\FileRepo\File\File;
+use MediaWiki\FileRepo\RepoGroup;
+use MediaWiki\Media\MediaHandler;
+use MediaWiki\Media\MediaTransformError;
+use MediaWiki\Media\ThumbnailImage;
+use MediaWiki\Parser\ParserOptions;
+use MediaWiki\Parser\ParserOutputLinkTypes;
 use MediaWiki\Rest\LocalizedHttpException;
 use MediaWiki\Rest\RequestData;
 use MediaWiki\Tests\Rest\Handler\HandlerTestTrait;
+use MediaWiki\Title\Title;
 use MediaWikiIntegrationTestCase;
 
 /**
@@ -40,13 +49,14 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 	private function newActorHandler(): ActorHandler {
 		$services = $this->getServiceContainer();
 		return new ActorHandler( $services->getMainConfig(), $services->getPageStore(),
-			$services->getTitleFormatter(), $services->getPageProps(), $this->getLocalKeyStore() );
+			$services->getTitleFormatter(), $services->getPageProps(), $this->getLocalKeyStore(),
+			$services->getRepoGroup() );
 	}
 
 	private function newWebFingerHandler(): WebFingerHandler {
 		$services = $this->getServiceContainer();
 		return new WebFingerHandler( $services->getMainConfig(), $services->getPageStore(),
-			$services->getTitleFormatter(), $services->getPageProps() );
+			$services->getTitleFormatter(), $services->getPageProps(), $services->getRepoGroup() );
 	}
 
 	/** Saves the page and returns its id once its page properties are stored. */
@@ -166,6 +176,112 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		$this->overrideConfigValues( [ 'Logos' => [ 'icon' => '/icon.svg' ] ] );
 		$id = $this->getExistingTestPage( 'Category:Blog' )->getId();
 		$this->assertArrayNotHasKey( 'icon', $this->getActor( "category_$id" ) );
+	}
+
+	public static function provideIconArgument(): iterable {
+		yield 'with the namespace' => [ '{{FEDIFEEDSNAME:Blog|icon=File:Feed icon.png}}', 'fedifeeds-icon' ];
+		yield 'without the namespace, before the kind' => [
+			'{{FEDIFEEDSNAME:Blog| icon = Feed icon.png |section}}', 'fedifeeds-icon-section' ];
+		yield 'an alias of the namespace, after the kind' => [
+			'{{FEDIFEEDSNAME:Blog|section|section-unit=3|icon=Image:Feed_icon.png}}', 'fedifeeds-icon-section' ];
+		yield 'another namespace' => [ '{{FEDIFEEDSNAME:Blog|icon=Category:Feed icon.png}}', null ];
+		yield 'an invalid title' => [ '{{FEDIFEEDSNAME:Blog|icon=Feed{icon}.png}}', null ];
+		yield 'empty' => [ '{{FEDIFEEDSNAME:Blog|icon=}}', null ];
+		yield 'no name' => [ '{{FEDIFEEDSNAME:|icon=Feed icon.png}}', null ];
+		yield 'an unknown kind' => [ '{{FEDIFEEDSNAME:Blog|page|icon=Feed icon.png}}', null ];
+	}
+
+	/**
+	 * @dataProvider provideIconArgument
+	 */
+	public function testIconArgument( string $text, ?string $property ) {
+		$output = $this->getServiceContainer()->getParserFactory()->create()->parse( $text,
+			Title::makeTitle( NS_CATEGORY, 'Blog' ), ParserOptions::newFromAnon() );
+		foreach ( [ Hooks::ICON_PROPERTY, Hooks::ICON_PROPERTY . '-section' ] as $name ) {
+			$this->assertSame( $name === $property ? 'Feed_icon.png' : null, $output->getPageProperty( $name ) );
+		}
+		// Registered so that the file's usage lists the page
+		$files = array_map( static fn ( $link ) => $link['link']->getDBkey(),
+			$output->getLinkList( ParserOutputLinkTypes::MEDIA ) );
+		$this->assertSame( $property === null ? [] : [ 'Feed_icon.png' ], $files );
+	}
+
+	/**
+	 * Replaces the files with a file named Feed_icon.png, if it is given, whose 400px thumbnail is
+	 * at the URL.
+	 */
+	private function setFile( string $extension, string $mime, string|false|null $thumbUrl ): void {
+		$file = null;
+		if ( $thumbUrl !== null ) {
+			$handler = $this->createMock( MediaHandler::class );
+			$handler->method( 'getThumbType' )
+				->with( $extension, $mime, [ 'width' => 400 ] )
+				->willReturn( [ 'png', 'image/png' ] );
+			$thumb = $thumbUrl === false
+				? new MediaTransformError( 'thumbnail_error', 400, 400 )
+				: $this->createMock( ThumbnailImage::class );
+			if ( $thumbUrl !== false ) {
+				$thumb->method( 'getUrl' )->willReturn( $thumbUrl );
+			}
+			$file = $this->createMock( File::class );
+			$file->method( 'exists' )->willReturn( true );
+			$file->method( 'canRender' )->willReturn( true );
+			$file->method( 'getExtension' )->willReturn( $extension );
+			$file->method( 'getMimeType' )->willReturn( $mime );
+			$file->method( 'getHandler' )->willReturn( $handler );
+			$file->method( 'transform' )->with( [ 'width' => 400 ] )->willReturn( $thumb );
+		}
+		$repoGroup = $this->createMock( RepoGroup::class );
+		$repoGroup->method( 'findFile' )
+			->willReturnCallback( static fn ( $name ) => $name === 'Feed_icon.png' ? ( $file ?? false ) : false );
+		$this->setService( 'RepoGroup', $repoGroup );
+	}
+
+	public static function provideFeedIcon(): iterable {
+		yield 'a raster file' => [ 'png', 'image/png', '/images/thumb/1/1a/Feed_icon.png/400px-Feed_icon.png',
+			'https://wiki.example.org/images/thumb/1/1a/Feed_icon.png/400px-Feed_icon.png' ];
+		yield 'an SVG file, rendered to PNG' => [ 'svg', 'image/svg+xml',
+			'//upload.example.org/thumb/1/1a/Feed_icon.svg/400px-Feed_icon.svg.png',
+			'https://upload.example.org/thumb/1/1a/Feed_icon.svg/400px-Feed_icon.svg.png' ];
+	}
+
+	/**
+	 * @dataProvider provideFeedIcon
+	 */
+	public function testFeedIcon( string $extension, string $mime, string $thumbUrl, string $expected ) {
+		$this->overrideConfigValues( [ 'AppleTouchIcon' => '/favicon-180.png' ] );
+		$this->setFile( $extension, $mime, $thumbUrl );
+		$id = $this->savePage( 'Category:Iconed', '{{FEDIFEEDSNAME:Blog|icon=Feed icon.png}}' );
+		$icon = [ 'type' => 'Image', 'mediaType' => 'image/png', 'url' => $expected ];
+		$this->assertSame( $icon, $this->getActor( "category_$id" )['icon'] );
+		$this->assertSame( $icon, $this->getActor( "section_$id" )['icon'] );
+	}
+
+	public function testFeedIconForOneKindWins() {
+		$this->setFile( 'png', 'image/png', '/thumb.png' );
+		$id = $this->savePage( 'Category:Iconed twice',
+			'{{FEDIFEEDSNAME:Blog|section|icon=Feed icon.png}}{{FEDIFEEDSNAME:Blog|icon=Other.png}}' );
+		$this->assertSame( 'https://wiki.example.org/thumb.png', $this->getActor( "section_$id" )['icon']['url'] );
+		$this->assertArrayNotHasKey( 'icon', $this->getActor( "category_$id" ) );
+	}
+
+	public static function provideFeedIconFallback(): iterable {
+		yield 'no argument' => [ '{{FEDIFEEDSNAME:Blog}}', '/thumb.png' ];
+		yield 'a missing file' => [ '{{FEDIFEEDSNAME:Blog|icon=Feed icon.png}}', null ];
+		yield 'a file that cannot be thumbnailed' => [ '{{FEDIFEEDSNAME:Blog|icon=Feed icon.png}}', false ];
+	}
+
+	/**
+	 * @dataProvider provideFeedIconFallback
+	 */
+	public function testFeedIconFallback( string $text, string|false|null $thumbUrl ) {
+		$this->overrideConfigValues( [ 'AppleTouchIcon' => '/favicon-180.png' ] );
+		$this->setFile( 'png', 'image/png', $thumbUrl );
+		$id = $this->savePage( 'Category:Fallback', $text );
+		$this->assertSame(
+			[ 'type' => 'Image', 'mediaType' => 'image/png', 'url' => 'https://wiki.example.org/favicon-180.png' ],
+			$this->getActor( "category_$id" )['icon']
+		);
 	}
 
 	public function testDefaultActorBase() {

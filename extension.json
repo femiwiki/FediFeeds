@@ -65,14 +65,21 @@
 				"PageStore",
 				"TitleFormatter",
 				"PageProps",
-				"FediFeeds.LocalKeyStore"
+				"FediFeeds.LocalKeyStore",
+				"RepoGroup"
 			]
 		},
 		{
 			"path": "/fedifeeds/webfinger",
 			"method": "GET",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\WebFingerHandler",
-			"services": ["MainConfig", "PageStore", "TitleFormatter", "PageProps"]
+			"services": [
+				"MainConfig",
+				"PageStore",
+				"TitleFormatter",
+				"PageProps",
+				"RepoGroup"
+			]
 		},
 		{
 			"path": "/fedifeeds/actors/{handle}/notes/{item}",
@@ -132,7 +139,7 @@
 		},
 		"FediFeedsIcon": {
 			"value": null,
-			"description": "URL or path of the image every actor shows as its avatar, such as \"/images/feed.png\". It must be a raster image such as PNG, since Mastodon does not show SVG avatars. Null uses $wgAppleTouchIcon, else the first non-SVG of $wgLogos['1x'] and $wgLogos['icon'], else no icon."
+			"description": "URL or path of the image an actor shows as its avatar when its page sets none with {{FEDIFEEDSNAME:<name>|icon=<file>}}, such as \"/images/feed.png\". It must be a raster image such as PNG, since Mastodon does not show SVG avatars. Null uses $wgAppleTouchIcon, else the first non-SVG of $wgLogos['1x'] and $wgLogos['icon'], else no icon."
 		}
 	},
 	"manifest_version": 2
