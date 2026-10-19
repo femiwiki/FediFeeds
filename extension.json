@@ -12,7 +12,14 @@
 		"FediFeeds": ["i18n"]
 	},
 	"ExtensionMessagesFiles": {
+		"FediFeedsAlias": "FediFeeds.alias.php",
 		"FediFeedsMagic": "FediFeeds.i18n.magic.php"
+	},
+	"SpecialPages": {
+		"FediFeedsReactions": {
+			"class": "MediaWiki\\Extension\\FediFeeds\\Specials\\SpecialFediFeedsReactions",
+			"services": ["PageStore", "ConnectionProvider", "FediFeeds.Reactions"]
+		}
 	},
 	"HookHandlers": {
 		"main": {
@@ -36,7 +43,12 @@
 		},
 		"info": {
 			"class": "MediaWiki\\Extension\\FediFeeds\\InfoHooks",
-			"services": ["FediFeeds.Items", "FediFeeds.Reactions"]
+			"services": [
+				"FediFeeds.Items",
+				"FediFeeds.Reactions",
+				"FediFeeds.RemoteActors",
+				"LinkRenderer"
+			]
 		},
 		"schema": {
 			"class": "MediaWiki\\Extension\\FediFeeds\\SchemaHooks"
@@ -51,6 +63,7 @@
 	},
 	"JobClasses": {
 		"fedifeedsDeliver": "MediaWiki\\Extension\\FediFeeds\\DeliveryJob",
+		"fedifeedsFetchActor": "MediaWiki\\Extension\\FediFeeds\\FetchActorJob",
 		"fedifeedsPurgeActor": "MediaWiki\\Extension\\FediFeeds\\PurgeActorJob"
 	},
 	"ServiceWiringFiles": ["includes/ServiceWiring.php"],
@@ -121,7 +134,8 @@
 				"FediFeeds.Followers",
 				"FediFeeds.Quotes",
 				"JobQueueGroup",
-				"FediFeeds.Reactions"
+				"FediFeeds.Reactions",
+				"FediFeeds.RemoteActors"
 			]
 		},
 		{
@@ -135,7 +149,8 @@
 				"FediFeeds.Followers",
 				"FediFeeds.Quotes",
 				"JobQueueGroup",
-				"FediFeeds.Reactions"
+				"FediFeeds.Reactions",
+				"FediFeeds.RemoteActors"
 			]
 		}
 	],

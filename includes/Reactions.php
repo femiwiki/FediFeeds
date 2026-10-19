@@ -120,6 +120,28 @@ class Reactions {
 	}
 
 	/**
+	 * How many actors gave the notes of the page's items each kind, across every feed.
+	 *
+	 * @return array{like: int, announce: int}
+	 */
+	public function countActorsForPage( int $pageId ): array {
+		$counts = [ self::LIKE => 0, self::ANNOUNCE => 0 ];
+		$rows = $this->dbProvider->getReplicaDatabase()->newSelectQueryBuilder()
+			->select( [ 'fr_type', 'count' => 'COUNT(DISTINCT fr_actor)' ] )
+			->from( 'fedifeeds_reaction' )
+			->where( [ 'fr_page' => $pageId ] )
+			->groupBy( 'fr_type' )
+			->caller( __METHOD__ )->fetchResultSet();
+		foreach ( $rows as $row ) {
+			'@phan-var stdClass $row';
+			if ( isset( $counts[$row->fr_type] ) ) {
+				$counts[$row->fr_type] = (int)$row->count;
+			}
+		}
+		return $counts;
+	}
+
+	/**
 	 * How many of each kind the notes of the page's items got, across every feed.
 	 *
 	 * @return array{like: int, announce: int}

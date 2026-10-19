@@ -14,6 +14,9 @@ class RemoteKeys {
 	/** How long a key that could not be fetched is not asked for again */
 	private const MISS_TTL = 300;
 
+	/** @var array<string,mixed> Documents fetched during this request, by URL */
+	private array $fetched = [];
+
 	public function __construct(
 		private readonly HttpRequestFactory $httpRequestFactory,
 		private readonly WANObjectCache $cache,
@@ -96,7 +99,17 @@ class RemoteKeys {
 		if ( !$request->execute()->isOK() ) {
 			return null;
 		}
-		return json_decode( $request->getContent(), true );
+		$document = json_decode( $request->getContent(), true );
+		$this->fetched[$url] = $document;
+		return $document;
+	}
+
+	/**
+	 * The document fetched from the URL during this request, if one was, such as the actor
+	 * document a signature's key came from.
+	 */
+	public function getFetchedDocument( string $url ): mixed {
+		return $this->fetched[explode( '#', $url, 2 )[0]] ?? null;
 	}
 
 	/**

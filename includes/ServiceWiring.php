@@ -7,6 +7,7 @@ use MediaWiki\Extension\FediFeeds\Items;
 use MediaWiki\Extension\FediFeeds\Notes;
 use MediaWiki\Extension\FediFeeds\Quotes;
 use MediaWiki\Extension\FediFeeds\Reactions;
+use MediaWiki\Extension\FediFeeds\RemoteActors;
 use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
 use MediaWiki\MediaWikiServices;
@@ -39,6 +40,9 @@ return [
 	},
 	'FediFeeds.Reactions' => static function ( MediaWikiServices $services ): Reactions {
 		return new Reactions( $services->getConnectionProvider() );
+	},
+	'FediFeeds.RemoteActors' => static function ( MediaWikiServices $services ): RemoteActors {
+		return new RemoteActors( $services->getConnectionProvider() );
 	},
 	'FediFeeds.RemoteKeys' => static function ( MediaWikiServices $services ): RemoteKeys {
 		return new RemoteKeys( $services->getHttpRequestFactory(), $services->getMainWANObjectCache() );

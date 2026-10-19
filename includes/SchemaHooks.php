@@ -19,5 +19,6 @@ class SchemaHooks implements LoadExtensionSchemaUpdatesHook {
 		$updater->addExtensionField( 'fedifeeds_item', 'fi_key', "$dir/$type/patch-fedifeeds_item-fi_key.sql" );
 		$updater->addExtensionTable( 'fedifeeds_quote', "$dir/$type/patch-fedifeeds_quote.sql" );
 		$updater->addExtensionTable( 'fedifeeds_reaction', "$dir/$type/patch-fedifeeds_reaction.sql" );
+		$updater->addExtensionTable( 'fedifeeds_actor', "$dir/$type/patch-fedifeeds_actor.sql" );
 	}
 }

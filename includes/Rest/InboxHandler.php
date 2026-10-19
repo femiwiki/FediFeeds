@@ -5,11 +5,13 @@ namespace MediaWiki\Extension\FediFeeds\Rest;
 use MediaWiki\Extension\FediFeeds\DeliveryJob;
 use MediaWiki\Extension\FediFeeds\Feed;
 use MediaWiki\Extension\FediFeeds\FeedLookup;
+use MediaWiki\Extension\FediFeeds\FetchActorJob;
 use MediaWiki\Extension\FediFeeds\Followers;
 use MediaWiki\Extension\FediFeeds\Notes;
 use MediaWiki\Extension\FediFeeds\PurgeActorJob;
 use MediaWiki\Extension\FediFeeds\Quotes;
 use MediaWiki\Extension\FediFeeds\Reactions;
+use MediaWiki\Extension\FediFeeds\RemoteActors;
 use MediaWiki\Extension\FediFeeds\Signatures\HttpSignature;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
 use MediaWiki\JobQueue\JobQueueGroup;
@@ -35,6 +37,7 @@ class InboxHandler extends Handler {
 		private readonly Quotes $quotes,
 		private readonly JobQueueGroup $jobQueueGroup,
 		private readonly Reactions $reactions,
+		private readonly RemoteActors $remoteActors,
 	) {
 		$this->feedLookup = new FeedLookup( $pageLookup );
 	}
@@ -51,6 +54,11 @@ class InboxHandler extends Handler {
 			return $this->getResponseFactory()->createHttpError( 400, [ 'message' => 'Not an activity' ] );
 		}
 		if ( $activity['type'] === 'Delete' && !$this->isKnown( $actor ) ) {
+			return $this->accepted();
+		}
+		// Only an Update of an actor whose reactions are shown is used, so others are dropped
+		// before their signature is checked
+		if ( $activity['type'] === 'Update' && !$this->remoteActors->has( $actor ) ) {
 			return $this->accepted();
 		}
 
@@ -92,6 +100,12 @@ class InboxHandler extends Handler {
 					$this->undoReaction( $object, $actor );
 				}
 				return $this->accepted();
+			case 'Update':
+				// The actor's own document, signed by it, refreshes what is cached about it
+				if ( self::getId( $activity['object'] ?? null ) === $actor ) {
+					$this->remoteActors->update( $actor, $activity['object'] );
+				}
+				return $this->accepted();
 			case 'Delete':
 				// A deleted quoting post loses its authorization; a deleted actor was handled above
 				$object = self::getId( $activity['object'] ?? null );
@@ -116,9 +130,18 @@ class InboxHandler extends Handler {
 	 */
 	private function react( array $activity, string $actor ): void {
 		$item = $this->getReactedItem( $activity );
-		if ( $item ) {
-			$this->reactions->add( $item['feed'], $item['page'], $item['key'],
-				Reactions::ACTIVITY_TYPES[$activity['type']], $actor, self::getId( $activity['id'] ?? null ) ?? '' );
+		if ( !$item ) {
+			return;
+		}
+		$this->reactions->add( $item['feed'], $item['page'], $item['key'],
+			Reactions::ACTIVITY_TYPES[$activity['type']], $actor, self::getId( $activity['id'] ?? null ) ?? '' );
+		if ( $this->remoteActors->isStale( $actor ) ) {
+			// The actor document the signature's key came from, if it was fetched just now, or
+			// else a job reads it, so the request waits on no other server
+			$document = $this->remoteKeys->getFetchedDocument( $actor );
+			if ( !$this->remoteActors->update( $actor, $document ) ) {
+				$this->jobQueueGroup->lazyPush( new FetchActorJob( [ 'actor' => $actor ] ) );
+			}
 		}
 	}
 

@@ -3,22 +3,34 @@
 namespace MediaWiki\Extension\FediFeeds;
 
 use MediaWiki\Actions\Hook\InfoActionHook;
+use MediaWiki\Context\IContextSource;
+use MediaWiki\Html\Html;
+use MediaWiki\Linker\LinkRenderer;
+use MediaWiki\SpecialPage\SpecialPage;
+use MediaWiki\Title\Title;
 
 /**
- * Shows on action=info how many Announces and Likes the notes of a page's items got
+ * Shows on action=info how many Announces and Likes the notes of a page's items got, and the
+ * discoverable accounts that gave them most recently
  */
 class InfoHooks implements InfoActionHook {
+
+	/** How many accounts are named after each total */
+	public const NAMED = 10;
 
 	public function __construct(
 		private readonly Items $items,
 		private readonly Reactions $reactions,
+		private readonly RemoteActors $remoteActors,
+		private readonly LinkRenderer $linkRenderer,
 	) {
 	}
 
 	/** @inheritDoc */
 	public function onInfoAction( $context, &$pageInfo ) {
-		$pageId = $context->getTitle()?->getArticleID() ?? 0;
-		if ( !$pageId ) {
+		$title = $context->getTitle();
+		$pageId = $title?->getArticleID() ?? 0;
+		if ( !$title || !$pageId ) {
 			return;
 		}
 		$counts = $this->reactions->countForPage( $pageId );
@@ -35,13 +47,63 @@ class InfoHooks implements InfoActionHook {
 				return;
 			}
 		}
-		$pageInfo['header-basic'][] = [
-			$context->msg( 'fedifeeds-info-announces' ),
-			$context->msg( 'fedifeeds-info-times' )->numParams( $counts[Reactions::ANNOUNCE] ),
-		];
-		$pageInfo['header-basic'][] = [
-			$context->msg( 'fedifeeds-info-likes' ),
-			$context->msg( 'fedifeeds-info-times' )->numParams( $counts[Reactions::LIKE] ),
-		];
+		$actorCounts = array_sum( $counts ) ? $this->reactions->countActorsForPage( $pageId ) : $counts;
+		foreach ( [ Reactions::ANNOUNCE => 'fedifeeds-info-announces', Reactions::LIKE => 'fedifeeds-info-likes' ]
+			as $type => $label
+		) {
+			$pageInfo['header-basic'][] = [
+				$context->msg( $label ),
+				$this->getValue( $context, $title, $type, $counts[$type], $actorCounts[$type] ),
+			];
+		}
+	}
+
+	/**
+	 * The total, then the discoverable accounts that gave the reaction last, how many others
+	 * did, and a link to the full list, as HTML.
+	 */
+	private function getValue(
+		IContextSource $context, Title $title, string $type, int $total, int $actors
+	): string {
+		$html = $context->msg( 'fedifeeds-info-times' )->numParams( $total )->escaped();
+		if ( !$total ) {
+			return $html;
+		}
+		$links = [];
+		foreach ( $this->remoteActors->getRecentDiscoverable( $title->getArticleID(), $type, self::NAMED ) as $actor ) {
+			$links[] = self::makeActorLink( $actor );
+		}
+		$others = max( 0, $actors - count( $links ) );
+		if ( $links ) {
+			$who = $context->getLanguage()->commaList( $links );
+			if ( $others ) {
+				$who .= $context->msg( 'word-separator' )->escaped()
+					. $context->msg( 'fedifeeds-info-others' )->numParams( $others )->escaped();
+			}
+		} else {
+			$who = $context->msg( 'fedifeeds-info-people' )->numParams( $others )->escaped();
+		}
+		$all = $this->linkRenderer->makeKnownLink(
+			SpecialPage::getTitleFor( 'FediFeedsReactions', $title->getPrefixedDBkey() ),
+			$context->msg( 'fedifeeds-info-all' )->text()
+		);
+		return $html . $context->msg( 'colon-separator' )->escaped() . $who
+			. $context->msg( 'word-separator' )->escaped()
+			. $context->msg( 'parentheses' )->rawParams( $all )->escaped();
+	}
+
+	/**
+	 * A link to a discoverable account's profile, named by its display name, else its handle.
+	 *
+	 * @param array{actor: string, handle: string, name: string, url: string} $actor
+	 */
+	public static function makeActorLink( array $actor ): string {
+		$handle = $actor['handle'] !== '' ? '@' . $actor['handle'] : $actor['actor'];
+		return Html::element( 'a', [
+			'href' => $actor['url'],
+			'class' => 'external',
+			'rel' => 'nofollow noreferrer noopener',
+			'title' => $handle,
+		], $actor['name'] !== '' ? $actor['name'] : $handle );
 	}
 }

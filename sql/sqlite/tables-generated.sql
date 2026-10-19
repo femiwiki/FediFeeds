@@ -62,3 +62,14 @@ CREATE UNIQUE INDEX fr_feed_page_key_type_actor ON /*_*/fedifeeds_reaction (
 CREATE INDEX fr_actor_activity ON /*_*/fedifeeds_reaction (fr_actor, fr_activity);
 
 CREATE INDEX fr_page_type ON /*_*/fedifeeds_reaction (fr_page, fr_type);
+
+
+CREATE TABLE /*_*/fedifeeds_actor (
+  fa_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  fa_actor BLOB NOT NULL, fa_handle BLOB DEFAULT '' NOT NULL,
+  fa_name BLOB DEFAULT '' NOT NULL, fa_url BLOB NOT NULL,
+  fa_discoverable SMALLINT DEFAULT 0 NOT NULL,
+  fa_checked BLOB NOT NULL
+);
+
+CREATE UNIQUE INDEX fa_actor ON /*_*/fedifeeds_actor (fa_actor);
