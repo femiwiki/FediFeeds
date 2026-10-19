@@ -536,15 +536,16 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <li><code>Delete</code> when an item that was sent as <code>Create</code> goes away, for example when the page is deleted or the section removed.</li>
 <li>Nothing for items that were never sent.</li></ul>
 <p>The <code>Note</code> carries the first paragraph as plain HTML and a link to the item, never wikitext. For <code>section</code>, the heading is often a timestamp and says little, so the paragraph leads.
-</p><p>A feed with no followers does nothing. Delivery goes to a server's <code>sharedInbox</code> when it has one, so a server with many followers gets one request.
+</p><p>A feed with no followers sends nothing. Delivery goes to a server's <code>sharedInbox</code> when it has one, so a server with many followers gets one request.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="Notes">Notes</h2></div>
-<p>Each item is a <code>Note</code> at <code>&lt;actor id&gt;/notes/&lt;item&gt;</code>, which answers while the item exists and is a 404 once it does not. For <code>category</code> the item is the page id. <code>attributedTo</code> is the actor, <code>url</code> is the page, <code>published</code> is the page's first revision, and the note is addressed to the public.
+<p>Each item is a <code>Note</code> at <code>&lt;actor id&gt;/notes/&lt;item&gt;</code>, which answers while the item exists and is a 404 once it does not. For <code>category</code> the item is the page id. <code>attributedTo</code> is the actor, <code>url</code> is the page, <code>published</code> is the page's first revision, and the note is addressed to the public. The page's URL, in <code>url</code> and in the content's link, carries <code>utm_source=fediverse</code>.
+</p><p>A <code>category</code> item stays a note after its page leaves the category. A follower got the item as news that a page appeared in the category, and like an RSS item it should not vanish later. A page usually leaves a category because the categories were tidied or moved, which followers need not hear about. Pages a follower would not want, such as spam or mistakes, are usually deleted, and a deletion sends <code>Delete</code>. Hiding the note or sending <code>Delete</code> on removal would be permanent or would flip-flop, because a page added back later is not a new item.
 </p><p>Only a feed whose page sets a <a href="../Accounts/en.html#Display_name" title="Special:MyLanguage/Accounts">display name</a> publishes notes. Any other feed's actor still answers, with an empty outbox and no notes, so maintenance categories publish nothing.
 </p><p>A page that is an item of such a feed links its note from its HTML head with <code>&lt;link rel="alternate" type="application/activity+json"&gt;</code>, so pasting the page's URL into a Mastodon search finds the note. When several such feeds hold the page, the first of its categories is used.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="Outbox">Outbox</h2></div>
-<p>The outbox is an <code>OrderedCollection</code> of <code>Create</code> activities for the newest 20 items, newest first. Until delivery records when an item appears, a <code>category</code> item is a page that is in the category now, and pages are ordered by page id.
+<p>The outbox is an <code>OrderedCollection</code> of <code>Create</code> activities for the newest 20 items, newest first. An item is recorded when it appears, whether or not the feed has followers, and is ordered by that time.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="Received">Received</h2></div>
 <ul><li><code>Follow</code> is accepted and stored against the feed it names. <code>Undo</code> of a <code>Follow</code> removes it.</li>
@@ -576,7 +577,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 18 October 2026, at 13:56.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 19 October 2026, at 12:59.</li>
 </ul>
 
 	<ul id="footer-places">
