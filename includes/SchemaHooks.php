@@ -10,9 +10,10 @@ class SchemaHooks implements LoadExtensionSchemaUpdatesHook {
 	public function onLoadExtensionSchemaUpdates( $updater ) {
 		$dir = dirname( __DIR__ ) . '/sql';
 		$type = $updater->getDB()->getType();
-		// A new install creates every table from the first file; a wiki that has the key
-		// table already gets the follower table from its patch
+		// A new install creates every table from the first file; an older wiki gets each later
+		// table from its patch
 		$updater->addExtensionTable( 'fedifeeds_key', "$dir/$type/tables-generated.sql" );
 		$updater->addExtensionTable( 'fedifeeds_follower', "$dir/$type/patch-fedifeeds_follower.sql" );
+		$updater->addExtensionTable( 'fedifeeds_item', "$dir/$type/patch-fedifeeds_item.sql" );
 	}
 }
