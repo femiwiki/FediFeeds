@@ -299,11 +299,23 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 		<ul id="toc-Notes-sublist" class="vector-toc-list">
 		</ul>
 	</li>
+	<li id="toc-Quotes"
+		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="#Quotes">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">3</span>
+				<span>Quotes</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Quotes-sublist" class="vector-toc-list">
+		</ul>
+	</li>
 	<li id="toc-Outbox"
 		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
 		<a class="vector-toc-link" href="#Outbox">
 			<div class="vector-toc-text">
-				<span class="vector-toc-numb">3</span>
+				<span class="vector-toc-numb">4</span>
 				<span>Outbox</span>
 			</div>
 		</a>
@@ -315,7 +327,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
 		<a class="vector-toc-link" href="#Received">
 			<div class="vector-toc-text">
-				<span class="vector-toc-numb">4</span>
+				<span class="vector-toc-numb">5</span>
 				<span>Received</span>
 			</div>
 		</a>
@@ -327,7 +339,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
 		<a class="vector-toc-link" href="#Signatures">
 			<div class="vector-toc-text">
-				<span class="vector-toc-numb">5</span>
+				<span class="vector-toc-numb">6</span>
 				<span>Signatures</span>
 			</div>
 		</a>
@@ -534,7 +546,8 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <ul><li><code>Create</code> with a <code>Note</code> when an item appears.</li>
 <li><code>Update</code> when an item that was sent as <code>Create</code> changes.</li>
 <li><code>Delete</code> when an item that was sent as <code>Create</code> goes away, for example when the page is deleted or the section removed.</li>
-<li>Nothing for items that were never sent.</li></ul>
+<li>Nothing for items that were never sent.</li>
+<li><code>Accept</code> of a <code>QuoteRequest</code>, with a <code>QuoteAuthorization</code> as its <code>result</code>.</li></ul>
 <p>The <code>Note</code> carries text as plain HTML and a link to the item, never wikitext. For <code>category</code> the text is the page's first paragraph. For <code>section</code> it is the section itself, because a heading is often just a time and says little.
 </p><p>A feed with no followers sends nothing. Delivery goes to a server's <code>sharedInbox</code> when it has one, so a server with many followers gets one request.
 </p>
@@ -545,17 +558,23 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 </p><p>Only a feed whose page sets a <a href="../Accounts/en.html#Display_name" title="Special:MyLanguage/Accounts">display name</a> publishes notes. Any other feed's actor still answers, with an empty outbox and no notes, so maintenance categories publish nothing.
 </p><p>A page that is an item of such a <code>category</code> feed links its note from its HTML head with <code>&lt;link rel="alternate" type="application/activity+json"&gt;</code>, so pasting the page's URL into a Mastodon search finds the note. When several such feeds hold the page, the first of its categories is used.
 </p>
+<div class="mw-heading mw-heading2"><h2 id="Quotes">Quotes</h2></div>
+<p>Anyone may quote a note, as <a rel="nofollow" class="external text" href="https://w3id.org/fep/044f">FEP-044f</a> describes. Each note has an <code>interactionPolicy</code> whose <code>canQuote</code> gives <code>automaticApproval</code> to the public, so servers such as Mastodon 4.5 and later let their users quote it.
+</p><p>A <code>QuoteRequest</code> whose <code>object</code> is one of our notes is answered with an <code>Accept</code>, sent as the <code>Accept</code> of a <code>Follow</code> is. Its <code>result</code> is a <code>QuoteAuthorization</code> at <code>&lt;actor id&gt;/quote_authorizations/&lt;id&gt;</code>, which is <code>attributedTo</code> the actor and names the quoting post as <code>interactingObject</code> and the note as <code>interactionTarget</code>. The request and the quoting post must be on the requesting actor's server. A request for a note we do not have is dropped without an answer. The quoting post is not fetched, since any post may quote.
+</p><p>An authorization answers until the quote is withdrawn. An <code>Undo</code> of the request, or a <code>Delete</code> of the quoting post or of its actor, removes it, and it is then a 404, as it is once the note is gone. No <code>Delete</code> of the authorization is sent, since the post it covers is gone or withdrawn already. Authorizations are kept in the <code>fedifeeds_quote</code> table.
+</p>
 <div class="mw-heading mw-heading2"><h2 id="Outbox">Outbox</h2></div>
 <p>The outbox is an <code>OrderedCollection</code> of <code>Create</code> activities for the newest 20 items, newest first. An item is recorded when it appears, whether or not the feed has followers, and is ordered by that time.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="Received">Received</h2></div>
 <ul><li><code>Follow</code> is accepted and stored against the feed it names. <code>Undo</code> of a <code>Follow</code> removes it.</li>
-<li><code>Like</code> and <code>Announce</code> of one of our notes are stored against its item, once per actor, item and kind. A reaction such as Misskey's <code>Like</code> with <code>content</code> or Pleroma's <code>EmojiReact</code> counts as a like. <code>Undo</code> of one removes it. Those of anything else are accepted and dropped.</li>
+<li><code>Like</code> and <code>Announce</code> of one of our notes are stored against its item, once per actor, item and kind. A <code>Like</code> with <code>content</code> and an <code>EmojiReact</code> count as likes. <code>Undo</code> of one removes it. Those of anything else are accepted and dropped.</li>
 <li>Replies, meaning a <code>Create</code> whose <code>inReplyTo</code> is one of our notes, are accepted and dropped.</li>
-<li>A <code>Delete</code> for an actor that follows nothing is dropped before its signature is checked.</li></ul>
-<p>A stored like or boost keeps the feed, the item and a SHA-256 hash of the actor's id, never the id itself, so it can be counted once and undone but does not say who gave it. A page's <code>action=info</code> shows the boosts and likes of the notes of all its items, such as <code><a rel="nofollow" class="external free" href="https://wiki.example.org/index.php?title=Post&amp;action=info">https://wiki.example.org/index.php?title=Post&amp;action=info</a></code>, when it has any item. An <code>Undo</code> is matched by its embedded activity, so an <code>Undo</code> that names the activity only by its id is dropped.
+<li><code>QuoteRequest</code> for one of our notes is authorized. <code>Undo</code> of it, or <code>Delete</code> of the quoting post, removes the authorization.</li>
+<li>A <code>Delete</code> for an actor that neither follows, quotes, likes nor shares anything is dropped before its signature is checked. A <code>Delete</code> of an actor that likes or shares removes its likes and shares.</li></ul>
+<p>A stored like or share keeps the feed, the item, the actor's id and the activity's id, so that each actor counts once and an <code>Undo</code> or <code>Delete</code> finds it. An <code>Undo</code> is matched by the undone activity's id, or else by its kind and object. Only totals are shown: a page with any item shows on its <code>action=info</code>, such as <code><a rel="nofollow" class="external free" href="https://wiki.example.org/index.php?title=Post&amp;action=info">https://wiki.example.org/index.php?title=Post&amp;action=info</a></code>, how many times the notes of all its items were announced and liked. A <code>Delete</code> of an actor whose signature does not verify, often because its key went with it, is answered 202, and its likes and shares are removed in the job queue once fetching the actor answers 404 or 410.
 </p><p>Every other request is verified by HTTP signature. Remote keys are cached, because without a cache each request holds a PHP worker while it fetches a key from another server.
-</p><p>Each actor's inbox and the shared inbox take the same activities. They answer 202 to what they accept and to what they drop alike, and 401 when the signature does not verify or the activity's <code>actor</code> is not the signer. An accepted <code>Follow</code> is answered with an <code>Accept</code> sent to the follower's shared inbox, or else its inbox. The <code>followers</code> collection shows only <code>totalItems</code>, so who follows a feed stays private.
+</p><p>Each actor's inbox and the shared inbox take the same activities. They answer 202 to what they accept and to what they drop alike, and 401 when the signature does not verify or the activity's <code>actor</code> is not the signer. An accepted <code>Follow</code> or <code>QuoteRequest</code> is answered with an <code>Accept</code> sent to the sender's shared inbox, or else its inbox. The <code>followers</code> collection shows only <code>totalItems</code>, so who follows a feed stays private.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="Signatures">Signatures</h2></div>
 <p>Requests are signed and verified as Mastodon does, with <a rel="nofollow" class="external text" href="https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12">draft-cavage-http-signatures-12</a>:
@@ -579,7 +598,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 19 October 2026, at 16:31.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 19 October 2026, at 16:44.</li>
 </ul>
 
 	<ul id="footer-places">
