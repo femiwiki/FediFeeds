@@ -7,7 +7,9 @@ use MediaWiki\Extension\FediFeeds\Feed;
 use MediaWiki\Extension\FediFeeds\FeedLookup;
 use MediaWiki\Extension\FediFeeds\Followers;
 use MediaWiki\Extension\FediFeeds\Notes;
+use MediaWiki\Extension\FediFeeds\PurgeActorJob;
 use MediaWiki\Extension\FediFeeds\Quotes;
+use MediaWiki\Extension\FediFeeds\Signatures\HttpSignature;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
 use MediaWiki\JobQueue\JobQueueGroup;
 use MediaWiki\Page\PageLookup;
@@ -46,9 +48,7 @@ class InboxHandler extends Handler {
 		if ( $actor === null || !is_string( $activity['type'] ?? null ) ) {
 			return $this->getResponseFactory()->createHttpError( 400, [ 'message' => 'Not an activity' ] );
 		}
-		if ( $activity['type'] === 'Delete'
-			&& !$this->followers->isFollower( $actor ) && !$this->quotes->isQuoter( $actor )
-		) {
+		if ( $activity['type'] === 'Delete' && !$this->isKnown( $actor ) ) {
 			return $this->accepted();
 		}
 
@@ -56,7 +56,13 @@ class InboxHandler extends Handler {
 		foreach ( $request->getHeaders() as $name => $values ) {
 			$headers[strtolower( (string)$name )] = implode( ', ', $values );
 		}
-		if ( $this->remoteKeys->verify( 'POST', $this->getSignedTarget(), $headers, $body ) !== $actor ) {
+		$verified = $this->remoteKeys->verify( 'POST', $this->getSignedTarget(), $headers, $body ) === $actor;
+		if ( $activity['type'] === 'Delete' && self::getId( $activity['object'] ?? null ) === $actor ) {
+			// An account that deleted itself no longer serves its key, so a signature that does
+			// not verify is left to the job, which purges the actor once it is seen gone
+			return $this->purgeActor( $actor, $headers['signature'] ?? '', !$verified );
+		}
+		if ( !$verified ) {
 			return $this->getResponseFactory()->createHttpError( 401, [ 'message' => 'Bad signature' ] );
 		}
 
@@ -81,11 +87,9 @@ class InboxHandler extends Handler {
 				}
 				return $this->accepted();
 			case 'Delete':
-				// A deleted quoting post loses its authorization, and a deleted actor all of its
+				// A deleted quoting post loses its authorization; a deleted actor was handled above
 				$object = self::getId( $activity['object'] ?? null );
-				if ( $object === $actor ) {
-					$this->quotes->removeByActor( $actor );
-				} elseif ( $object !== null ) {
+				if ( $object !== null ) {
 					$this->quotes->removeByPost( $actor, $object );
 				}
 				return $this->accepted();
@@ -181,6 +185,24 @@ class InboxHandler extends Handler {
 	private static function sameHost( string $url, string $other ): bool {
 		$host = parse_url( $url, PHP_URL_HOST );
 		return is_string( $host ) && $host === parse_url( $other, PHP_URL_HOST );
+	}
+
+	/**
+	 * Whether the actor has anything here that its Delete would remove, which decides if the
+	 * Delete is worth verifying.
+	 */
+	private function isKnown( string $actor ): bool {
+		return $this->followers->isFollower( $actor ) || $this->quotes->isQuoter( $actor );
+	}
+
+	private function purgeActor( string $actor, string $signature, bool $check ): Response {
+		$params = [ 'actor' => $actor, 'check' => $check ];
+		$keyId = HttpSignature::parse( $signature )['keyId'] ?? null;
+		if ( is_string( $keyId ) && str_starts_with( $keyId, $actor ) ) {
+			$params['keyId'] = $keyId;
+		}
+		$this->jobQueueGroup->lazyPush( new PurgeActorJob( $params ) );
+		return $this->accepted();
 	}
 
 	private function getFeed( mixed $object ): ?Feed {

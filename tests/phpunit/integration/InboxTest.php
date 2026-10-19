@@ -6,6 +6,7 @@ use GuzzleHttp\Psr7\Uri;
 use MediaWiki\Extension\FediFeeds\DeliveryJob;
 use MediaWiki\Extension\FediFeeds\Feed;
 use MediaWiki\Extension\FediFeeds\Followers;
+use MediaWiki\Extension\FediFeeds\PurgeActorJob;
 use MediaWiki\Extension\FediFeeds\Quotes;
 use MediaWiki\Extension\FediFeeds\Rest\FeedInboxHandler;
 use MediaWiki\Extension\FediFeeds\Rest\FollowersHandler;
@@ -13,11 +14,13 @@ use MediaWiki\Extension\FediFeeds\Rest\InboxHandler;
 use MediaWiki\Extension\FediFeeds\Rest\QuoteAuthorizationHandler;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
 use MediaWiki\Http\HttpRequestFactory;
+use MediaWiki\Http\MWHttpRequest;
 use MediaWiki\Rest\LocalizedHttpException;
 use MediaWiki\Rest\RequestData;
 use MediaWiki\Tests\Rest\Handler\HandlerTestTrait;
 use MediaWikiIntegrationTestCase;
 use RuntimeException;
+use StatusValue;
 use Wikimedia\ObjectCache\HashBagOStuff;
 use Wikimedia\ObjectCache\WANObjectCache;
 
@@ -27,7 +30,9 @@ use Wikimedia\ObjectCache\WANObjectCache;
  * @covers \MediaWiki\Extension\FediFeeds\Rest\FollowersHandler
  * @covers \MediaWiki\Extension\FediFeeds\Rest\QuoteAuthorizationHandler
  * @covers \MediaWiki\Extension\FediFeeds\Followers
+ * @covers \MediaWiki\Extension\FediFeeds\PurgeActorJob
  * @covers \MediaWiki\Extension\FediFeeds\Quotes
+ * @covers \MediaWiki\Extension\FediFeeds\Signatures\GoneActors
  * @group Database
  */
 class InboxTest extends MediaWikiIntegrationTestCase {
@@ -158,6 +163,105 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->keys['signer'] = 'throw';
 		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ];
 		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
+	}
+
+	/**
+	 * Answers each fetch of an actor with the status, and counts the fetches.
+	 */
+	private function setRemoteStatus( int $status, ?int &$fetches = 0 ): void {
+		$fetches = 0;
+		$request = $this->createMock( MWHttpRequest::class );
+		$request->method( 'execute' )->willReturn( StatusValue::newGood() );
+		$request->method( 'getStatus' )->willReturn( $status );
+		$http = $this->createMock( HttpRequestFactory::class );
+		$http->method( 'create' )->willReturnCallback( static function ( $url ) use ( $request, &$fetches ) {
+			$fetches++;
+			return $request;
+		} );
+		$this->setService( 'HttpRequestFactory', $http );
+	}
+
+	private function newOtherCategory(): Feed {
+		$this->editPage( 'Category:News', '{{FEDIFEEDSNAME:News}}' );
+		$this->runDeferredUpdates();
+		return new Feed( 'category', $this->getServiceContainer()->getPageStore()->getPageByText( 'Category:News' ) );
+	}
+
+	private function runPurges(): void {
+		$this->runJobs( [ 'minJobs' => 0 ], [ 'type' => PurgeActorJob::TYPE ] );
+	}
+
+	public function testDeleteFromANonFollowerFetchesNothing() {
+		$this->setRemoteStatus( 410, $fetches );
+		$this->keys['signer'] = 'throw';
+		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ];
+		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
+		$this->runDeferredUpdates();
+		$this->assertSame( 0, $this->getServiceContainer()->getJobQueueGroup()->get( PurgeActorJob::TYPE )
+			->getSize() );
+		$this->assertSame( 0, $fetches );
+	}
+
+	public function testSignedDeleteOfTheActorDropsItsFollows() {
+		$this->setRemoteStatus( 200, $fetches );
+		$feed = $this->newCategory();
+		$other = $this->newOtherCategory();
+		$this->getFollowers()->add( $feed, self::REMOTE, self::SHARED_INBOX );
+		$this->getFollowers()->add( $other, self::REMOTE, self::SHARED_INBOX );
+		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ];
+		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
+		$this->runPurges();
+		$this->assertSame( 0, $this->getFollowers()->count( $feed ) );
+		$this->assertSame( 0, $this->getFollowers()->count( $other ) );
+		$this->assertSame( 0, $fetches, 'a verified Delete needs no fetch' );
+	}
+
+	public function testUnverifiedDeleteOfAGoneActorDropsItsFollows() {
+		$this->setRemoteStatus( 410, $fetches );
+		$feed = $this->newCategory();
+		$this->getFollowers()->add( $feed, self::REMOTE, self::SHARED_INBOX );
+		$this->keys['signer'] = null;
+		$tombstone = [ 'type' => 'Delete', 'actor' => self::REMOTE,
+			'object' => [ 'type' => 'Tombstone', 'id' => self::REMOTE ] ];
+		$this->assertSame( 202, $this->post( $tombstone, $feed->getHandle() )->getStatusCode() );
+		$this->runPurges();
+		$this->assertSame( 0, $this->getFollowers()->count( $feed ) );
+		$this->assertSame( 1, $fetches );
+	}
+
+	public function testUnverifiedDeleteOfALiveActorKeepsItsFollows() {
+		$this->setRemoteStatus( 200, $fetches );
+		$feed = $this->newCategory();
+		$this->getFollowers()->add( $feed, self::REMOTE, self::SHARED_INBOX );
+		$this->keys['signer'] = null;
+		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ];
+		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
+		$this->runPurges();
+		$this->assertSame( 1, $this->getFollowers()->count( $feed ) );
+		$this->assertSame( 1, $fetches );
+	}
+
+	public function testUnverifiedDeleteOfAnotherObjectIsRefused() {
+		$feed = $this->newCategory();
+		$this->getFollowers()->add( $feed, self::REMOTE, self::SHARED_INBOX );
+		$this->keys['signer'] = null;
+		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE . '/statuses/1' ];
+		$this->assertSame( 401, $this->post( $delete, null )->getStatusCode() );
+		$this->assertSame( 1, $this->getFollowers()->count( $feed ) );
+	}
+
+	public function testPurgeJobDropsEveryFollowOfTheActor() {
+		$feed = $this->newCategory();
+		$other = $this->newOtherCategory();
+		$followers = $this->getFollowers();
+		$followers->add( $feed, self::REMOTE, self::SHARED_INBOX );
+		$followers->add( $other, self::REMOTE, self::SHARED_INBOX );
+		$followers->add( $feed, 'https://remote.example/users/b', self::SHARED_INBOX );
+		$job = new PurgeActorJob( [ 'actor' => self::REMOTE, 'check' => false ] );
+		$this->assertTrue( $job->run() );
+		$this->assertSame( 1, $followers->count( $feed ) );
+		$this->assertSame( 0, $followers->count( $other ) );
+		$this->assertFalse( $followers->isFollower( self::REMOTE ) );
 	}
 
 	public function testOtherActivitiesAreDropped() {
@@ -392,6 +496,8 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$feed = $this->newCategory();
 		[ $note, $url ] = $this->quote( $feed );
 		$this->assertSame( 202, $this->post( $withdrawal( $note ), null )->getStatusCode() );
+		// A Delete of the actor is purged by a job
+		$this->runPurges();
 		$this->assertSame( 404, $this->getQuoteAuthorization( $url ) );
 		$this->assertFalse( $this->getQuotes()->isQuoter( self::REMOTE ) );
 	}
@@ -414,6 +520,17 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::POST ];
 		$this->assertSame( 401, $this->post( $delete, null )->getStatusCode() );
 		$this->assertSame( $url, $this->getQuoteAuthorization( $url )['id'] );
+	}
+
+	public function testUnverifiedDeleteOfAGoneQuoterRemovesTheAuthorization() {
+		$feed = $this->newCategory();
+		[ , $url ] = $this->quote( $feed );
+		$this->setRemoteStatus( 404 );
+		$this->keys['signer'] = null;
+		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ];
+		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
+		$this->runPurges();
+		$this->assertSame( 404, $this->getQuoteAuthorization( $url ) );
 	}
 
 	public function testNoAuthorizationOnceTheNoteIsGone() {

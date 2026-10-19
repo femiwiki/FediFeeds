@@ -45,7 +45,8 @@
 		"LoadExtensionSchemaUpdates": "schema"
 	},
 	"JobClasses": {
-		"fedifeedsDeliver": "MediaWiki\\Extension\\FediFeeds\\DeliveryJob"
+		"fedifeedsDeliver": "MediaWiki\\Extension\\FediFeeds\\DeliveryJob",
+		"fedifeedsPurgeActor": "MediaWiki\\Extension\\FediFeeds\\PurgeActorJob"
 	},
 	"ServiceWiringFiles": ["includes/ServiceWiring.php"],
 	"AutoloadNamespaces": {

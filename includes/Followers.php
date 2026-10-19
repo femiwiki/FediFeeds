@@ -36,6 +36,16 @@ class Followers {
 			->caller( __METHOD__ )->execute();
 	}
 
+	/**
+	 * Drops the actor's follows of every feed, for an actor that was deleted.
+	 */
+	public function removeActor( string $actor ): void {
+		$this->dbProvider->getPrimaryDatabase()->newDeleteQueryBuilder()
+			->deleteFrom( 'fedifeeds_follower' )
+			->where( [ 'ff_actor' => $actor ] )
+			->caller( __METHOD__ )->execute();
+	}
+
 	public function count( Feed $feed ): int {
 		return (int)$this->dbProvider->getReplicaDatabase()->newSelectQueryBuilder()
 			->select( 'COUNT(*)' )
