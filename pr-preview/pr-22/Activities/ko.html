@@ -540,11 +540,12 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 </p>
 <div class="mw-heading mw-heading2"><h2 id="노트"><span id=".EB.85.B8.ED.8A.B8"></span>노트</h2></div>
 <p>항목은 저마다 <code>&lt;actor id&gt;/notes/&lt;item&gt;</code>에 있는 <code>Note</code>입니다. 항목이 있는 동안 답하고, 없어지면 404입니다. <code>category</code>에서 항목은 문서 id입니다. <code>attributedTo</code>는 액터, <code>url</code>은 문서, <code>published</code>는 문서의 첫 판이고, 노트는 공개로 보냅니다. <code>url</code>과 본문 링크의 문서 주소에는 <code>utm_source=fediverse</code>를 붙입니다.
+</p><p><code>category</code> 항목은 문서가 분류에서 빠져도 노트로 남습니다. 팔로어는 그 항목을 분류에 새 문서가 생겼다는 소식으로 받았으니, RSS 항목처럼 나중에 사라지면 안 됩니다. 문서가 분류에서 빠지는 것은 대개 분류를 정리하거나 옮겨서이고, 팔로어가 알 필요는 없습니다. 팔로어가 원하지 않을 문서, 이를테면 스팸이나 실수로 만든 문서는 대개 삭제되며, 삭제하면 <code>Delete</code>를 보냅니다. 빠질 때 노트를 숨기거나 <code>Delete</code>를 보내면 되돌릴 수 없거나 오락가락하게 됩니다. 나중에 다시 넣은 문서는 새 항목이 아니기 때문입니다.
 </p><p>문서가 <a href="../Accounts/ko.html#Display_name" title="Special:MyLanguage/Accounts">표시 이름</a>을 정한 피드만 노트를 내보냅니다. 다른 피드의 액터도 답은 하지만 outbox가 비어 있고 노트가 없으므로, 유지보수용 분류는 아무것도 내보내지 않습니다.
 </p><p>그런 피드의 항목인 문서는 HTML head에 <code>&lt;link rel="alternate" type="application/activity+json"&gt;</code>로 자기 노트를 걸어 둡니다. 그래서 마스토돈 검색창에 문서 주소를 붙이면 노트를 찾습니다. 그런 피드 여럿이 문서를 담고 있으면 문서의 분류 가운데 첫째를 씁니다.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="Outbox">Outbox</h2></div>
-<p>outbox는 최근 항목 20개의 <code>Create</code> 액티비티를 최근 것부터 담은 <code>OrderedCollection</code>입니다. 항목은 생길 때 기록하며, 피드에 팔로어가 없어도 기록합니다. 순서는 그 시각을 따릅니다. <code>category</code> 항목은 문서가 분류에서 빠져도 문서가 있는 동안 노트로 남습니다.
+<p>outbox는 최근 항목 20개의 <code>Create</code> 액티비티를 최근 것부터 담은 <code>OrderedCollection</code>입니다. 항목은 생길 때 기록하며, 피드에 팔로어가 없어도 기록합니다. 순서는 그 시각을 따릅니다.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="받는_것"><span id=".EB.B0.9B.EB.8A.94_.EA.B2.83"></span>받는 것</h2></div>
 <ul><li><code>Follow</code>는 받아서 그 피드에 저장합니다. <code>Follow</code>의 <code>Undo</code>가 오면 지웁니다.</li>
@@ -576,7 +577,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer"  lang="ko" dir="ltr">
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 19일 (월) 11:16에 마지막으로 편집되었습니다.</li>
+	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 19일 (월) 12:20에 마지막으로 편집되었습니다.</li>
 </ul>
 
 	<ul id="footer-places">
