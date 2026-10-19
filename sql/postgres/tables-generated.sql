@@ -38,3 +38,19 @@ CREATE TABLE fedifeeds_item (
 CREATE UNIQUE INDEX fi_feed_page_key ON fedifeeds_item (fi_feed, fi_page, fi_key);
 
 CREATE INDEX fi_feed_timestamp ON fedifeeds_item (fi_feed, fi_timestamp);
+
+
+CREATE TABLE fedifeeds_quote (
+  fq_id SERIAL NOT NULL,
+  fq_feed TEXT NOT NULL,
+  fq_item TEXT NOT NULL,
+  fq_actor TEXT NOT NULL,
+  fq_post TEXT NOT NULL,
+  fq_request TEXT NOT NULL,
+  fq_timestamp TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY(fq_id)
+);
+
+CREATE UNIQUE INDEX fq_post_feed ON fedifeeds_quote (fq_post, fq_feed);
+
+CREATE INDEX fq_actor_request ON fedifeeds_quote (fq_actor, fq_request);

@@ -128,5 +128,65 @@
 			}
 		],
 		"pk": ["fi_id"]
+	},
+	{
+		"name": "fedifeeds_quote",
+		"comment": "Quotes of notes that were authorized, each served as a QuoteAuthorization until the quote is withdrawn",
+		"columns": [
+			{
+				"name": "fq_id",
+				"type": "integer",
+				"options": { "unsigned": true, "notnull": true, "autoincrement": true }
+			},
+			{
+				"name": "fq_feed",
+				"comment": "Handle of the feed whose note is quoted, such as category_4521",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "fq_item",
+				"comment": "The quoted item, as the last part of its note id: a page id, or the encoded key of a section item",
+				"type": "blob",
+				"options": { "notnull": true, "length": 65530 }
+			},
+			{
+				"name": "fq_actor",
+				"comment": "Id of the remote actor that quotes",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "fq_post",
+				"comment": "Id of the remote post that quotes",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "fq_request",
+				"comment": "Id of the QuoteRequest, which an Undo names",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "fq_timestamp",
+				"comment": "When the quote was authorized",
+				"type": "mwtimestamp",
+				"options": { "notnull": true }
+			}
+		],
+		"indexes": [
+			{
+				"name": "fq_post_feed",
+				"columns": ["fq_post", "fq_feed"],
+				"unique": true
+			},
+			{
+				"name": "fq_actor_request",
+				"columns": ["fq_actor", "fq_request"],
+				"unique": false
+			}
+		],
+		"pk": ["fq_id"]
 	}
 ]
