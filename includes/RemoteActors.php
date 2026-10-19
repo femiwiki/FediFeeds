@@ -8,9 +8,9 @@ use Wikimedia\Rdbms\SelectQueryBuilder;
 use Wikimedia\Timestamp\TimestampFormat as TS;
 
 /**
- * What remote actors that liked or shared a note say about themselves: a handle, a display name,
- * a profile page and whether they let themselves be discovered. Only a discoverable actor is
- * ever named; any other is only counted.
+ * What remote actors that liked or shared a note say about themselves: a handle, a display name
+ * and a profile page, so they can be named as other servers name them. An actor not read yet is
+ * only counted.
  */
 class RemoteActors {
 
@@ -54,7 +54,7 @@ class RemoteActors {
 	/**
 	 * The columns for an actor document, or null if it is not the actor's.
 	 *
-	 * @return array{fa_handle: string, fa_name: string, fa_url: string, fa_discoverable: int}|null
+	 * @return array{fa_handle: string, fa_name: string, fa_url: string}|null
 	 */
 	public static function parse( string $actor, mixed $document ): ?array {
 		if ( !is_array( $document ) || ( $document['id'] ?? null ) !== $actor
@@ -72,8 +72,6 @@ class RemoteActors {
 			'fa_handle' => strlen( $handle ) > self::MAX_LENGTH ? '' : $handle,
 			'fa_name' => mb_strcut( $name, 0, self::MAX_LENGTH ),
 			'fa_url' => self::getProfileUrl( $document['url'] ?? null ) ?? $actor,
-			// Only an explicit true lets the actor be named
-			'fa_discoverable' => ( $document['discoverable'] ?? false ) === true ? 1 : 0,
 		];
 	}
 
@@ -128,20 +126,20 @@ class RemoteActors {
 	}
 
 	/**
-	 * The discoverable actors that gave the page's notes that kind of reaction, the one that
-	 * reacted last first.
+	 * The cached actors that gave the page's notes that kind of reaction, the one that reacted
+	 * last first.
 	 *
 	 * @param int $pageId
 	 * @param string $type Reactions::LIKE or Reactions::ANNOUNCE
 	 * @param int $limit
 	 * @return array{actor: string, handle: string, name: string, url: string}[]
 	 */
-	public function getRecentDiscoverable( int $pageId, string $type, int $limit ): array {
+	public function getRecent( int $pageId, string $type, int $limit ): array {
 		$rows = $this->dbProvider->getReplicaDatabase()->newSelectQueryBuilder()
 			->select( [ 'fa_actor', 'fa_handle', 'fa_name', 'fa_url', 'latest' => 'MAX(fr_timestamp)' ] )
 			->from( 'fedifeeds_reaction' )
 			->join( 'fedifeeds_actor', null, 'fa_actor = fr_actor' )
-			->where( [ 'fr_page' => $pageId, 'fr_type' => $type, 'fa_discoverable' => 1 ] )
+			->where( [ 'fr_page' => $pageId, 'fr_type' => $type ] )
 			->groupBy( [ 'fa_actor', 'fa_handle', 'fa_name', 'fa_url' ] )
 			->orderBy( [ 'latest', 'fa_actor' ], SelectQueryBuilder::SORT_DESC )
 			->limit( $limit )

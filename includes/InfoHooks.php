@@ -11,7 +11,7 @@ use MediaWiki\Title\Title;
 
 /**
  * Shows on action=info how many Announces and Likes the notes of a page's items got, and the
- * discoverable accounts that gave them most recently
+ * accounts that gave them most recently
  */
 class InfoHooks implements InfoActionHook {
 
@@ -59,7 +59,7 @@ class InfoHooks implements InfoActionHook {
 	}
 
 	/**
-	 * The total, then the discoverable accounts that gave the reaction last, how many others
+	 * The total, then the cached accounts that gave the reaction last, how many others
 	 * did, and a link to the full list, as HTML.
 	 */
 	private function getValue(
@@ -70,7 +70,7 @@ class InfoHooks implements InfoActionHook {
 			return $html;
 		}
 		$links = [];
-		foreach ( $this->remoteActors->getRecentDiscoverable( $title->getArticleID(), $type, self::NAMED ) as $actor ) {
+		foreach ( $this->remoteActors->getRecent( $title->getArticleID(), $type, self::NAMED ) as $actor ) {
 			$links[] = self::makeActorLink( $actor );
 		}
 		$others = max( 0, $actors - count( $links ) );
@@ -93,7 +93,7 @@ class InfoHooks implements InfoActionHook {
 	}
 
 	/**
-	 * A link to a discoverable account's profile, named by its display name, else its handle.
+	 * A link to an account's profile, named by its display name, else its handle.
 	 *
 	 * @param array{actor: string, handle: string, name: string, url: string} $actor
 	 */

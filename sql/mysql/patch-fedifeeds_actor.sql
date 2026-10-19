@@ -5,7 +5,6 @@ CREATE TABLE /*_*/fedifeeds_actor (
   fa_handle VARBINARY(255) DEFAULT '' NOT NULL,
   fa_name VARBINARY(255) DEFAULT '' NOT NULL,
   fa_url BLOB NOT NULL,
-  fa_discoverable TINYINT DEFAULT 0 NOT NULL,
   fa_checked BINARY(14) NOT NULL,
   UNIQUE INDEX fa_actor (fa_actor),
   PRIMARY KEY(fa_id)

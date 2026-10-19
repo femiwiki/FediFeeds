@@ -15,8 +15,8 @@ class RemoteActorsTest extends MediaWikiIntegrationTestCase {
 
 	public static function provideParse() {
 		$base = [ 'id' => self::ACTOR, 'type' => 'Person', 'preferredUsername' => 'a' ];
-		yield 'discoverable left out is false' => [ $base, [
-			'fa_handle' => 'a@remote.example', 'fa_name' => '', 'fa_url' => self::ACTOR, 'fa_discoverable' => 0,
+		yield 'only a handle' => [ $base, [
+			'fa_handle' => 'a@remote.example', 'fa_name' => '', 'fa_url' => self::ACTOR,
 		] ];
 		yield 'a Link url, a name with markup' => [ $base + [
 			'name' => "<p>A &amp; <b>B</b>\n</p>",
@@ -24,16 +24,11 @@ class RemoteActorsTest extends MediaWikiIntegrationTestCase {
 				[ 'type' => 'Link', 'href' => 'javascript:x' ],
 				[ 'type' => 'Link', 'href' => 'https://remote.example/@a' ],
 			],
-			'discoverable' => true,
 		], [
 			'fa_handle' => 'a@remote.example', 'fa_name' => 'A & B', 'fa_url' => 'https://remote.example/@a',
-			'fa_discoverable' => 1,
-		] ];
-		yield 'discoverable must be true itself' => [ $base + [ 'discoverable' => 'true' ], [
-			'fa_handle' => 'a@remote.example', 'fa_name' => '', 'fa_url' => self::ACTOR, 'fa_discoverable' => 0,
 		] ];
 		yield 'no preferredUsername' => [ [ 'id' => self::ACTOR, 'type' => 'Service' ], [
-			'fa_handle' => '', 'fa_name' => '', 'fa_url' => self::ACTOR, 'fa_discoverable' => 0,
+			'fa_handle' => '', 'fa_name' => '', 'fa_url' => self::ACTOR,
 		] ];
 		yield 'another actor' => [ [ 'id' => 'https://other.example/users/b' ] + $base, null ];
 		yield 'not an actor' => [ [ 'type' => 'Note' ] + $base, null ];

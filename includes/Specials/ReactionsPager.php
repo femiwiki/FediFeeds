@@ -16,7 +16,7 @@ use Wikimedia\Rdbms\IConnectionProvider;
 
 /**
  * The Likes and Announces of a page's notes, grouped by note, the newest note and the newest
- * reaction first. An account is named only when it is discoverable.
+ * reaction first. An account is named once it is cached.
  */
 class ReactionsPager extends IndexPager {
 
@@ -48,7 +48,7 @@ class ReactionsPager extends IndexPager {
 			'tables' => [ 'fedifeeds_reaction', 'fedifeeds_item', 'fedifeeds_actor' ],
 			'fields' => [
 				'fr_id', 'fr_type', 'fr_actor', 'fr_timestamp', 'fr_feed', 'fr_key', 'fi_id',
-				'fa_actor', 'fa_handle', 'fa_name', 'fa_url', 'fa_discoverable',
+				'fa_actor', 'fa_handle', 'fa_name', 'fa_url',
 			],
 			'conds' => [ 'fr_page' => $this->pageId ],
 			'options' => [],
@@ -108,10 +108,10 @@ class ReactionsPager extends IndexPager {
 		// fedifeeds-reactions-announce, fedifeeds-reactions-like
 		$type = $this->msg( 'fedifeeds-reactions-' . ( $row->fr_type === Reactions::ANNOUNCE ? 'announce' : 'like' ) )
 			->escaped();
-		$account = $row->fa_actor !== null && (int)$row->fa_discoverable === 1
+		$account = $row->fa_actor !== null
 			? InfoHooks::makeActorLink( RemoteActors::toArray( $row ) )
-			: Html::element( 'span', [ 'class' => 'mw-fedifeeds-reactions-hidden' ],
-				$this->msg( 'fedifeeds-reactions-hidden' )->text() );
+			: Html::element( 'span', [ 'class' => 'mw-fedifeeds-reactions-uncached' ],
+				$this->msg( 'fedifeeds-reactions-uncached' )->text() );
 		$time = htmlspecialchars( $lang->userTimeAndDate( $row->fr_timestamp, $this->getUser() ) );
 		return $html . Html::rawElement( 'tr', [],
 			Html::rawElement( 'td', [], $time ) . Html::rawElement( 'td', [], $type )

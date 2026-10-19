@@ -5,7 +5,6 @@ CREATE TABLE fedifeeds_actor (
   fa_handle TEXT DEFAULT '' NOT NULL,
   fa_name TEXT DEFAULT '' NOT NULL,
   fa_url TEXT NOT NULL,
-  fa_discoverable SMALLINT DEFAULT 0 NOT NULL,
   fa_checked TIMESTAMPTZ NOT NULL,
   PRIMARY KEY(fa_id)
 );

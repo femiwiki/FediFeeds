@@ -76,7 +76,7 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 	/**
 	 * Caches an actor as its document would say.
 	 */
-	private function cacheActor( string $name, bool $discoverable, string $displayName = '' ): string {
+	private function cacheActor( string $name, string $displayName = '' ): string {
 		$actor = self::REMOTE . $name;
 		$this->getRemoteActors()->update( $actor, [
 			'id' => $actor,
@@ -84,7 +84,6 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 			'preferredUsername' => $name,
 			'name' => $displayName,
 			'url' => "https://remote.example/@$name",
-			'discoverable' => $discoverable,
 		] );
 		return $actor;
 	}
@@ -147,24 +146,23 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( self::totals( 1, 0 ), $this->getTotals( 'Post' ) );
 	}
 
-	public function testOnlyDiscoverableAccountsAreNamed() {
+	public function testCachedAccountsAreNamed() {
 		[ $category, $pageId ] = $this->newCategoryItem();
 		$reactions = $this->getReactions();
-		$named = $this->cacheActor( 'named', true, 'Named <b>One</b>' );
-		$handleOnly = $this->cacheActor( 'handle', true );
-		$hidden = $this->cacheActor( 'hidden', false, 'Hidden' );
-		foreach ( [ $named, $handleOnly, $hidden, self::REMOTE . 'uncached' ] as $actor ) {
+		$named = $this->cacheActor( 'named', 'Named <b>One</b>' );
+		$handleOnly = $this->cacheActor( 'handle' );
+		foreach ( [ $named, $handleOnly, self::REMOTE . 'uncached' ] as $actor ) {
 			$reactions->add( $category, $pageId, '', Reactions::LIKE, $actor, '' );
 		}
 		$likes = $this->getRows( 'Post' )['fedifeeds-info-likes'];
-		$this->assertStringStartsWith( '(fedifeeds-info-times: 4)(colon-separator)', $likes );
+		$this->assertStringStartsWith( '(fedifeeds-info-times: 3)(colon-separator)', $likes );
 		$this->assertStringContainsString(
 			'<a href="https://remote.example/@named" class="external" rel="nofollow noreferrer noopener" '
 				. 'title="@named@remote.example">Named One</a>', $likes );
 		$this->assertStringContainsString( '>@handle@remote.example</a>', $likes );
-		$this->assertStringNotContainsString( 'Hidden', $likes );
+		// Not read yet, so only counted
 		$this->assertStringNotContainsString( 'uncached', $likes );
-		$this->assertStringContainsString( '(fedifeeds-info-others: 2)', $likes );
+		$this->assertStringContainsString( '(fedifeeds-info-others: 1)', $likes );
 		$this->assertStringContainsString( 'Special:FediFeedsReactions/Post', $likes );
 		$this->assertStringContainsString( '(fedifeeds-info-all)', $likes );
 		// Nobody to name
@@ -175,9 +173,9 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 	public function testOthersInKorean() {
 		[ $category, $pageId ] = $this->newCategoryItem();
 		$reactions = $this->getReactions();
-		$reactions->add( $category, $pageId, '', Reactions::ANNOUNCE, $this->cacheActor( 'a', true, '가' ), '' );
-		$reactions->add( $category, $pageId, '', Reactions::ANNOUNCE, $this->cacheActor( 'b', false ), '' );
-		$reactions->add( $category, $pageId, '', Reactions::LIKE, $this->cacheActor( 'c', false ), '' );
+		$reactions->add( $category, $pageId, '', Reactions::ANNOUNCE, $this->cacheActor( 'a', '가' ), '' );
+		$reactions->add( $category, $pageId, '', Reactions::ANNOUNCE, self::REMOTE . 'b', '' );
+		$reactions->add( $category, $pageId, '', Reactions::LIKE, self::REMOTE . 'c', '' );
 		$rows = $this->getRows( 'Post', 'ko' );
 		$this->assertMatchesRegularExpression( '#^2회: <a [^>]+>가</a> 외 1명 \(<a [^>]+>모두 보기</a>\)$#',
 			$rows['fedifeeds-info-announces'] );
@@ -189,7 +187,7 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 		[ $category, $pageId ] = $this->newCategoryItem();
 		$dbw = $this->getDb();
 		for ( $i = 1; $i <= 12; $i++ ) {
-			$actor = $this->cacheActor( "user$i", true );
+			$actor = $this->cacheActor( "user$i" );
 			$this->getReactions()->add( $category, $pageId, '', Reactions::LIKE, $actor, '' );
 			$dbw->newUpdateQueryBuilder()
 				->update( 'fedifeeds_reaction' )
