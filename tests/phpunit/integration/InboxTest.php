@@ -457,21 +457,20 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
 	}
 
-	private static function newActorDocument( bool $discoverable = true, string $name = 'A' ): array {
+	private static function newActorDocument( string $name = 'A' ): array {
 		return [
 			'id' => self::REMOTE,
 			'type' => 'Person',
 			'preferredUsername' => 'a',
 			'name' => $name,
 			'url' => 'https://remote.example/@a',
-			'discoverable' => $discoverable,
 			'inbox' => self::REMOTE . '/inbox',
 		];
 	}
 
 	private function getCachedActor(): ?array {
 		$row = $this->newSelectQueryBuilder()
-			->select( [ 'fa_handle', 'fa_name', 'fa_url', 'fa_discoverable' ] )
+			->select( [ 'fa_handle', 'fa_name', 'fa_url' ] )
 			->from( 'fedifeeds_actor' )
 			->where( [ 'fa_actor' => self::REMOTE ] )
 			->fetchRow();
@@ -488,7 +487,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->keys['fetched'] = self::newActorDocument();
 		$this->post( self::newReaction( 'Like', $noteId ), null );
 		$this->assertEquals( [ 'fa_handle' => 'a@remote.example', 'fa_name' => 'A',
-			'fa_url' => 'https://remote.example/@a', 'fa_discoverable' => 1 ], $this->getCachedActor() );
+			'fa_url' => 'https://remote.example/@a' ], $this->getCachedActor() );
 		$this->assertSame( 0, $this->countFetchJobs() );
 	}
 
@@ -498,11 +497,11 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->assertNull( $this->getCachedActor() );
 		$this->assertSame( 1, $this->countFetchJobs() );
 
-		$this->keys['document'] = self::newActorDocument( false );
+		$this->keys['document'] = self::newActorDocument();
 		$this->setService( 'FediFeeds.RemoteKeys', $this->newRemoteKeys() );
 		$this->runJobs( [ 'minJobs' => 1 ], [ 'type' => FetchActorJob::TYPE ] );
 		$this->assertEquals( [ 'fa_handle' => 'a@remote.example', 'fa_name' => 'A',
-			'fa_url' => 'https://remote.example/@a', 'fa_discoverable' => 0 ], $this->getCachedActor() );
+			'fa_url' => 'https://remote.example/@a' ], $this->getCachedActor() );
 	}
 
 	public function testReactionOfAFreshlyCachedActorFetchesNothing() {
@@ -515,10 +514,10 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 	public function testUpdateRefreshesAKnownActor() {
 		$this->getRemoteActors()->update( self::REMOTE, self::newActorDocument() );
 		$update = [ 'type' => 'Update', 'actor' => self::REMOTE,
-			'object' => self::newActorDocument( false, 'Renamed' ) ];
+			'object' => self::newActorDocument( 'Renamed' ) ];
 		$this->assertSame( 202, $this->post( $update, null )->getStatusCode() );
 		$this->assertEquals( [ 'fa_handle' => 'a@remote.example', 'fa_name' => 'Renamed',
-			'fa_url' => 'https://remote.example/@a', 'fa_discoverable' => 0 ], $this->getCachedActor() );
+			'fa_url' => 'https://remote.example/@a' ], $this->getCachedActor() );
 
 		// Another actor's document is not taken
 		$update['object'] = [ 'id' => 'https://other.example/users/b' ] + self::newActorDocument();

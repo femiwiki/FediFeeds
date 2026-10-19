@@ -43,7 +43,7 @@ class SpecialFediFeedsReactionsTest extends SpecialPageTestBase {
 
 		$services->getService( 'FediFeeds.RemoteActors' )->update( self::REMOTE . 'alice', [
 			'id' => self::REMOTE . 'alice', 'type' => 'Person', 'preferredUsername' => 'alice',
-			'name' => 'Alice', 'discoverable' => true,
+			'name' => 'Alice',
 		] );
 		$services->getService( 'FediFeeds.RemoteActors' )->update( self::REMOTE . 'bob', [
 			'id' => self::REMOTE . 'bob', 'type' => 'Person', 'preferredUsername' => 'bob', 'name' => 'Bob',
@@ -68,17 +68,18 @@ class SpecialFediFeedsReactionsTest extends SpecialPageTestBase {
 		return $groups;
 	}
 
-	public function testGroupsByNoteAndNamesOnlyDiscoverableAccounts() {
+	public function testGroupsByNoteAndNamesCachedAccounts() {
 		$this->setUpReactions();
 		[ $html ] = $this->executeSpecialPage( 'Post', null, 'qqx' );
 		$this->assertStringContainsString( '(fedifeeds-reactions-totals: 1, 3)', $html );
 		$this->assertSame( [
 			'Part(fedifeeds-reactions-path-separator)Sub' => [ '(fedifeeds-reactions-like) Alice' ],
-			'(fedifeeds-reactions-section-nth: B, 2)' => [ '(fedifeeds-reactions-like) (fedifeeds-reactions-hidden)' ],
-			'A' => [ '(fedifeeds-reactions-like) (fedifeeds-reactions-hidden)' ],
+			'(fedifeeds-reactions-section-nth: B, 2)' => [
+				'(fedifeeds-reactions-like) (fedifeeds-reactions-uncached)',
+			],
+			'A' => [ '(fedifeeds-reactions-like) Bob' ],
 			'(fedifeeds-reactions-category: Posts)' => [ '(fedifeeds-reactions-announce) Alice' ],
 		], self::getNoteGroups( $html ) );
-		$this->assertStringNotContainsString( 'Bob', $html );
 		$this->assertStringNotContainsString( 'carol', $html );
 	}
 

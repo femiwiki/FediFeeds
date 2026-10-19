@@ -262,7 +262,7 @@
 	},
 	{
 		"name": "fedifeeds_actor",
-		"comment": "What a remote actor that liked or shared a note says about itself, so that action=info and Special:FediFeedsReactions can name it when it allows that",
+		"comment": "What a remote actor that liked or shared a note says about itself, so that action=info and Special:FediFeedsReactions can name it",
 		"columns": [
 			{
 				"name": "fa_id",
@@ -292,12 +292,6 @@
 				"comment": "Its profile page: its url, else its id",
 				"type": "blob",
 				"options": { "notnull": true, "length": 65530 }
-			},
-			{
-				"name": "fa_discoverable",
-				"comment": "1 when the actor sets discoverable to true, which lets it be named; 0 otherwise",
-				"type": "mwtinyint",
-				"options": { "notnull": true, "default": 0 }
 			},
 			{
 				"name": "fa_checked",

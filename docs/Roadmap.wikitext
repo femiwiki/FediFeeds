@@ -4,7 +4,9 @@
 These are not in the spec yet.
 
 <!--T:2-->
-* Store replies in their own table, sanitised, and show them on the page from a read API with JavaScript. They are never written into wiki pages, which keeps remote servers from editing the wiki and keeps the parser cache out of it.
+* Store replies in their own table, sanitised, and show them on the page from a read API with JavaScript. They are never written into wiki pages, which keeps remote servers from editing the wiki and keeps the parser cache out of it. Only public and unlisted replies would be stored and shown; followers-only and direct replies would be neither.
+* If quotes are shown, the quoting accounts are named as the accounts that like or share are.
+* If followers are shown, an account is listed only if it does not hide its follow lists.
 </translate>
 
 {{Prevnext}}
