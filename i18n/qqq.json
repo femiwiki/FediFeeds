@@ -3,8 +3,8 @@
 		"authors": []
 	},
 	"fedifeeds-desc": "{{desc|name=FediFeeds|url=https://github.com/femiwiki/FediFeeds}}",
-	"fedifeeds-summary-category": "Summary of the Fediverse account that follows a category.\n\nParameters:\n* $1 - the category's title, with namespace",
-	"fedifeeds-summary-section": "Summary of the Fediverse account that follows the new sections of a page.\n\nParameters:\n* $1 - the page's title, with namespace",
+	"fedifeeds-summary-category": "Summary of the ActivityPub account that follows a category.\n\nParameters:\n* $1 - the category's title, with namespace",
+	"fedifeeds-summary-section": "Summary of the ActivityPub account that follows the new sections of a page.\n\nParameters:\n* $1 - the page's title, with namespace",
 	"fedifeeds-rest-no-feed": "Error from the REST API when a handle or WebFinger resource names no feed.\n\nParameters:\n* $1 - the handle or resource asked for",
 	"fedifeeds-rest-no-note": "Error from the REST API when a note path names no item of a feed that publishes notes.\n\nParameters:\n* $1 - the path asked for, such as category_4521/notes/88",
 	"fedifeeds-rest-no-quote-authorization": "Error from the REST API when a path names no quote authorization of a feed, for example because the quote was withdrawn.\n\nParameters:\n* $1 - the path asked for, such as category_4521/quote_authorizations/3",

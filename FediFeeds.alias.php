@@ -14,5 +14,5 @@ $specialPageAliases['en'] = [
 
 /** Korean (한국어) */
 $specialPageAliases['ko'] = [
-	'FediFeedsReactions' => [ '연합반응' ],
+	'FediFeedsReactions' => [ 'ActivityPub반응' ],
 ];
