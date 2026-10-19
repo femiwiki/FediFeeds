@@ -7,12 +7,41 @@
 |-
 | <code>category</code> || Page id of the category page || A page created while it is in the category. Pages added to the category later are not items.
 |-
-| <code>section</code> || Page id || A section whose heading was not in the previous revision. Edits by bots count.
+| <code>section</code> || Page id || A section at the page's unit level whose heading path was not in the previous revision. Edits by bots count.
 |}
 
 <!--T:2-->
 === section ===
-The headings of the parent revision and the new revision are compared by level and text. An item is identified by the page id and the section's anchor. Renaming a heading therefore removes one item and adds another.
+The page sets its unit with <code><nowiki>{{FEDIFEEDSNAME:</nowiki>&lt;name&gt;|section-unit=&lt;n&gt;}}</code>: each heading with this many equals signs is one note. The default is 2, so each <code>== heading ==</code> is one note. A heading with more equals signs belongs to the note above it, and a heading with fewer is context for the notes below it.
+
+<!--T:7-->
+An item is identified by the page id and its heading path: the texts of the headings above it and its own. The paths of the parent revision and the new revision are compared. Renaming the heading or any heading above it therefore removes one item and adds another.
+
+<!--T:8-->
+A path can occur more than once, as when two sections under the same heading have the same title. Paths are then counted: when the new revision has a path more times than the parent, each extra occurrence is a new item, numbered in the order they appeared. An item exists while the page has its path at least as many times as its number.
+
+<!--T:9-->
+For example, a log of updates where each day is a section and each update a section in it, both newest first, sets <code>section-unit=3</code>:
+<syntaxhighlight lang="text">
+{{FEDIFEEDSNAME:Updates|section|section-unit=3}}
+== 19 October ==
+=== 14:10 ===
+[https://example.org/changes/2 Change 2]
+* Updated the search
+==== Added ====
+* A new page
+=== 09:00 ===
+[https://example.org/changes/1 Change 1]
+== 18 October ==
+=== 14:10 ===
+[https://example.org/changes/0 Change 0]
+</syntaxhighlight>
+
+<!--T:10-->
+Each update is an item, with a path such as "19 October / 14:10". Adding a new day with its first update makes one item, the update, and the day is its context. The <code>14:10</code> under 19 October is a different item from the one under 18 October. <code>==== Added ====</code> is part of its update's note. Two updates in the same minute make the path "19 October / 14:10" twice, and the second is item number 2 of that path.
+
+<!--T:6-->
+Only a save to an existing page is compared. The headings of a page's first revision are not items, because it has no parent revision. A null edit adds nothing, and neither does a revert, which brings back headings that were there before.
 
 <!--T:3-->
 == Reserved ==

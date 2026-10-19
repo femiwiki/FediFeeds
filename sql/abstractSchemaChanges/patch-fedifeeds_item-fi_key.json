@@ -1,0 +1,141 @@
+{
+	"comment": "Add fi_key, fi_rev and fi_anchor so that a page can hold several items, such as the sections of a section feed, each linked to the revision it appeared in",
+	"before": {
+		"name": "fedifeeds_item",
+		"comment": "Items of a feed as they appeared. Only items recorded here were sent, so only they get Update or Delete",
+		"columns": [
+			{
+				"name": "fi_id",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true,
+					"autoincrement": true
+				}
+			},
+			{
+				"name": "fi_feed",
+				"comment": "Handle of the feed, such as category_4521",
+				"type": "binary",
+				"options": {
+					"notnull": true,
+					"length": 255
+				}
+			},
+			{
+				"name": "fi_page",
+				"comment": "Page id of the item",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true
+				}
+			},
+			{
+				"name": "fi_timestamp",
+				"comment": "When the item appeared",
+				"type": "mwtimestamp",
+				"options": {
+					"notnull": true
+				}
+			}
+		],
+		"indexes": [
+			{
+				"name": "fi_feed_page",
+				"columns": ["fi_feed", "fi_page"],
+				"unique": true
+			},
+			{
+				"name": "fi_feed_timestamp",
+				"columns": ["fi_feed", "fi_timestamp"],
+				"unique": false
+			}
+		],
+		"pk": ["fi_id"]
+	},
+	"after": {
+		"name": "fedifeeds_item",
+		"comment": "Items of a feed as they appeared. Only items recorded here were sent, so only they get Update or Delete",
+		"columns": [
+			{
+				"name": "fi_id",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true,
+					"autoincrement": true
+				}
+			},
+			{
+				"name": "fi_feed",
+				"comment": "Handle of the feed, such as category_4521",
+				"type": "binary",
+				"options": {
+					"notnull": true,
+					"length": 255
+				}
+			},
+			{
+				"name": "fi_page",
+				"comment": "Page id of the item",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true
+				}
+			},
+			{
+				"name": "fi_key",
+				"comment": "What tells the item apart within the page: for a section item the texts of its heading and the headings above it, one per line, or their SHA-256 when that is longer than the column; empty for a category item, which is the page itself",
+				"type": "binary",
+				"options": {
+					"notnull": true,
+					"length": 255,
+					"default": ""
+				}
+			},
+			{
+				"name": "fi_rev",
+				"comment": "The revision the item appeared in, or 0 for an item recorded before this was",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true,
+					"default": 0
+				}
+			},
+			{
+				"name": "fi_anchor",
+				"comment": "The anchor of a section item's heading in fi_rev, as it goes in a link; empty for a category item",
+				"type": "binary",
+				"options": {
+					"notnull": true,
+					"length": 255,
+					"default": ""
+				}
+			},
+			{
+				"name": "fi_timestamp",
+				"comment": "When the item appeared",
+				"type": "mwtimestamp",
+				"options": {
+					"notnull": true
+				}
+			}
+		],
+		"indexes": [
+			{
+				"name": "fi_feed_page_key",
+				"columns": ["fi_feed", "fi_page", "fi_key"],
+				"unique": true
+			},
+			{
+				"name": "fi_feed_timestamp",
+				"columns": ["fi_feed", "fi_timestamp"],
+				"unique": false
+			}
+		],
+		"pk": ["fi_id"]
+	}
+}

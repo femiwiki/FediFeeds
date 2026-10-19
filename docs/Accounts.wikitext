@@ -58,6 +58,7 @@ The title of the page is shown as the actor's <code>name</code>, so readers see 
 The followed page sets a display name with a magic word in its own wikitext:
 * <code><nowiki>{{FEDIFEEDSNAME:</nowiki>&lt;name&gt;}}</code> applies to every feed of the page.
 * <code><nowiki>{{FEDIFEEDSNAME:</nowiki>&lt;name&gt;|&lt;kind&gt;}}</code> applies to that kind only, and wins over the form without a kind. A category page that is also followed for its sections can name the two feeds apart this way.
+* <code>section-unit=&lt;n&gt;</code>, where n is 1 to 6, sets the [[<tvar name="2">Special:MyLanguage/Feed kinds#section</tvar>|unit]] of the page's <code>section</code> feed: each heading with this many equals signs is one note. It can come before or after the kind.
 * The name is plain text: markup is dropped. An empty name, or a kind that is not in the [[<tvar name="1">Special:MyLanguage/Feed kinds</tvar>|list of kinds]], sets nothing. When the page sets the same one twice, the last wins.
 
 <!--T:11-->

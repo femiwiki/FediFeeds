@@ -26,17 +26,21 @@ class NoteHandler extends SimpleHandler {
 		$this->feedLookup = new FeedLookup( $pageLookup );
 	}
 
-	public function run( string $handle, int $item ): Response {
+	/**
+	 * @param string $handle
+	 * @param string $item The page id of a category item, or the encoded key of a section item
+	 */
+	public function run( string $handle, string $item ): Response {
 		$feed = $this->feedLookup->getFeed( $handle );
-		$page = $feed ? $this->notes->getItem( $feed, $item ) : null;
-		if ( !$feed || !$page ) {
+		$found = $feed ? $this->notes->getItem( $feed, $item ) : null;
+		if ( !$feed || !$found ) {
 			throw new LocalizedHttpException(
 				( new MessageValue( 'fedifeeds-rest-no-note' ) )->plaintextParams( "$handle/notes/$item" ),
 				404
 			);
 		}
 		return $this->getResponseFactory()->createJson(
-			[ '@context' => 'https://www.w3.org/ns/activitystreams' ] + $this->notes->getNote( $feed, $page ),
+			[ '@context' => 'https://www.w3.org/ns/activitystreams' ] + $this->notes->getNote( $feed, $found ),
 			Actors::CONTENT_TYPE
 		);
 	}
@@ -50,7 +54,7 @@ class NoteHandler extends SimpleHandler {
 			],
 			'item' => [
 				self::PARAM_SOURCE => 'path',
-				ParamValidator::PARAM_TYPE => 'integer',
+				ParamValidator::PARAM_TYPE => 'string',
 				ParamValidator::PARAM_REQUIRED => true,
 			],
 		];
