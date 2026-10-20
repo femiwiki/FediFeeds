@@ -2,7 +2,6 @@
 
 namespace MediaWiki\Extension\FediFeeds\Signatures;
 
-use MediaWiki\Http\HttpRequestFactory;
 use Wikimedia\ObjectCache\WANObjectCache;
 
 /**
@@ -10,7 +9,6 @@ use Wikimedia\ObjectCache\WANObjectCache;
  */
 class RemoteKeys {
 
-	private const ACCEPT = 'application/activity+json, application/ld+json';
 	/** How long a key that could not be fetched is not asked for again */
 	private const MISS_TTL = 300;
 
@@ -18,7 +16,7 @@ class RemoteKeys {
 	private array $fetched = [];
 
 	public function __construct(
-		private readonly HttpRequestFactory $httpRequestFactory,
+		private readonly SignedFetch $signedFetch,
 		private readonly WANObjectCache $cache,
 	) {
 	}
@@ -69,7 +67,8 @@ class RemoteKeys {
 				if ( !$key ) {
 					$ttl = self::MISS_TTL;
 				}
-				return $key ?? false;
+				// WANObjectCache does not store false, so a miss is cached as null
+				return $key;
 			}
 		);
 		return is_array( $key ) ? $key : null;
@@ -87,15 +86,15 @@ class RemoteKeys {
 	}
 
 	/**
-	 * The ActivityPub document at an https URL, without its fragment: an actor, or a key.
+	 * The ActivityPub document at an https URL, without its fragment: an actor, or a key. The
+	 * GET is signed, for a server that refuses unsigned ones.
 	 */
 	public function fetchDocument( string $url ): mixed {
 		$url = explode( '#', $url, 2 )[0];
 		if ( parse_url( $url, PHP_URL_SCHEME ) !== 'https' ) {
 			return null;
 		}
-		$request = $this->httpRequestFactory->create( $url, [ 'method' => 'GET', 'timeout' => 5 ], __METHOD__ );
-		$request->setHeader( 'Accept', self::ACCEPT );
+		$request = $this->signedFetch->newRequest( $url, __METHOD__ );
 		if ( !$request->execute()->isOK() ) {
 			return null;
 		}

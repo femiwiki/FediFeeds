@@ -2,6 +2,7 @@
 
 namespace MediaWiki\Extension\FediFeeds\Rest;
 
+use MediaWiki\Extension\FediFeeds\Actors;
 use MediaWiki\Extension\FediFeeds\DeliveryJob;
 use MediaWiki\Extension\FediFeeds\Feed;
 use MediaWiki\Extension\FediFeeds\FeedLookup;
@@ -177,6 +178,12 @@ class InboxHandler extends Handler {
 	}
 
 	private function follow( array $activity, string $actor ): Response {
+		// The instance actor takes no followers, and a Follow of it is dropped unanswered
+		if ( self::getId( $activity['object'] ?? null )
+			=== $this->notes->actors->getActorId( Actors::INSTANCE_HANDLE )
+		) {
+			return $this->accepted();
+		}
 		$feed = $this->getFeed( $activity['object'] ?? null );
 		if ( !$feed ) {
 			return $this->getResponseFactory()->createHttpError( 404, [ 'message' => 'No such feed' ] );

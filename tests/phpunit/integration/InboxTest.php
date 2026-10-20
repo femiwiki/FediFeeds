@@ -17,6 +17,7 @@ use MediaWiki\Extension\FediFeeds\Rest\FollowersHandler;
 use MediaWiki\Extension\FediFeeds\Rest\InboxHandler;
 use MediaWiki\Extension\FediFeeds\Rest\QuoteAuthorizationHandler;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
+use MediaWiki\Extension\FediFeeds\Signatures\SignedFetch;
 use MediaWiki\Http\HttpRequestFactory;
 use MediaWiki\Http\MWHttpRequest;
 use MediaWiki\Rest\LocalizedHttpException;
@@ -73,7 +74,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 
 	private function newRemoteKeys(): RemoteKeys {
 		return new class (
-			$this->createNoOpMock( HttpRequestFactory::class ),
+			$this->createNoOpMock( SignedFetch::class ),
 			new WANObjectCache( [ 'cache' => new HashBagOStuff() ] ),
 			$this->keys
 		) extends RemoteKeys {
@@ -177,6 +178,38 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE, 'object' => self::newFollow( $feed ) ];
 		$this->assertSame( 202, $this->post( $undo, $feed->getHandle() )->getStatusCode() );
 		$this->assertSame( 0, $this->getFollowers()->count( $feed ) );
+	}
+
+	public static function provideInstanceActorInbox(): iterable {
+		yield 'shared inbox' => [ null ];
+		yield 'its own path' => [ 'wiki' ];
+	}
+
+	/**
+	 * @dataProvider provideInstanceActorInbox
+	 */
+	public function testActivitiesToTheInstanceActorAreDropped( ?string $handle ) {
+		$feed = $this->newCategory();
+		$follow = [
+			'id' => self::REMOTE . '#follows/2',
+			'type' => 'Follow',
+			'actor' => self::REMOTE,
+			'object' => 'https://fedi.example.org/actors/wiki',
+		];
+		$this->assertSame( 202, $this->post( $follow, $handle )->getStatusCode() );
+		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE, 'object' => $follow ];
+		$this->assertSame( 202, $this->post( $undo, $handle )->getStatusCode() );
+		$create = [
+			'type' => 'Create',
+			'actor' => self::REMOTE,
+			'to' => [ 'https://fedi.example.org/actors/wiki' ],
+			'object' => [ 'id' => self::POST, 'type' => 'Note', 'content' => 'Hi' ],
+		];
+		$this->assertSame( 202, $this->post( $create, $handle )->getStatusCode() );
+		$this->assertSame( 0, $this->getFollowers()->count( $feed ) );
+		$this->assertFalse( $this->getFollowers()->isFollower( self::REMOTE ) );
+		$this->runDeferredUpdates();
+		$this->assertSame( 0, $this->getServiceContainer()->getJobQueueGroup()->get( DeliveryJob::TYPE )->getSize() );
 	}
 
 	public function testBadSignature() {

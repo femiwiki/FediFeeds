@@ -18,7 +18,7 @@ use Wikimedia\Message\MessageValue;
 use Wikimedia\ParamValidator\ParamValidator;
 
 /**
- * Serves the actor of a feed
+ * Serves the actor of a feed, or the wiki's instance actor
  */
 class ActorHandler extends SimpleHandler {
 
@@ -38,6 +38,12 @@ class ActorHandler extends SimpleHandler {
 	}
 
 	public function run( string $handle ): Response {
+		if ( $handle === Actors::INSTANCE_HANDLE ) {
+			return $this->getResponseFactory()->createJson(
+				$this->actors->getInstanceActor( $this->localKeyStore->getKey()->getPublicKeyPem() ),
+				Actors::CONTENT_TYPE
+			);
+		}
 		$feed = $this->feedLookup->getFeed( $handle );
 		if ( !$feed ) {
 			throw new LocalizedHttpException(

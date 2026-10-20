@@ -71,6 +71,32 @@ The display name changes only <code>name</code>. The handle, the id and the <cod
 == WebFinger ==
 <code>/.well-known/webfinger?resource=acct:&lt;handle&gt;</code> answers with a <code>self</code> link to the actor, on both the wiki host and the actor host. Mastodon fetches the actor and then asks the actor host's WebFinger for <code>preferredUsername@&lt;actor host&gt;</code>, which answers with the handle on the wiki host as its <code>subject</code>, so both directions must agree.
 
+<!--T:12-->
+== Instance actor ==
+Besides the feeds, the wiki has one actor of its own, <code>wiki@&lt;wiki host&gt;</code>, as each Mastodon server has. It signs the wiki's fetches of remote documents, since a server in Mastodon's secure mode (<code>AUTHORIZED_FETCH</code>) refuses unsigned fetches of its accounts, and so of the keys that sign what they send. A feed's handle always ends in <code>_&lt;id&gt;</code>, so no feed can take the name <code>wiki</code>.
+{| class="wikitable"
+! Property !! Value
+|-
+| <code>type</code> || <code>Application</code>
+|-
+| <code>id</code> || <code>https://&lt;actor host&gt;/actors/wiki</code>
+|-
+| <code>preferredUsername</code> || <code>wiki</code>
+|-
+| <code>name</code> || The name of the wiki
+|-
+| <code>url</code> || The wiki's front page, such as <code>https://wiki.example.org/</code>
+|-
+| <code>icon</code> || The image of the wiki that feeds without an icon of their own show. Left out when the wiki has none
+|-
+| <code>inbox</code> || The shared inbox
+|-
+| <code>manuallyApprovesFollowers</code> || <code>true</code>
+|-
+| <code>publicKey</code> || See [[#Keys|Keys]]
+|}
+It has no outbox or followers. WebFinger answers for it as for a feed, with the wiki's front page as its profile page. A <code>Follow</code> of it, and anything else sent to it, is answered with 202 and dropped.
+
 <!--T:9-->
 == Keys ==
 The wiki has one key pair. Each actor publishes it under its own key id, <code>&lt;actor id&gt;#main-key</code>.

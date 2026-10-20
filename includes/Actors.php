@@ -18,6 +18,17 @@ class Actors {
 
 	public const CONTENT_TYPE = 'application/activity+json';
 
+	/**
+	 * Handle of the wiki's instance actor, which signs fetches of remote documents. A feed's
+	 * handle always ends in _<page id>, so no feed can take it.
+	 */
+	public const INSTANCE_HANDLE = 'wiki';
+
+	private const CONTEXT = [
+		'https://www.w3.org/ns/activitystreams',
+		'https://w3id.org/security/v1',
+	];
+
 	/** Media types of the raster images an icon may be, by extension */
 	private const ICON_TYPES = [
 		'png' => 'image/png',
@@ -32,6 +43,8 @@ class Actors {
 
 	private string $actorBase;
 	private string $wikiHost;
+	private string $sitename;
+	private string $server;
 	private UrlUtils $urlUtils;
 	private ?array $wikiIcon;
 
@@ -46,6 +59,8 @@ class Actors {
 		$this->actorBase = $config->get( 'FediFeedsActorBase' )
 			?? $server . $config->get( MainConfigNames::RestPath ) . '/fedifeeds/actors/';
 		$this->wikiHost = (string)parse_url( $server, PHP_URL_HOST );
+		$this->sitename = (string)$config->get( MainConfigNames::Sitename );
+		$this->server = $server;
 		$this->urlUtils = new UrlUtils( [
 			UrlUtils::SERVER => $server,
 			UrlUtils::CANONICAL_SERVER => $server,
@@ -152,7 +167,15 @@ class Actors {
 	}
 
 	/**
-	 * Gets the handle from an actor id of this wiki, without checking that the feed exists.
+	 * The key id that fetches of remote documents are signed with.
+	 */
+	public function getInstanceKeyId(): string {
+		return $this->getActorId( self::INSTANCE_HANDLE ) . '#main-key';
+	}
+
+	/**
+	 * Gets the handle of a feed from an actor id of this wiki, without checking that the feed
+	 * exists. The instance actor is not a feed, so its id gives null.
 	 */
 	public function getHandleFromActorId( string $url ): ?string {
 		if ( !str_starts_with( $url, $this->actorBase ) ) {
@@ -181,10 +204,7 @@ class Actors {
 		$id = $this->getActorId( $feed->getHandle() );
 		$title = $this->titleFormatter->getPrefixedText( $feed->page );
 		$actor = [
-			'@context' => [
-				'https://www.w3.org/ns/activitystreams',
-				'https://w3id.org/security/v1',
-			],
+			'@context' => self::CONTEXT,
 			'id' => $id,
 			'type' => 'Service',
 			'preferredUsername' => $feed->getHandle(),
@@ -208,10 +228,39 @@ class Actors {
 		if ( $icon !== null ) {
 			$actor['icon'] = $icon;
 		}
+		return $this->addPublicKey( $actor, $publicKeyPem );
+	}
+
+	/**
+	 * The wiki's own actor, whose key signs fetches of remote documents, as Mastodon's
+	 * instance actor does. It posts nothing, and what is sent to it is dropped.
+	 */
+	public function getInstanceActor( ?string $publicKeyPem ): array {
+		$id = $this->getActorId( self::INSTANCE_HANDLE );
+		$actor = [
+			'@context' => self::CONTEXT,
+			'id' => $id,
+			'type' => 'Application',
+			'preferredUsername' => self::INSTANCE_HANDLE,
+			'name' => $this->sitename,
+			'url' => $this->server . '/',
+			'inbox' => $this->actorBase . 'inbox',
+			'endpoints' => [
+				'sharedInbox' => $this->actorBase . 'inbox',
+			],
+			'manuallyApprovesFollowers' => true,
+		];
+		if ( $this->wikiIcon !== null ) {
+			$actor['icon'] = $this->wikiIcon;
+		}
+		return $this->addPublicKey( $actor, $publicKeyPem );
+	}
+
+	private function addPublicKey( array $actor, ?string $publicKeyPem ): array {
 		if ( $publicKeyPem !== null ) {
 			$actor['publicKey'] = [
-				'id' => "$id#main-key",
-				'owner' => $id,
+				'id' => $actor['id'] . '#main-key',
+				'owner' => $actor['id'],
 				'publicKeyPem' => $publicKeyPem,
 			];
 		}
