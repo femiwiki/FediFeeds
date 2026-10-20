@@ -51,7 +51,9 @@ class DeliveryJob extends Job implements GenericParameterJob {
 		$request = $services->getHttpRequestFactory()->create( $url,
 			[ 'method' => 'POST', 'postData' => $body, 'timeout' => 10 ], __METHOD__ );
 		foreach ( $headers as $name => $value ) {
-			$request->setHeader( $name, $value );
+			// Under its canonical name, since MediaWiki adds a form Content-Type to a string body
+			// unless "Content-Type" is set, and the receiver would then see a header we did not sign
+			$request->setHeader( ucwords( $name, '-' ), $value );
 		}
 		$status = $request->execute();
 		if ( !$status->isOK() ) {
