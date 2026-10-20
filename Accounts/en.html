@@ -341,11 +341,23 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 		<ul id="toc-WebFinger-sublist" class="vector-toc-list">
 		</ul>
 	</li>
+	<li id="toc-Instance_actor"
+		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
+		<a class="vector-toc-link" href="#Instance_actor">
+			<div class="vector-toc-text">
+				<span class="vector-toc-numb">5</span>
+				<span>Instance actor</span>
+			</div>
+		</a>
+		
+		<ul id="toc-Instance_actor-sublist" class="vector-toc-list">
+		</ul>
+	</li>
 	<li id="toc-Keys"
 		class="vector-toc-list-item vector-toc-level-1 vector-toc-list-item-expanded">
 		<a class="vector-toc-link" href="#Keys">
 			<div class="vector-toc-text">
-				<span class="vector-toc-numb">5</span>
+				<span class="vector-toc-numb">6</span>
 				<span>Keys</span>
 			</div>
 		</a>
@@ -620,6 +632,52 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <div class="mw-heading mw-heading2"><h2 id="WebFinger">WebFinger</h2></div>
 <p><code>/.well-known/webfinger?resource=acct:&lt;handle&gt;</code> answers with a <code>self</code> link to the actor, on both the wiki host and the actor host. Mastodon fetches the actor and then asks the actor host's WebFinger for <code>preferredUsername@&lt;actor host&gt;</code>, which answers with the handle on the wiki host as its <code>subject</code>, so both directions must agree.
 </p>
+<div class="mw-heading mw-heading2"><h2 id="Instance_actor">Instance actor</h2></div>
+<p>Besides the feeds, the wiki has one actor of its own, <code>wiki@&lt;wiki host&gt;</code>, as each Mastodon server has. It signs the wiki's fetches of remote documents, since a server in Mastodon's secure mode (<code>AUTHORIZED_FETCH</code>) refuses unsigned fetches of its accounts, and so of the keys that sign what they send. A feed's handle always ends in <code>_&lt;id&gt;</code>, so no feed can take the name <code>wiki</code>.
+</p>
+<table class="wikitable">
+<tbody><tr>
+<th>Property</th>
+<th>Value
+</th></tr>
+<tr>
+<td><code>type</code></td>
+<td><code>Application</code>
+</td></tr>
+<tr>
+<td><code>id</code></td>
+<td><code>https://&lt;actor host&gt;/actors/wiki</code>
+</td></tr>
+<tr>
+<td><code>preferredUsername</code></td>
+<td><code>wiki</code>
+</td></tr>
+<tr>
+<td><code>name</code></td>
+<td>The name of the wiki
+</td></tr>
+<tr>
+<td><code>url</code></td>
+<td>The wiki's front page, such as <code><a rel="nofollow" class="external free" href="https://wiki.example.org/">https://wiki.example.org/</a></code>
+</td></tr>
+<tr>
+<td><code>icon</code></td>
+<td>The image of the wiki that feeds without an icon of their own show. Left out when the wiki has none
+</td></tr>
+<tr>
+<td><code>inbox</code></td>
+<td>The shared inbox
+</td></tr>
+<tr>
+<td><code>manuallyApprovesFollowers</code></td>
+<td><code>true</code>
+</td></tr>
+<tr>
+<td><code>publicKey</code></td>
+<td>See <a href="#Keys">Keys</a>
+</td></tr></tbody></table>
+<p>It has no outbox or followers. WebFinger answers for it as for a feed, with the wiki's front page as its profile page. A <code>Follow</code> of it, and anything else sent to it, is answered with 202 and dropped.
+</p>
 <div class="mw-heading mw-heading2"><h2 id="Keys">Keys</h2></div>
 <p>The wiki has one key pair. Each actor publishes it under its own key id, <code>&lt;actor id&gt;#main-key</code>.
 </p>
@@ -636,7 +694,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 19 October 2026, at 16:52.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 20 October 2026, at 13:48.</li>
 </ul>
 
 	<ul id="footer-places">
