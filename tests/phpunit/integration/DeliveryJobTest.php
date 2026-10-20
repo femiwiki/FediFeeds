@@ -2,12 +2,13 @@
 
 namespace MediaWiki\Extension\FediFeeds\Tests;
 
+use Femiwiki\HttpSignatures\Cavage;
+use Femiwiki\HttpSignatures\Signature;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use MediaWiki\Extension\FediFeeds\DeliveryJob;
-use MediaWiki\Extension\FediFeeds\Signatures\HttpSignature;
 use MediaWiki\Http\GuzzleHttpRequest;
 use MediaWiki\Http\HttpRequestFactory;
 use MediaWikiIntegrationTestCase;
@@ -59,14 +60,14 @@ class DeliveryJobTest extends MediaWikiIntegrationTestCase {
 		foreach ( $request->getHeaders() as $name => $values ) {
 			$headers[strtolower( $name )] = implode( ', ', $values );
 		}
-		$parsed = HttpSignature::parse( $headers['signature'] );
+		$parsed = Signature::parse( $headers['signature'] );
 		$this->assertNotNull( $parsed );
-		$this->assertSame( self::KEY_ID, $parsed['keyId'] );
-		$this->assertNull( HttpSignature::check( $parsed, 'POST', $headers, $body, time() ) );
-		$string = HttpSignature::signingString( 'POST', '/inbox', $headers, $parsed['headers'] );
+		$this->assertSame( self::KEY_ID, $parsed->keyId );
+		$this->assertNull( $parsed->check( 'POST', $headers, $body, time() ) );
+		$string = Cavage::signingString( 'POST', '/inbox', $headers, $parsed->headers );
 		$publicKey = $this->getServiceContainer()->getService( 'FediFeeds.LocalKeyStore' )
 			->getKey()->getPublicKeyPem();
-		$this->assertTrue( HttpSignature::verify( $string, $parsed['signature'], $publicKey ) );
+		$this->assertTrue( Cavage::verify( $string, $parsed->signature, $publicKey ) );
 	}
 
 	public function testRefusedDeliveryIsRetried() {

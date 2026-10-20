@@ -39,9 +39,12 @@ class ActorHandler extends SimpleHandler {
 
 	public function run( string $handle ): Response {
 		if ( $handle === Actors::INSTANCE_HANDLE ) {
-			return $this->getResponseFactory()->createJson(
-				$this->actors->getInstanceActor( $this->localKeyStore->getKey()->getPublicKeyPem() ),
-				Actors::CONTENT_TYPE
+			return BrowserRedirect::respond( $this,
+				fn () => $this->actors->getInstanceActor( null )['url'],
+				fn () => $this->getResponseFactory()->createJson(
+					$this->actors->getInstanceActor( $this->localKeyStore->getKey()->getPublicKeyPem() ),
+					Actors::CONTENT_TYPE
+				)
 			);
 		}
 		$feed = $this->feedLookup->getFeed( $handle );
@@ -51,9 +54,12 @@ class ActorHandler extends SimpleHandler {
 				404
 			);
 		}
-		return $this->getResponseFactory()->createJson(
-			$this->actors->getActor( $feed, $this->localKeyStore->getKey()->getPublicKeyPem() ),
-			Actors::CONTENT_TYPE
+		return BrowserRedirect::respond( $this,
+			fn () => $this->actors->getPageUrl( $feed ),
+			fn () => $this->getResponseFactory()->createJson(
+				$this->actors->getActor( $feed, $this->localKeyStore->getKey()->getPublicKeyPem() ),
+				Actors::CONTENT_TYPE
+			)
 		);
 	}
 
