@@ -1,6 +1,22 @@
 {
 	"name": "femiwiki/fedifeeds",
 	"description": "Lets the Fediverse follow feeds of a wiki.",
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "https://github.com/femiwiki/http-signatures",
+			"no-api": true
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/femiwiki/webfinger",
+			"no-api": true
+		}
+	],
+	"require": {
+		"femiwiki/http-signatures": "1.0.0",
+		"femiwiki/webfinger": "1.0.0"
+	},
 	"require-dev": {
 		"mediawiki/mediawiki-codesniffer": "48.0.1",
 		"mediawiki/mediawiki-phan-config": "0.20.0",

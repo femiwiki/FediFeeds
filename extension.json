@@ -67,6 +67,7 @@
 		"fedifeedsPurgeActor": "MediaWiki\\Extension\\FediFeeds\\PurgeActorJob"
 	},
 	"ServiceWiringFiles": ["includes/ServiceWiring.php"],
+	"load_composer_autoloader": true,
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\FediFeeds\\": "includes/"
 	},

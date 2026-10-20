@@ -2,7 +2,7 @@
 
 namespace MediaWiki\Extension\FediFeeds;
 
-use MediaWiki\Extension\FediFeeds\Signatures\HttpSignature;
+use Femiwiki\HttpSignatures\Digest;
 use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
 use MediaWiki\JobQueue\GenericParameterJob;
 use MediaWiki\JobQueue\Job;
@@ -43,7 +43,7 @@ class DeliveryJob extends Job implements GenericParameterJob {
 		$headers = [
 			'host' => (string)parse_url( $url, PHP_URL_HOST ),
 			'date' => gmdate( 'D, d M Y H:i:s \G\M\T' ),
-			'digest' => HttpSignature::digest( $body ),
+			'digest' => Digest::of( $body ),
 			'content-type' => Actors::CONTENT_TYPE,
 		];
 		$headers['signature'] = $key->sign( 'POST', $target, $headers, (string)$this->params['keyId'] );

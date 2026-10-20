@@ -2,7 +2,9 @@
 
 namespace MediaWiki\Extension\FediFeeds\Tests;
 
-use MediaWiki\Extension\FediFeeds\Signatures\HttpSignature;
+use Femiwiki\HttpSignatures\Cavage;
+use Femiwiki\HttpSignatures\Digest;
+use Femiwiki\HttpSignatures\Signature;
 use MediaWiki\Extension\FediFeeds\Signatures\LocalKey;
 use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
@@ -65,9 +67,9 @@ class RemoteKeysTest extends MediaWikiUnitTestCase {
 		$headers = [
 			'host' => 'fedi.example.org',
 			'date' => gmdate( 'D, d M Y H:i:s \G\M\T', self::NOW ),
-			'digest' => HttpSignature::digest( $body ),
+			'digest' => Digest::of( $body ),
 		];
-		$headers['signature'] = HttpSignature::sign( 'POST', '/actors/inbox', $headers, self::KEY_ID, $privateKeyPem );
+		$headers['signature'] = Cavage::sign( 'POST', '/actors/inbox', $headers, self::KEY_ID, $privateKeyPem );
 		return $headers;
 	}
 
@@ -132,15 +134,16 @@ class RemoteKeysTest extends MediaWikiUnitTestCase {
 		$this->assertSame( self::OWNER, $document['id'] );
 		$this->assertSame( 'application/activity+json, application/ld+json', $headers['accept'] );
 		$this->assertSame( 'remote.example', $headers['host'] );
-		$parsed = HttpSignature::parse( $headers['signature'] );
-		$this->assertSame( self::INSTANCE_KEY_ID, $parsed['keyId'] );
-		$this->assertSame( 'rsa-sha256', $parsed['algorithm'] );
-		$this->assertSame( [ '(request-target)', 'host', 'date' ], $parsed['headers'] );
-		$this->assertNull( HttpSignature::check( $parsed, 'GET', $headers, '', time() ) );
-		$string = HttpSignature::signingString( 'GET', '/users/a?page=1', $headers, $parsed['headers'] );
+		$parsed = Signature::parse( $headers['signature'] );
+		$this->assertNotNull( $parsed );
+		$this->assertSame( self::INSTANCE_KEY_ID, $parsed->keyId );
+		$this->assertSame( 'rsa-sha256', $parsed->algorithm );
+		$this->assertSame( [ '(request-target)', 'host', 'date' ], $parsed->headers );
+		$this->assertNull( $parsed->check( 'GET', $headers, '', time() ) );
+		$string = Cavage::signingString( 'GET', '/users/a?page=1', $headers, $parsed->headers );
 		$this->assertStringStartsWith( "(request-target): get /users/a?page=1\nhost: remote.example\ndate: ",
 			$string );
-		$this->assertTrue( HttpSignature::verify( $string, $parsed['signature'], $public ) );
+		$this->assertTrue( $parsed->verify( 'GET', '/users/a?page=1', $headers, $public ) );
 	}
 
 	public function testFetchDocumentSkipsWhatIsNotHttps() {

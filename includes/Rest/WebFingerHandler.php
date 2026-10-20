@@ -2,6 +2,8 @@
 
 namespace MediaWiki\Extension\FediFeeds\Rest;
 
+use Femiwiki\WebFinger\Account;
+use Femiwiki\WebFinger\Jrd;
 use MediaWiki\Config\Config;
 use MediaWiki\Context\RequestContext;
 use MediaWiki\Extension\FediFeeds\Actors;
@@ -54,22 +56,14 @@ class WebFingerHandler extends SimpleHandler {
 
 	private function respond( string $handle, string $pageUrl ): Response {
 		$actorId = $this->actors->getActorId( $handle );
-		$response = $this->getResponseFactory()->createJson( [
-			'subject' => 'acct:' . $handle . '@' . $this->actors->getWikiHost(),
-			'aliases' => [ $actorId, $pageUrl ],
-			'links' => [
-				[
-					'rel' => 'self',
-					'type' => Actors::CONTENT_TYPE,
-					'href' => $actorId,
-				],
-				[
-					'rel' => 'http://webfinger.net/rel/profile-page',
-					'type' => 'text/html',
-					'href' => $pageUrl,
-				],
-			],
-		], 'application/jrd+json' );
+		$response = $this->getResponseFactory()->createJson( Jrd::document(
+			( new Account( $handle, $this->actors->getWikiHost() ) )->toUri(),
+			[ $actorId, $pageUrl ],
+			[
+				Jrd::link( Jrd::REL_SELF, $actorId, Actors::CONTENT_TYPE ),
+				Jrd::link( Jrd::REL_PROFILE_PAGE, $pageUrl, 'text/html' ),
+			]
+		), Jrd::CONTENT_TYPE );
 		$response->setHeader( 'Access-Control-Allow-Origin', '*' );
 		return $response;
 	}
@@ -84,15 +78,13 @@ class WebFingerHandler extends SimpleHandler {
 		if ( !str_starts_with( $resource, 'acct:' ) ) {
 			return $this->actors->getHandleFromActorId( $resource );
 		}
-		$at = strrpos( $resource, '@' );
-		if ( $at === false ) {
+		$account = Account::fromUri( $resource );
+		if ( !$account
+			|| ( $account->host !== $this->actors->getWikiHost() && $account->host !== $this->actors->getActorHost() )
+		) {
 			return null;
 		}
-		$host = strtolower( substr( $resource, $at + 1 ) );
-		if ( $host !== $this->actors->getWikiHost() && $host !== $this->actors->getActorHost() ) {
-			return null;
-		}
-		return substr( $resource, strlen( 'acct:' ), $at - strlen( 'acct:' ) );
+		return $account->user;
 	}
 
 	public function getParamSettings(): array {
