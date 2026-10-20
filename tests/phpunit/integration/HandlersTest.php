@@ -2,6 +2,8 @@
 
 namespace MediaWiki\Extension\FediFeeds\Tests;
 
+use MediaWiki\Context\RequestContext;
+use MediaWiki\Extension\FediFeeds\Actors;
 use MediaWiki\Extension\FediFeeds\Hooks;
 use MediaWiki\Extension\FediFeeds\Rest\ActorHandler;
 use MediaWiki\Extension\FediFeeds\Rest\WebFingerHandler;
@@ -39,6 +41,7 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 			'FediFeedsIcon' => null,
 			'AppleTouchIcon' => false,
 			'Logos' => false,
+			'Sitename' => 'Example Wiki',
 		] );
 	}
 
@@ -337,10 +340,75 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		], $data['links'][0] );
 	}
 
+	public function testInstanceActor() {
+		$actor = $this->getActor( 'wiki' );
+		$this->assertSame( [
+			'https://www.w3.org/ns/activitystreams',
+			'https://w3id.org/security/v1',
+		], $actor['@context'] );
+		$this->assertSame( 'https://fedi.example.org/actors/wiki', $actor['id'] );
+		$this->assertSame( 'Application', $actor['type'] );
+		$this->assertSame( 'wiki', $actor['preferredUsername'] );
+		$this->assertSame( 'Example Wiki', $actor['name'] );
+		$this->assertSame( 'https://fedi.example.org/actors/inbox', $actor['inbox'] );
+		$this->assertSame( 'https://fedi.example.org/actors/inbox', $actor['endpoints']['sharedInbox'] );
+		$this->assertTrue( $actor['manuallyApprovesFollowers'] );
+		$this->assertArrayNotHasKey( 'outbox', $actor );
+		$this->assertArrayNotHasKey( 'followers', $actor );
+		$this->assertSame( [
+			'id' => 'https://fedi.example.org/actors/wiki#main-key',
+			'owner' => 'https://fedi.example.org/actors/wiki',
+			'publicKeyPem' => $this->getLocalKeyStore()->getKey()->getPublicKeyPem(),
+		], $actor['publicKey'] );
+	}
+
+	public function testInstanceKeyIdIsTheOneFetchesAreSignedWith() {
+		$services = $this->getServiceContainer();
+		$actors = new Actors( $services->getMainConfig(), $services->getTitleFormatter(),
+			RequestContext::getMain(), $services->getPageProps(), $services->getRepoGroup() );
+		$this->assertSame( $this->getActor( 'wiki' )['publicKey']['id'], $actors->getInstanceKeyId() );
+		$this->assertNull( $actors->getHandleFromActorId( 'https://fedi.example.org/actors/wiki' ),
+			'the instance actor is not a feed' );
+	}
+
+	public static function provideInstanceWebFinger(): iterable {
+		yield 'wiki host' => [ 'acct:wiki@wiki.example.org' ];
+		yield 'actor host' => [ 'acct:wiki@fedi.example.org' ];
+		yield 'actor id' => [ 'https://fedi.example.org/actors/wiki' ];
+	}
+
+	/**
+	 * @dataProvider provideInstanceWebFinger
+	 */
+	public function testInstanceWebFinger( string $resource ) {
+		$response = $this->executeHandler( $this->newWebFingerHandler(),
+			new RequestData( [ 'queryParams' => [ 'resource' => $resource ] ] ) );
+		$this->assertSame( 200, $response->getStatusCode() );
+		$this->assertSame( 'application/jrd+json', $response->getHeaderLine( 'Content-Type' ) );
+		$data = json_decode( $response->getBody(), true );
+		$this->assertSame( 'acct:wiki@wiki.example.org', $data['subject'] );
+		$this->assertSame( [ 'https://fedi.example.org/actors/wiki', 'https://wiki.example.org/' ],
+			$data['aliases'] );
+		$this->assertSame( [
+			[
+				'rel' => 'self',
+				'type' => 'application/activity+json',
+				'href' => 'https://fedi.example.org/actors/wiki',
+			],
+			[
+				'rel' => 'http://webfinger.net/rel/profile-page',
+				'type' => 'text/html',
+				'href' => 'https://wiki.example.org/',
+			],
+		], $data['links'] );
+	}
+
 	public static function provideWebFingerMiss(): iterable {
 		yield 'other host' => [ 'acct:category_%d@example.com' ];
 		yield 'no host' => [ 'acct:category_%d' ];
 		yield 'other URL' => [ 'https://example.com/actors/category_%d' ];
+		yield 'instance actor on another host' => [ 'acct:wiki@example.com' ];
+		yield 'instance actor elsewhere' => [ 'https://example.com/actors/wiki' ];
 	}
 
 	/**

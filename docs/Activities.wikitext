@@ -81,6 +81,7 @@ Requests are signed and verified as Mastodon does, with [<tvar name="1">https://
 * The signed headers include <code>(request-target)</code>, <code>host</code> and <code>date</code>, and for a <code>POST</code> also <code>digest</code>, which must match the SHA-256 of the body.
 * A <code>Date</code> more than an hour ahead or twelve hours behind is refused.
 * The <code>keyId</code> is the URL of a remote actor's <code>publicKey</code>. The key is fetched from it with <code>Accept: application/activity+json</code> and cached for a day. A signature that fails against a cached key is checked once more against a fresh one, since the remote may have changed its key.
+* Every fetch of a remote document, a key or an actor, is a <code>GET</code> signed as the [[<tvar name="2">Special:MyLanguage/Accounts#Instance actor</tvar>|instance actor]] over <code>(request-target)</code>, <code>host</code> and <code>date</code>, since a server in Mastodon's secure mode refuses unsigned ones. To check it, the remote fetches the instance actor, which is served unsigned, so neither side waits on the other.
 
 <!--T:11-->
 The wiki's own key pair is generated the first time it is needed and stored in the database, so nobody has a secret to keep. The public key every actor publishes is derived from the stored private key.

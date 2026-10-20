@@ -3,20 +3,27 @@
 namespace MediaWiki\Extension\FediFeeds\Tests;
 
 use MediaWiki\Extension\FediFeeds\Signatures\HttpSignature;
+use MediaWiki\Extension\FediFeeds\Signatures\LocalKey;
+use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
+use MediaWiki\Extension\FediFeeds\Signatures\SignedFetch;
 use MediaWiki\Http\HttpRequestFactory;
+use MediaWiki\Http\MWHttpRequest;
 use MediaWikiUnitTestCase;
+use StatusValue;
 use Wikimedia\ObjectCache\HashBagOStuff;
 use Wikimedia\ObjectCache\WANObjectCache;
 
 /**
  * @covers \MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys
+ * @covers \MediaWiki\Extension\FediFeeds\Signatures\SignedFetch
  */
 class RemoteKeysTest extends MediaWikiUnitTestCase {
 
 	private const KEY_ID = 'https://remote.example/users/a#main-key';
 	private const OWNER = 'https://remote.example/users/a';
 	private const NOW = 1792320000;
+	private const INSTANCE_KEY_ID = 'https://fedi.example.org/actors/wiki#main-key';
 
 	private static function newKeyPair(): array {
 		$key = openssl_pkey_new( [ 'private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA ] );
@@ -39,7 +46,7 @@ class RemoteKeysTest extends MediaWikiUnitTestCase {
 	private function newRemoteKeys( array $documents, ?int &$fetches = 0 ): RemoteKeys {
 		$fetches = 0;
 		return new class (
-			$this->createNoOpMock( HttpRequestFactory::class ),
+			$this->createNoOpMock( SignedFetch::class ),
 			new WANObjectCache( [ 'cache' => new HashBagOStuff() ] ),
 			$documents,
 			$fetches
@@ -90,6 +97,59 @@ class RemoteKeysTest extends MediaWikiUnitTestCase {
 			'another target' );
 		$this->assertNull( $keys->verify( 'POST', '/actors/inbox', $headers, '{"a":1}', self::NOW ), 'another body' );
 		$this->assertNull( $keys->verify( 'POST', '/actors/inbox', [], '{}', self::NOW ), 'no signature' );
+	}
+
+	public function testMissIsCached() {
+		$keys = $this->newRemoteKeys( [ null, null ], $fetches );
+		$this->assertNull( $keys->getKey( self::KEY_ID ) );
+		$this->assertNull( $keys->getKey( self::KEY_ID ) );
+		$this->assertSame( 1, $fetches, 'a key that could not be fetched is not asked for again' );
+		$this->assertNull( $keys->getKey( self::KEY_ID, true ) );
+		$this->assertSame( 2, $fetches, 'unless fresh' );
+	}
+
+	public function testFetchDocumentIsSignedAsTheInstanceActor() {
+		[ $private, $public ] = self::newKeyPair();
+		$headers = [];
+		$request = $this->createMock( MWHttpRequest::class );
+		$request->method( 'setHeader' )->willReturnCallback( static function ( $name, $value ) use ( &$headers ) {
+			$headers[strtolower( $name )] = $value;
+		} );
+		$request->method( 'execute' )->willReturn( StatusValue::newGood() );
+		$request->method( 'getContent' )->willReturn( json_encode( self::newActor( $public ) ) );
+		$http = $this->createMock( HttpRequestFactory::class );
+		$http->expects( $this->once() )->method( 'create' )
+			->with( 'https://remote.example/users/a?page=1', $this->callback(
+				static fn ( $options ) => $options['method'] === 'GET'
+			) )
+			->willReturn( $request );
+		$localKeyStore = $this->createMock( LocalKeyStore::class );
+		$localKeyStore->method( 'getKey' )->willReturn( new LocalKey( $private ) );
+		$keys = new RemoteKeys( new SignedFetch( $http, $localKeyStore, self::INSTANCE_KEY_ID ),
+			new WANObjectCache( [ 'cache' => new HashBagOStuff() ] ) );
+
+		$document = $keys->fetchDocument( 'https://remote.example/users/a?page=1#main-key' );
+		$this->assertSame( self::OWNER, $document['id'] );
+		$this->assertSame( 'application/activity+json, application/ld+json', $headers['accept'] );
+		$this->assertSame( 'remote.example', $headers['host'] );
+		$parsed = HttpSignature::parse( $headers['signature'] );
+		$this->assertSame( self::INSTANCE_KEY_ID, $parsed['keyId'] );
+		$this->assertSame( 'rsa-sha256', $parsed['algorithm'] );
+		$this->assertSame( [ '(request-target)', 'host', 'date' ], $parsed['headers'] );
+		$this->assertNull( HttpSignature::check( $parsed, 'GET', $headers, '', time() ) );
+		$string = HttpSignature::signingString( 'GET', '/users/a?page=1', $headers, $parsed['headers'] );
+		$this->assertStringStartsWith( "(request-target): get /users/a?page=1\nhost: remote.example\ndate: ",
+			$string );
+		$this->assertTrue( HttpSignature::verify( $string, $parsed['signature'], $public ) );
+	}
+
+	public function testFetchDocumentSkipsWhatIsNotHttps() {
+		$keys = new RemoteKeys(
+			new SignedFetch( $this->createNoOpMock( HttpRequestFactory::class ),
+				$this->createNoOpMock( LocalKeyStore::class ), self::INSTANCE_KEY_ID ),
+			new WANObjectCache( [ 'cache' => new HashBagOStuff() ] )
+		);
+		$this->assertNull( $keys->fetchDocument( 'http://remote.example/users/a' ) );
 	}
 
 	public static function provideFindKey(): iterable {

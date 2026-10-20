@@ -67,6 +67,33 @@
 == 웹핑거 ==
 <code>/.well-known/webfinger?resource=acct:&lt;handle&gt;</code>는 위키 호스트와 액터 호스트 모두에서 액터를 가리키는 <code>self</code> 링크로 답합니다. 마스토돈은 액터를 가져온 뒤 액터 호스트의 웹핑거에 <code>preferredUsername@&lt;actor host&gt;</code>로 다시 묻고, 그 답의 <code>subject</code>는 위키 호스트의 핸들입니다. 그래서 양쪽 답이 같아야 합니다.
 
+<!--T:12 @8b70ed00-->
+<span id="Instance actor"></span>
+== 인스턴스 액터 ==
+위키에는 피드 말고도 위키 자신의 액터 <code>wiki@&lt;wiki host&gt;</code>가 하나 있습니다. 마스토돈 서버마다 있는 것과 같습니다. 이 액터는 위키가 원격 문서를 받아 올 때 요청에 서명합니다. 마스토돈의 보안 모드(<code>AUTHORIZED_FETCH</code>)를 켠 서버는 서명 없는 요청에 계정을 내주지 않고, 그 계정이 보내는 요청에 서명한 키도 내주지 않기 때문입니다. 피드의 핸들은 언제나 <code>_&lt;id&gt;</code>로 끝나므로 어떤 피드도 <code>wiki</code>라는 이름을 차지할 수 없습니다.
+{| class="wikitable"
+! 속성 !! 값
+|-
+| <code>type</code> || <code>Application</code>
+|-
+| <code>id</code> || <code>https://&lt;actor host&gt;/actors/wiki</code>
+|-
+| <code>preferredUsername</code> || <code>wiki</code>
+|-
+| <code>name</code> || 위키 이름
+|-
+| <code>url</code> || 위키의 첫 화면. 예: <code>https://wiki.example.org/</code>
+|-
+| <code>icon</code> || 아이콘을 따로 정하지 않은 피드가 보여 주는 위키 이미지. 위키에 없으면 넣지 않습니다
+|-
+| <code>inbox</code> || 공유 inbox
+|-
+| <code>manuallyApprovesFollowers</code> || <code>true</code>
+|-
+| <code>publicKey</code> || [[#Keys|키]] 참고
+|}
+outbox와 팔로워는 없습니다. 웹핑거는 피드처럼 이 액터에도 답하며, 프로필 페이지는 위키의 첫 화면입니다. 이 액터를 팔로하는 <code>Follow</code>나 이 액터에게 보낸 다른 것은 모두 202로 답하고 버립니다.
+
 <!--T:9 @8379a265-->
 <span id="Keys"></span>
 == 키 ==

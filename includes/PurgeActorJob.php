@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\FediFeeds;
 
 use MediaWiki\Extension\FediFeeds\Signatures\GoneActors;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
+use MediaWiki\Extension\FediFeeds\Signatures\SignedFetch;
 use MediaWiki\JobQueue\GenericParameterJob;
 use MediaWiki\JobQueue\Job;
 use MediaWiki\MediaWikiServices;
@@ -29,9 +30,9 @@ class PurgeActorJob extends Job implements GenericParameterJob {
 	public function run(): bool {
 		$services = MediaWikiServices::getInstance();
 		$actor = (string)$this->params['actor'];
-		if ( ( $this->params['check'] ?? true )
-			&& !GoneActors::isGone( $services->getHttpRequestFactory(), $actor )
-		) {
+		/** @var SignedFetch $signedFetch */
+		$signedFetch = $services->getService( 'FediFeeds.SignedFetch' );
+		if ( ( $this->params['check'] ?? true ) && !GoneActors::isGone( $signedFetch, $actor ) ) {
 			return true;
 		}
 		/** @var Followers $followers */

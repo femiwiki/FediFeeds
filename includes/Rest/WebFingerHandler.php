@@ -17,7 +17,8 @@ use Wikimedia\Message\MessageValue;
 use Wikimedia\ParamValidator\ParamValidator;
 
 /**
- * Answers WebFinger for the feeds, on the wiki host and on the actor host alike
+ * Answers WebFinger for the feeds and the wiki's instance actor, on the wiki host and on the
+ * actor host alike
  */
 class WebFingerHandler extends SimpleHandler {
 
@@ -38,6 +39,9 @@ class WebFingerHandler extends SimpleHandler {
 	public function run(): Response {
 		$resource = $this->getValidatedParams()['resource'];
 		$handle = $this->getHandle( $resource );
+		if ( $handle === Actors::INSTANCE_HANDLE ) {
+			return $this->respond( $handle, $this->actors->getInstanceActor( null )['url'] );
+		}
 		$feed = $handle === null ? null : $this->feedLookup->getFeed( $handle );
 		if ( !$feed ) {
 			throw new LocalizedHttpException(
@@ -45,10 +49,13 @@ class WebFingerHandler extends SimpleHandler {
 				404
 			);
 		}
-		$actorId = $this->actors->getActorId( $feed->getHandle() );
-		$pageUrl = $this->actors->getPageUrl( $feed );
+		return $this->respond( $feed->getHandle(), $this->actors->getPageUrl( $feed ) );
+	}
+
+	private function respond( string $handle, string $pageUrl ): Response {
+		$actorId = $this->actors->getActorId( $handle );
 		$response = $this->getResponseFactory()->createJson( [
-			'subject' => 'acct:' . $feed->getHandle() . '@' . $this->actors->getWikiHost(),
+			'subject' => 'acct:' . $handle . '@' . $this->actors->getWikiHost(),
 			'aliases' => [ $actorId, $pageUrl ],
 			'links' => [
 				[
@@ -71,6 +78,9 @@ class WebFingerHandler extends SimpleHandler {
 	 * Gets the handle from an acct: URI on either host, or from an actor id.
 	 */
 	private function getHandle( string $resource ): ?string {
+		if ( $resource === $this->actors->getActorId( Actors::INSTANCE_HANDLE ) ) {
+			return Actors::INSTANCE_HANDLE;
+		}
 		if ( !str_starts_with( $resource, 'acct:' ) ) {
 			return $this->actors->getHandleFromActorId( $resource );
 		}

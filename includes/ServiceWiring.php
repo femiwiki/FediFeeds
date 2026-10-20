@@ -10,6 +10,7 @@ use MediaWiki\Extension\FediFeeds\Reactions;
 use MediaWiki\Extension\FediFeeds\RemoteActors;
 use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
+use MediaWiki\Extension\FediFeeds\Signatures\SignedFetch;
 use MediaWiki\MediaWikiServices;
 
 /** @phpcs-require-sorted-array */
@@ -46,6 +47,12 @@ return [
 		return new RemoteActors( $services->getConnectionProvider() );
 	},
 	'FediFeeds.RemoteKeys' => static function ( MediaWikiServices $services ): RemoteKeys {
-		return new RemoteKeys( $services->getHttpRequestFactory(), $services->getMainWANObjectCache() );
+		return new RemoteKeys( $services->getService( 'FediFeeds.SignedFetch' ), $services->getMainWANObjectCache() );
+	},
+	'FediFeeds.SignedFetch' => static function ( MediaWikiServices $services ): SignedFetch {
+		$actors = new Actors( $services->getMainConfig(), $services->getTitleFormatter(),
+			RequestContext::getMain(), $services->getPageProps(), $services->getRepoGroup() );
+		return new SignedFetch( $services->getHttpRequestFactory(), $services->getService( 'FediFeeds.LocalKeyStore' ),
+			$actors->getInstanceKeyId() );
 	},
 ];
