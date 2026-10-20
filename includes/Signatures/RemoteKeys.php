@@ -2,6 +2,8 @@
 
 namespace MediaWiki\Extension\FediFeeds\Signatures;
 
+use Femiwiki\HttpSignatures\Cavage;
+use Femiwiki\HttpSignatures\Signature;
 use Wikimedia\ObjectCache\WANObjectCache;
 
 /**
@@ -34,17 +36,17 @@ class RemoteKeys {
 	public function verify(
 		string $method, string $target, array $headers, string $body, ?int $now = null
 	): ?string {
-		$parsed = HttpSignature::parse( $headers['signature'] ?? '' );
-		if ( $parsed === null || HttpSignature::check( $parsed, $method, $headers, $body, $now ?? time() ) !== null ) {
+		$parsed = Signature::parse( $headers['signature'] ?? '' );
+		if ( $parsed === null || $parsed->check( $method, $headers, $body, $now ?? time() ) !== null ) {
 			return null;
 		}
-		$string = HttpSignature::signingString( $method, $target, $headers, $parsed['headers'] );
+		$string = Cavage::signingString( $method, $target, $headers, $parsed->headers );
 		if ( $string === null ) {
 			return null;
 		}
 		foreach ( [ false, true ] as $fresh ) {
-			$key = $this->getKey( $parsed['keyId'], $fresh );
-			if ( $key && HttpSignature::verify( $string, $parsed['signature'], $key['pem'] ) ) {
+			$key = $this->getKey( $parsed->keyId, $fresh );
+			if ( $key && Cavage::verify( $string, $parsed->signature, $key['pem'] ) ) {
 				return $key['owner'];
 			}
 		}

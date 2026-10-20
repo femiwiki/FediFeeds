@@ -2,6 +2,7 @@
 
 namespace MediaWiki\Extension\FediFeeds\Rest;
 
+use Femiwiki\HttpSignatures\Signature;
 use MediaWiki\Extension\FediFeeds\Actors;
 use MediaWiki\Extension\FediFeeds\DeliveryJob;
 use MediaWiki\Extension\FediFeeds\Feed;
@@ -13,7 +14,6 @@ use MediaWiki\Extension\FediFeeds\PurgeActorJob;
 use MediaWiki\Extension\FediFeeds\Quotes;
 use MediaWiki\Extension\FediFeeds\Reactions;
 use MediaWiki\Extension\FediFeeds\RemoteActors;
-use MediaWiki\Extension\FediFeeds\Signatures\HttpSignature;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
 use MediaWiki\JobQueue\JobQueueGroup;
 use MediaWiki\Page\PageLookup;
@@ -289,8 +289,8 @@ class InboxHandler extends Handler {
 
 	private function purgeActor( string $actor, string $signature, bool $check ): Response {
 		$params = [ 'actor' => $actor, 'check' => $check ];
-		$keyId = HttpSignature::parse( $signature )['keyId'] ?? null;
-		if ( is_string( $keyId ) && str_starts_with( $keyId, $actor ) ) {
+		$keyId = Signature::parse( $signature )?->keyId;
+		if ( $keyId !== null && str_starts_with( $keyId, $actor ) ) {
 			$params['keyId'] = $keyId;
 		}
 		$this->jobQueueGroup->lazyPush( new PurgeActorJob( $params ) );

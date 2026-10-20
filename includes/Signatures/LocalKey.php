@@ -2,6 +2,8 @@
 
 namespace MediaWiki\Extension\FediFeeds\Signatures;
 
+use Femiwiki\HttpSignatures\Cavage;
+
 /**
  * The wiki's own key pair, from its private key; LocalKeyStore keeps it
  */
@@ -28,6 +30,6 @@ class LocalKey {
 	 * @return string The Signature header
 	 */
 	public function sign( string $method, string $target, array $headers, string $keyId ): string {
-		return HttpSignature::sign( $method, $target, $headers, $keyId, $this->privateKeyPem );
+		return Cavage::sign( $method, $target, $headers, $keyId, $this->privateKeyPem );
 	}
 }
