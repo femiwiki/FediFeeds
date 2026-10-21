@@ -51,6 +51,30 @@ class Items {
 		return $dbw->affectedRows() > 0;
 	}
 
+	/**
+	 * Moves a recorded section item to a later revision that changed it, so its note links
+	 * to what followers were told last.
+	 *
+	 * @param Feed $feed
+	 * @param int $pageId
+	 * @param string $key
+	 * @param int $revId
+	 * @param string $anchor The link anchor of the item's heading in that revision
+	 * @return bool Whether the item is recorded
+	 */
+	public function setRevision( Feed $feed, int $pageId, string $key, int $revId, string $anchor ): bool {
+		$dbw = $this->dbProvider->getPrimaryDatabase();
+		$dbw->newUpdateQueryBuilder()
+			->update( 'fedifeeds_item' )
+			->set( [
+				'fi_rev' => $revId,
+				'fi_anchor' => strlen( $anchor ) > self::MAX_KEY_LENGTH ? '' : $anchor,
+			] )
+			->where( [ 'fi_feed' => $feed->getHandle(), 'fi_page' => $pageId, 'fi_key' => $key ] )
+			->caller( __METHOD__ )->execute();
+		return $dbw->affectedRows() > 0;
+	}
+
 	public function has( Feed $feed, int $pageId, string $key = '' ): bool {
 		return $this->get( $feed, $pageId, $key ) !== null;
 	}
