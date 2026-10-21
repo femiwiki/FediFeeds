@@ -222,15 +222,14 @@ class Notes {
 		if ( $feed->kind === 'section' ) {
 			$record = $this->items->get( $feed, $item->page->getId(), $item->key );
 			// The revision the section appeared in, so the link shows what followers were told
-			$query = ( $record['rev'] ?? 0 ) ? [ 'oldid' => $record['rev'] ] : [];
+			$rev = $record['rev'] ?? 0;
+			$query = $rev ? [ 'oldid' => $rev ] : [];
 			$url = $title->getFullURL( $query + [ 'utm_source' => 'fediverse' ], false, PROTO_CANONICAL )
 				. ( ( $record['anchor'] ?? '' ) !== '' ? '#' . $record['anchor'] : '' );
 			$content = $this->getSectionContent( $item, $url, $linkText );
 			$published = $record['timestamp'] ?? null;
 			// The revision is a later one once an edit changed the section
-			$changed = ( $record['rev'] ?? 0 )
-				? ( $this->revisionLookup->getTimestampFromId( $record['rev'] ) ?: null )
-				: null;
+			$changed = $rev ? ( $this->revisionLookup->getTimestampFromId( $rev ) ?: null ) : null;
 			$updated = $changed !== null && $changed !== $published ? $changed : null;
 		} else {
 			$url = $title->getFullURL( [ 'utm_source' => 'fediverse' ], false, PROTO_CANONICAL );
