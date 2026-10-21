@@ -620,6 +620,8 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <td><code>publicKey</code></td>
 <td>See <a href="#Keys">Keys</a>
 </td></tr></tbody></table>
+<p>A browser that opens the actor id is sent to the page with a 303. Mastodon keeps an actor's <code>url</code> only when it is on the host of the id, so its link to the profile is the id itself. The request counts as a browser's when its <code>Accept</code> names <code>text/html</code> and neither <code>application/activity+json</code> nor <code>application/ld+json</code>; any other request, including one with no <code>Accept</code> or only <code>*/*</code>, gets the JSON. Both answers carry <code>Vary: Accept</code>.
+</p>
 <div class="mw-heading mw-heading2"><h2 id="Display_name">Display name</h2></div>
 <p>The followed page sets a display name with a magic word in its own wikitext:
 </p>
@@ -677,7 +679,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <td><code>publicKey</code></td>
 <td>See <a href="#Keys">Keys</a>
 </td></tr></tbody></table>
-<p>It has no outbox or followers. WebFinger answers for it as for a feed, with the wiki's front page as its profile page. A <code>Follow</code> of it, and anything else sent to it, is answered with 202 and dropped.
+<p>It has no outbox or followers. WebFinger answers for it as for a feed, with the wiki's front page as its profile page. A <code>Follow</code> of it, and anything else sent to it, is answered with 202 and dropped. A browser that opens its id is sent to the front page, as one that opens a feed's id is sent to the page.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="Keys">Keys</h2></div>
 <p>The wiki has one key pair. Each actor publishes it under its own key id, <code>&lt;actor id&gt;#main-key</code>.
@@ -695,7 +697,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 20 October 2026, at 13:48.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 21 October 2026, at 00:02.</li>
 </ul>
 
 	<ul id="footer-places">

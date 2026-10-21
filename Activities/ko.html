@@ -564,7 +564,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 </p><p>팔로어가 없는 피드는 아무것도 보내지 않습니다. 서버에 <code>sharedInbox</code>가 있으면 그리로 보내므로, 팔로어가 많은 서버라도 요청은 한 번만 받습니다.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="노트"><span id=".EB.85.B8.ED.8A.B8"></span>노트</h2></div>
-<p>항목은 저마다 <code>&lt;actor id&gt;/notes/&lt;item&gt;</code>에 있는 <code>Note</code>입니다. 항목이 있는 동안 답하고, 없어지면 404입니다. <code>category</code>에서 항목은 문서 id이고, <code>section</code>에서는 항목의 제목 경로와 번호를 패딩 없는 base64url로 쓴 것입니다. 그래서 제목에 무엇이 들어 있든 URL 경로 한 조각으로 남습니다. <code>attributedTo</code>는 액터, <code>url</code>은 문서, <code>published</code>는 문서의 첫 판이고, 노트는 공개로 보냅니다. <code>url</code>과 본문 링크의 문서 주소에는 <code>utm_source=fediverse</code>를 붙입니다.
+<p>항목은 저마다 <code>&lt;actor id&gt;/notes/&lt;item&gt;</code>에 있는 <code>Note</code>입니다. 항목이 있는 동안 답하고, 없어지면 404입니다. <code>category</code>에서 항목은 문서 id이고, <code>section</code>에서는 항목의 제목 경로와 번호를 패딩 없는 base64url로 쓴 것입니다. 그래서 제목에 무엇이 들어 있든 URL 경로 한 조각으로 남습니다. <code>attributedTo</code>는 액터, <code>url</code>은 문서, <code>published</code>는 문서의 첫 판이고, 노트는 공개로 보냅니다. <code>url</code>과 본문 링크의 문서 주소에는 <code>utm_source=fediverse</code>를 붙입니다. 브라우저로 노트의 id를 열면, <a href="../Accounts/ko.html#Actor" title="Special:MyLanguage/Accounts">액터 id</a>를 열 때 문서로 보내듯 노트의 <code>url</code>로 보냅니다.
 </p><p><code>section</code> 노트의 본문은 <strong>10월 19일 14:10</strong>처럼 굵게 쓴 제목 경로로 시작합니다. 그 뒤에 문단이 하위 문단과 함께 옵니다. 단락과 목록, 다른 사이트로 가는 링크를 담고, 하위 제목은 굵은 줄로 씁니다. 글이 500자를 넘으면 말줄임표로 자르고, 노트 끝에는 문서 링크를 붙입니다. 링크도 쓰는 <code>url</code>은 문단이 생긴 판의 고유 링크에 <code>utm_source=fediverse</code>를 붙이고, 그 판에서 문단의 앵커를 붙인 것입니다. <code>published</code>는 문단이 생긴 때입니다. 마스토돈은 <code>summary</code>를 열람 주의 문구로 보여 주므로 노트에 넣지 않습니다. 노트는 문서의 현재 판에 그 경로가 항목 번호만큼 있는 동안 답합니다. 경로가 여러 번 나오면 n번 항목은 n번째로 나타난 것이고, 문서가 새 문단을 옛 문단 위에 더한다면 문서 아래쪽부터 셉니다.
 </p><p><code>category</code> 항목은 문서가 분류에서 빠져도 노트로 남습니다. 팔로어는 그 항목을 분류에 새 문서가 생겼다는 소식으로 받았으니, RSS 항목처럼 나중에 사라지면 안 됩니다. 문서가 분류에서 빠지는 것은 대개 분류를 정리하거나 옮겨서이고, 팔로어가 알 필요는 없습니다. 팔로어가 원하지 않을 문서, 이를테면 스팸이나 실수로 만든 문서는 대개 삭제되며, 삭제하면 <code>Delete</code>를 보냅니다. 빠질 때 노트를 숨기거나 <code>Delete</code>를 보내면 되돌릴 수 없거나 오락가락하게 됩니다. 나중에 다시 넣은 문서는 새 항목이 아니기 때문입니다.
 </p><p>문서가 <a href="../Accounts/ko.html#Display_name" title="Special:MyLanguage/Accounts">표시 이름</a>을 정한 피드만 노트를 내보냅니다. 다른 피드의 액터도 답은 하지만 outbox가 비어 있고 노트가 없으므로, 유지보수용 분류는 아무것도 내보내지 않습니다.
@@ -621,7 +621,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer"  lang="ko" dir="ltr">
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 20일 (화) 13:48에 마지막으로 편집되었습니다.</li>
+	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 21일 (수) 00:02에 마지막으로 편집되었습니다.</li>
 </ul>
 
 	<ul id="footer-places">

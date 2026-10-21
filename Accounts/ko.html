@@ -620,7 +620,8 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <td><code>publicKey</code></td>
 <td><a href="#Keys">키</a> 참고
 </td></tr></tbody></table>
-<p><span id="Display&#95;name"></span>
+<p>브라우저로 액터 id를 열면 303으로 문서에 보냅니다. 마스토돈은 액터의 <code>url</code>이 id와 같은 호스트에 있을 때만 받아들이므로, 프로필 링크가 id 그대로이기 때문입니다. 요청의 <code>Accept</code>에 <code>text/html</code>이 있고 <code>application/activity+json</code>도 <code>application/ld+json</code>도 없으면 브라우저로 봅니다. <code>Accept</code>가 없거나 <code>*/*</code>뿐인 요청을 비롯한 나머지는 JSON을 받습니다. 두 답 모두 <code>Vary: Accept</code>를 붙입니다.
+</p><p><span id="Display&#95;name"></span>
 </p>
 <div class="mw-heading mw-heading2"><h2 id="표시_이름"><span id=".ED.91.9C.EC.8B.9C_.EC.9D.B4.EB.A6.84"></span>표시 이름</h2></div>
 <p>팔로하는 문서는 자기 위키텍스트에 매직 워드를 넣어 표시 이름을 정합니다.
@@ -680,7 +681,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <td><code>publicKey</code></td>
 <td><a href="#Keys">키</a> 참고
 </td></tr></tbody></table>
-<p>outbox와 팔로워는 없습니다. 웹핑거는 피드처럼 이 액터에도 답하며, 프로필 페이지는 위키의 첫 화면입니다. 이 액터를 팔로하는 <code>Follow</code>나 이 액터에게 보낸 다른 것은 모두 202로 답하고 버립니다.
+<p>outbox와 팔로워는 없습니다. 웹핑거는 피드처럼 이 액터에도 답하며, 프로필 페이지는 위키의 첫 화면입니다. 이 액터를 팔로하는 <code>Follow</code>나 이 액터에게 보낸 다른 것은 모두 202로 답하고 버립니다. 브라우저로 이 액터의 id를 열면, 피드의 id를 열 때 문서로 보내듯 위키의 첫 화면으로 보냅니다.
 </p><p><span id="Keys"></span>
 </p>
 <div class="mw-heading mw-heading2"><h2 id="키"><span id=".ED.82.A4"></span>키</h2></div>
@@ -699,7 +700,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer"  lang="ko" dir="ltr">
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 20일 (화) 13:48에 마지막으로 편집되었습니다.</li>
+	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 21일 (수) 00:02에 마지막으로 편집되었습니다.</li>
 </ul>
 
 	<ul id="footer-places">
