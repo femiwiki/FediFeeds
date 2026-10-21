@@ -39,9 +39,13 @@ class NoteHandler extends SimpleHandler {
 				404
 			);
 		}
-		return $this->getResponseFactory()->createJson(
-			[ '@context' => Notes::CONTEXT ] + $this->notes->getNote( $feed, $found ),
-			Actors::CONTENT_TYPE
+		$note = $this->notes->getNote( $feed, $found );
+		return BrowserRedirect::respond( $this,
+			static fn () => $note['url'],
+			fn () => $this->getResponseFactory()->createJson(
+				[ '@context' => Notes::CONTEXT ] + $note,
+				Actors::CONTENT_TYPE
+			)
 		);
 	}
 

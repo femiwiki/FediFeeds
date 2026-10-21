@@ -54,6 +54,7 @@ The title of the page is shown as the actor's <code>name</code>, so readers see 
 |-
 | <code>publicKey</code> || See [[#Keys|Keys]]
 |}
+A browser that opens the actor id is sent to the page with a 303. Mastodon keeps an actor's <code>url</code> only when it is on the host of the id, so its link to the profile is the id itself. The request counts as a browser's when its <code>Accept</code> names <code>text/html</code> and neither <code>application/activity+json</code> nor <code>application/ld+json</code>; any other request, including one with no <code>Accept</code> or only <code>*/*</code>, gets the JSON. Both answers carry <code>Vary: Accept</code>.
 
 <!--T:10-->
 == Display name ==
@@ -95,7 +96,7 @@ Besides the feeds, the wiki has one actor of its own, <code>wiki@&lt;wiki host&g
 |-
 | <code>publicKey</code> || See [[#Keys|Keys]]
 |}
-It has no outbox or followers. WebFinger answers for it as for a feed, with the wiki's front page as its profile page. A <code>Follow</code> of it, and anything else sent to it, is answered with 202 and dropped.
+It has no outbox or followers. WebFinger answers for it as for a feed, with the wiki's front page as its profile page. A <code>Follow</code> of it, and anything else sent to it, is answered with 202 and dropped. A browser that opens its id is sent to the front page, as one that opens a feed's id is sent to the page.
 
 <!--T:9-->
 == Keys ==

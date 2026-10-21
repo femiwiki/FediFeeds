@@ -23,6 +23,7 @@ use MediaWikiIntegrationTestCase;
 
 /**
  * @covers \MediaWiki\Extension\FediFeeds\Rest\ActorHandler
+ * @covers \MediaWiki\Extension\FediFeeds\Rest\BrowserRedirect
  * @covers \MediaWiki\Extension\FediFeeds\Rest\WebFingerHandler
  * @covers \MediaWiki\Extension\FediFeeds\Actors
  * @covers \MediaWiki\Extension\FediFeeds\FeedLookup
@@ -74,7 +75,65 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 			new RequestData( [ 'pathParams' => [ 'handle' => $handle ] ] ) );
 		$this->assertSame( 200, $response->getStatusCode() );
 		$this->assertSame( 'application/activity+json', $response->getHeaderLine( 'Content-Type' ) );
+		$this->assertSame( 'Accept', $response->getHeaderLine( 'Vary' ) );
 		return json_decode( $response->getBody(), true );
+	}
+
+	public static function provideBrowserAccept(): iterable {
+		yield 'Firefox' => [ 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' ];
+		yield 'Chrome' => [ 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,'
+			. 'image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7' ];
+		yield 'ActivityPub refused' => [ 'text/html, application/activity+json;q=0' ];
+	}
+
+	/**
+	 * @dataProvider provideBrowserAccept
+	 */
+	public function testBrowserIsSentToThePage( string $accept ) {
+		$id = $this->getExistingTestPage( 'Category:Blog' )->getId();
+		$cases = [
+			"category_$id" => $this->getActor( "category_$id" )['url'],
+			'wiki' => 'https://wiki.example.org/',
+		];
+		$this->assertStringStartsWith( 'https://wiki.example.org/', $cases["category_$id"] );
+		foreach ( $cases as $handle => $url ) {
+			$response = $this->executeHandler( $this->newActorHandler(), new RequestData( [
+				'pathParams' => [ 'handle' => $handle ],
+				'headers' => [ 'Accept' => $accept ],
+			] ) );
+			$this->assertSame( 303, $response->getStatusCode(), $handle );
+			$this->assertSame( $url, $response->getHeaderLine( 'Location' ), $handle );
+			$this->assertSame( 'Accept', $response->getHeaderLine( 'Vary' ), $handle );
+		}
+	}
+
+	public static function provideFetcherAccept(): iterable {
+		yield 'none' => [ null ];
+		yield 'any' => [ '*/*' ];
+		yield 'ActivityPub' => [ 'application/activity+json' ];
+		yield 'JSON-LD with a profile' => [ 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"' ];
+		yield 'both' => [ 'application/activity+json, application/ld+json' ];
+		yield 'with q-values and HTML' => [ 'application/activity+json;q=0.9, text/html;q=1' ];
+		yield 'upper case' => [ 'Application/Activity+JSON, text/html' ];
+		yield 'plain JSON' => [ 'application/json' ];
+	}
+
+	/**
+	 * @dataProvider provideFetcherAccept
+	 */
+	public function testFetcherGetsJson( ?string $accept ) {
+		$id = $this->getExistingTestPage( 'Category:Blog' )->getId();
+		foreach ( [ "category_$id", 'wiki' ] as $handle ) {
+			$response = $this->executeHandler( $this->newActorHandler(), new RequestData( [
+				'pathParams' => [ 'handle' => $handle ],
+				'headers' => $accept === null ? [] : [ 'Accept' => $accept ],
+			] ) );
+			$this->assertSame( 200, $response->getStatusCode(), $handle );
+			$this->assertSame( 'application/activity+json', $response->getHeaderLine( 'Content-Type' ) );
+			$this->assertSame( 'Accept', $response->getHeaderLine( 'Vary' ) );
+			$this->assertSame( "https://fedi.example.org/actors/$handle",
+				json_decode( $response->getBody(), true )['id'] );
+		}
 	}
 
 	public function testCategoryActor() {

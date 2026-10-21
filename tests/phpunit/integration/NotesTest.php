@@ -12,6 +12,7 @@ use MediaWikiIntegrationTestCase;
 /**
  * @covers \MediaWiki\Extension\FediFeeds\Notes
  * @covers \MediaWiki\Extension\FediFeeds\Rest\NoteHandler
+ * @covers \MediaWiki\Extension\FediFeeds\Rest\BrowserRedirect
  * @covers \MediaWiki\Extension\FediFeeds\Rest\OutboxHandler
  * @group Database
  */
@@ -38,10 +39,13 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		return $this->getServiceContainer()->getService( 'FediFeeds.Notes' );
 	}
 
-	private function executeNote( string $handle, int|string $item ) {
+	private function executeNote( string $handle, int|string $item, ?string $accept = null ) {
 		return $this->executeHandler(
 			new NoteHandler( $this->getNotes(), $this->getServiceContainer()->getPageStore() ),
-			new RequestData( [ 'pathParams' => [ 'handle' => $handle, 'item' => (string)$item ] ] )
+			new RequestData( [
+				'pathParams' => [ 'handle' => $handle, 'item' => (string)$item ],
+				'headers' => $accept === null ? [] : [ 'Accept' => $accept ],
+			] )
 		);
 	}
 
@@ -72,6 +76,27 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		$this->assertStringContainsString( 'href="' . htmlspecialchars( $note['url'] ) . '"', $note['content'] );
 		$this->assertSame( [ 'https://www.w3.org/ns/activitystreams#Public' ], $note['to'] );
 		$this->assertNotNull( $note['published'] );
+		$this->assertSame( 'Accept', $response->getHeaderLine( 'Vary' ) );
+	}
+
+	public function testBrowserIsSentToTheNotesPage() {
+		$text = "{{FEDIFEEDSNAME:Releases|section}}\n\nAbout the releases.\n";
+		$page = $this->savePage( 'Release notes', $text );
+		$this->savePage( 'Release notes', "$text\n== 1.0 ==\nThe first release.\n" );
+		$url = json_decode( $this->executeNote( "section_$page", 'MS4w' )->getBody(), true )['url'];
+		$this->assertStringContainsString( '&oldid=', $url );
+		$this->assertStringEndsWith( '#1.0', $url );
+
+		$response = $this->executeNote( "section_$page", 'MS4w',
+			'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' );
+		$this->assertSame( 303, $response->getStatusCode() );
+		$this->assertSame( $url, $response->getHeaderLine( 'Location' ) );
+		$this->assertSame( 'Accept', $response->getHeaderLine( 'Vary' ) );
+
+		$response = $this->executeNote( "section_$page", 'MS4w', 'application/activity+json, application/ld+json' );
+		$this->assertSame( 200, $response->getStatusCode() );
+		$this->assertSame( 'application/activity+json', $response->getHeaderLine( 'Content-Type' ) );
+		$this->assertSame( 'Accept', $response->getHeaderLine( 'Vary' ) );
 	}
 
 	private static function assertQuotable( array $note, array $context ) {
