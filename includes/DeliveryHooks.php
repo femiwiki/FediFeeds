@@ -14,7 +14,8 @@ use MediaWiki\Storage\Hook\PageSaveCompleteHook;
 /**
  * Records the items a save makes and sends their Create to the feed's followers: a new page is
  * an item of each publishing category feed it is created in, and a new heading at the unit level
- * of an existing page is an item of the page's section feed if that publishes
+ * of an existing page is an item of the page's section feed if that publishes. A save that
+ * changes the text of a section item sends its Update.
  */
 class DeliveryHooks implements PageSaveCompleteHook {
 
@@ -31,7 +32,8 @@ class DeliveryHooks implements PageSaveCompleteHook {
 
 	/**
 	 * A save that creates the page makes category items, and a later save that adds headings
-	 * makes section items. Null edits, reverts and reparses add nothing.
+	 * makes section items. Null edits, reverts and reparses add nothing, though a revert still
+	 * updates the sections it changes.
 	 *
 	 * @inheritDoc
 	 */
@@ -39,9 +41,11 @@ class DeliveryHooks implements PageSaveCompleteHook {
 		$pageId = $wikiPage->getId();
 		if ( $flags & EDIT_NEW ) {
 			DeferredUpdates::addCallableUpdate( fn () => $this->recordCategoryItems( $pageId, $revisionRecord ) );
-		} elseif ( !$editResult->isNullEdit() && !$editResult->isRevert() && $revisionRecord->getParentId() ) {
+		} elseif ( !$editResult->isNullEdit() && $revisionRecord->getParentId() ) {
 			// A revert brings back headings that were there before, which are not news
-			DeferredUpdates::addCallableUpdate( fn () => $this->recordSectionItems( $pageId, $revisionRecord ) );
+			$adds = !$editResult->isRevert();
+			DeferredUpdates::addCallableUpdate(
+				fn () => $this->recordSectionItems( $pageId, $revisionRecord, $adds ) );
 		}
 	}
 
@@ -73,9 +77,10 @@ class DeliveryHooks implements PageSaveCompleteHook {
 
 	/**
 	 * Records each heading of the new revision at the feed's unit level whose path the parent
-	 * revision did not have, or had fewer times.
+	 * revision did not have, or had fewer times, unless $adds is false. Then sends an Update
+	 * for each recorded item both revisions have whose note text the new one changed.
 	 */
-	private function recordSectionItems( int $pageId, RevisionRecord $revision ): void {
+	private function recordSectionItems( int $pageId, RevisionRecord $revision, bool $adds ): void {
 		$page = $this->pageStore->getPageById( $pageId );
 		$parent = $this->revisionLookup->getRevisionById( (int)$revision->getParentId() );
 		if ( !$page || !$parent ) {
@@ -96,25 +101,42 @@ class DeliveryHooks implements PageSaveCompleteHook {
 		$new = Sections::getOccurrences( Sections::getHeadings( $newStatus->getValue() ), $unit );
 		$old = Sections::getOccurrences( Sections::getHeadings( $parentStatus->getValue() ), $unit );
 		$timestamp = $revision->getTimestamp() ?? wfTimestampNow();
-		foreach ( Sections::findNew( $old, $new ) as $i => $ordinal ) {
+		$revId = (int)$revision->getId();
+		$added = [];
+		foreach ( $adds ? Sections::findNew( $old, $new ) : [] as $i => $ordinal ) {
 			$key = Sections::getKey( $new[$i]['base'], $ordinal );
-			if ( $this->items->add( $feed, $pageId, $timestamp, $key, (int)$revision->getId(), $new[$i]['link'] ) ) {
+			$added[$key] = true;
+			if ( $this->items->add( $feed, $pageId, $timestamp, $key, $revId, $new[$i]['link'] ) ) {
 				$this->deliver( $feed, new Item( $page, $key ) );
+			}
+		}
+
+		// Compared as the note would say it, so an edit past the cut or to markup alone sends nothing
+		$before = $this->notes->getSections( $page, $parentStatus->getValue() );
+		foreach ( $this->notes->getSections( $page, $newStatus->getValue() ) as $key => $section ) {
+			$key = (string)$key;
+			if ( !isset( $added[$key] ) && isset( $before[$key] )
+				&& Notes::getSectionText( $section ) !== Notes::getSectionText( $before[$key] )
+				&& $this->items->setRevision( $feed, $pageId, $key, $revId, $section['link'] )
+			) {
+				$this->deliver( $feed, new Item( $page, $key ), $revId );
 			}
 		}
 	}
 
 	/**
-	 * Queues one delivery of the Create for each inbox, which is none without followers.
+	 * Queues one delivery of the Create, or with a revision the Update it made, for each inbox,
+	 * which is none without followers.
 	 */
-	private function deliver( Feed $feed, Item $item ): void {
+	private function deliver( Feed $feed, Item $item, ?int $updatedIn = null ): void {
 		$inboxes = $this->followers->getInboxes( $feed );
 		if ( !$inboxes ) {
 			return;
 		}
 		$actorId = $this->notes->actors->getActorId( $feed->getHandle() );
-		$activity = [ '@context' => Notes::CONTEXT ]
-			+ $this->notes->getCreate( $feed, $item );
+		$activity = [ '@context' => Notes::CONTEXT ] + ( $updatedIn === null
+			? $this->notes->getCreate( $feed, $item )
+			: $this->notes->getUpdate( $feed, $item, $updatedIn ) );
 		$jobs = [];
 		foreach ( $inboxes as $inbox ) {
 			$jobs[] = new DeliveryJob( [ 'inbox' => $inbox, 'keyId' => "$actorId#main-key", 'activity' => $activity ] );

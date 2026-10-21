@@ -227,12 +227,18 @@ class Notes {
 				. ( ( $record['anchor'] ?? '' ) !== '' ? '#' . $record['anchor'] : '' );
 			$content = $this->getSectionContent( $item, $url, $linkText );
 			$published = $record['timestamp'] ?? null;
+			// The revision is a later one once an edit changed the section
+			$changed = ( $record['rev'] ?? 0 )
+				? ( $this->revisionLookup->getTimestampFromId( $record['rev'] ) ?: null )
+				: null;
+			$updated = $changed !== null && $changed !== $published ? $changed : null;
 		} else {
 			$url = $title->getFullURL( [ 'utm_source' => 'fediverse' ], false, PROTO_CANONICAL );
 			$paragraph = $this->getRendering( $item->page, false )['paragraph'];
 			$content = ( $paragraph === '' ? '' : '<p>' . htmlspecialchars( $paragraph ) . '</p>' )
 				. '<p><a href="' . htmlspecialchars( $url ) . '">' . htmlspecialchars( $linkText ) . '</a></p>';
 			$published = $this->revisionLookup->getFirstRevision( $item->page )?->getTimestamp();
+			$updated = null;
 		}
 		$note = [
 			'id' => $this->getNoteId( $feed, $item ),
@@ -241,6 +247,11 @@ class Notes {
 			'content' => $content,
 			'url' => $url,
 			'published' => $published !== null ? wfTimestamp( TS::ISO_8601, $published ) : null,
+		];
+		if ( $updated !== null ) {
+			$note['updated'] = wfTimestamp( TS::ISO_8601, $updated );
+		}
+		$note += [
 			'to' => [ self::PUBLIC ],
 			'cc' => [ "$actorId/followers" ],
 		];
@@ -280,11 +291,22 @@ class Notes {
 	}
 
 	/**
-	 * The path in bold, then the section's paragraphs and lists with its subheadings as bold
-	 * lines, cut with an ellipsis after CONTENT_LENGTH characters of text, then the link.
+	 * The section's text, then the link.
 	 */
 	private function getSectionContent( Item $item, string $url, string $linkText ): string {
 		$section = $this->getRendering( $item->page, true )['sections'][$item->key] ?? null;
+		return self::getSectionText( $section )
+			. '<p><a href="' . htmlspecialchars( $url ) . '">' . htmlspecialchars( $linkText ) . '</a></p>';
+	}
+
+	/**
+	 * The path in bold, then the section's paragraphs and lists with its subheadings as bold
+	 * lines, cut with an ellipsis after CONTENT_LENGTH characters of text: what a note says
+	 * before its link.
+	 *
+	 * @param array{path: string[], blocks: array}|null $section From getSections()
+	 */
+	public static function getSectionText( ?array $section ): string {
 		$html = '<p><strong>' . htmlspecialchars( implode( ' ', $section['path'] ?? [] ) ) . '</strong></p>';
 		$budget = self::CONTENT_LENGTH;
 		foreach ( $section['blocks'] ?? [] as $block ) {
@@ -305,7 +327,7 @@ class Notes {
 				break;
 			}
 		}
-		return $html . '<p><a href="' . htmlspecialchars( $url ) . '">' . htmlspecialchars( $linkText ) . '</a></p>';
+		return $html;
 	}
 
 	public function getCreate( Feed $feed, Item $item ): array {
@@ -315,6 +337,23 @@ class Notes {
 			'type' => 'Create',
 			'actor' => $note['attributedTo'],
 			'published' => $note['published'],
+			'to' => $note['to'],
+			'cc' => $note['cc'],
+			'object' => $note,
+		];
+	}
+
+	/**
+	 * The Update that tells followers the item's note changed, as of the revision that
+	 * changed it.
+	 */
+	public function getUpdate( Feed $feed, Item $item, int $revId ): array {
+		$note = $this->getNote( $feed, $item );
+		return [
+			'id' => $note['id'] . "/updates/$revId",
+			'type' => 'Update',
+			'actor' => $note['attributedTo'],
+			'published' => $note['updated'] ?? $note['published'],
 			'to' => $note['to'],
 			'cc' => $note['cc'],
 			'object' => $note,
@@ -385,11 +424,7 @@ class Notes {
 			return $rendering;
 		}
 		$output = $status->getValue();
-		$doc = new DOMDocument();
-		$previous = libxml_use_internal_errors( true );
-		$doc->loadHTML( '<?xml encoding="utf-8"?><body>' . $output->getContentHolderText() . '</body>' );
-		libxml_clear_errors();
-		libxml_use_internal_errors( $previous );
+		$doc = self::loadDocument( $output );
 		foreach ( $doc->getElementsByTagName( 'p' ) as $p ) {
 			$text = trim( preg_replace( '/\s+/u', ' ', $p->textContent ) );
 			if ( $text !== '' ) {
@@ -405,7 +440,28 @@ class Notes {
 	}
 
 	/**
-	 * @return array<string,array{path: string[], blocks: array}>
+	 * The section feed's items that a rendering of the page has, by key, as getRendering()
+	 * finds them in the current one. Ordinals are counted by the items recorded so far.
+	 *
+	 * @param ExistingPageRecord $page
+	 * @param ParserOutput $output A rendering of any revision of the page
+	 * @return array<string,array{path: string[], blocks: array, link: string}>
+	 */
+	public function getSections( ExistingPageRecord $page, ParserOutput $output ): array {
+		return $this->getSectionItems( $page, $output, self::loadDocument( $output ) );
+	}
+
+	private static function loadDocument( ParserOutput $output ): DOMDocument {
+		$doc = new DOMDocument();
+		$previous = libxml_use_internal_errors( true );
+		$doc->loadHTML( '<?xml encoding="utf-8"?><body>' . $output->getContentHolderText() . '</body>' );
+		libxml_clear_errors();
+		libxml_use_internal_errors( $previous );
+		return $doc;
+	}
+
+	/**
+	 * @return array<string,array{path: string[], blocks: array, link: string}>
 	 */
 	private function getSectionItems( ExistingPageRecord $page, ParserOutput $output, DOMDocument $doc ): array {
 		$unit = $this->getSectionUnit( $page );
@@ -470,6 +526,7 @@ class Notes {
 				$sections[Sections::getKey( (string)$base, $n + 1 )] = [
 					'path' => $occurrences[$i]['path'],
 					'blocks' => $blocks[$i] ?? [],
+					'link' => $occurrences[$i]['link'],
 				];
 			}
 		}

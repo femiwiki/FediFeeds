@@ -10,6 +10,7 @@ use MediaWiki\Extension\FediFeeds\Items;
 use MediaWiki\Extension\FediFeeds\Notes;
 use MediaWiki\Storage\EditResult;
 use MediaWikiIntegrationTestCase;
+use Wikimedia\Timestamp\ConvertibleTimestamp;
 
 /**
  * @covers \MediaWiki\Extension\FediFeeds\DeliveryHooks
@@ -299,6 +300,71 @@ class DeliveryTest extends MediaWikiIntegrationTestCase {
 			"== 1.0 ==\nThe first release, reworded.\n\n{{FEDIFEEDSNAME:Releases|section}}" );
 		$this->assertSame( 0, $this->getItems()->count( $feed ) );
 		$this->assertSame( [], $this->getDeliveries() );
+	}
+
+	public function testChangedSectionIsUpdated() {
+		$feed = $this->newSectionFeed();
+		ConvertibleTimestamp::setFakeTime( '20261021090000' );
+		$page = $this->savePage( 'Release notes', self::RELEASES . "\n== 1.1 ==\nThe second release.\n" );
+		$created = $this->getDeliveries()[0]['activity']['object'];
+		$this->assertArrayNotHasKey( 'updated', $created );
+
+		// Rewording it later sends an Update of the same note, which now links to the revision
+		ConvertibleTimestamp::setFakeTime( '20261021091500' );
+		$this->savePage( 'Release notes', self::RELEASES . "\n== 1.1 ==\nThe second release, fixed.\n" );
+		$rev = $this->getServiceContainer()->getPageStore()->getPageById( $page )->getLatest();
+		$deliveries = $this->getDeliveries();
+		$this->assertCount( 2, $deliveries );
+		$update = $deliveries[1]['activity'];
+		$this->assertSame( 'Update', $update['type'] );
+		$this->assertSame( $created['id'] . "/updates/$rev", $update['id'] );
+		$note = $update['object'];
+		$this->assertSame( $created['id'], $note['id'] );
+		$this->assertSame( $created['published'], $note['published'] );
+		$this->assertSame( '2026-10-21T09:15:00Z', $note['updated'] );
+		$this->assertSame( $note['updated'], $update['published'] );
+		$this->assertStringContainsString( 'The second release, fixed.', $note['content'] );
+		$this->assertStringContainsString( "oldid=$rev&", $note['url'] );
+
+		/** @var Notes $notes */
+		$notes = $this->getServiceContainer()->getService( 'FediFeeds.Notes' );
+		$feed = new Feed( 'section', $this->getServiceContainer()->getPageStore()->getPageById( $page ) );
+		$fetched = $notes->getNote( $feed, $notes->getItem( $feed, self::itemId( '1.1' ) ) );
+		$this->assertSame( $note['updated'], $fetched['updated'] );
+		$this->assertSame( $note['url'], $fetched['url'] );
+
+		// A section that was never an item, and moving the item, send nothing
+		$this->savePage( 'Release notes', "{{FEDIFEEDSNAME:Releases|section}}\n\n== 1.0 ==\nReworded.\n\n"
+			. "== 1.1 ==\nThe second release, fixed.\n" );
+		$this->savePage( 'Release notes', "{{FEDIFEEDSNAME:Releases|section}}\n\n"
+			. "== 1.1 ==\nThe second release, fixed.\n\n== 1.0 ==\nReworded.\n" );
+		$this->assertCount( 2, $this->getDeliveries() );
+	}
+
+	public function testChangePastTheCutIsNoUpdate() {
+		$this->newSectionFeed();
+		$long = str_repeat( 'word ', 150 );
+		$this->savePage( 'Release notes', self::RELEASES . "\n== 1.1 ==\n$long\n\nNot shown.\n" );
+		$this->savePage( 'Release notes', self::RELEASES . "\n== 1.1 ==\n$long\n\nStill not shown.\n" );
+		$this->assertCount( 1, $this->getDeliveries() );
+	}
+
+	public function testRevertOfAChangeIsUpdated() {
+		$feed = $this->newSectionFeed();
+		$services = $this->getServiceContainer();
+		$this->savePage( 'Release notes', self::RELEASES . "\n== 1.1 ==\nThe second release.\n" );
+		$good = $services->getPageStore()->getPageByText( 'Release notes' )->getLatest();
+		$this->savePage( 'Release notes', self::RELEASES . "\n== 1.1 ==\nVandalism.\n" );
+		$updater = $services->getWikiPageFactory()->newFromTitle( $feed->page )
+			->newPageUpdater( $this->getTestSysop()->getAuthority() );
+		$updater->setContent( 'main', new WikitextContent( self::RELEASES . "\n== 1.1 ==\nThe second release.\n" ) );
+		$updater->markAsRevert( EditResult::REVERT_UNDO, $updater->grabParentRevision()->getId(), $good );
+		$updater->saveRevision( CommentStoreComment::newUnsavedComment( '' ) );
+		$this->runDeferredUpdates();
+		$deliveries = $this->getDeliveries();
+		$types = array_column( array_column( $deliveries, 'activity' ), 'type' );
+		$this->assertSame( [ 'Create', 'Update', 'Update' ], $types );
+		$this->assertStringContainsString( 'The second release.', $deliveries[2]['activity']['object']['content'] );
 	}
 
 	public function testRenamedSectionIsANewItem() {
