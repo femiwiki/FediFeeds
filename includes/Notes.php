@@ -6,6 +6,7 @@ use DOMDocument;
 use DOMElement;
 use DOMNode;
 use DOMText;
+use MediaWiki\Language\LanguageCode;
 use MediaWiki\Page\ExistingPageRecord;
 use MediaWiki\Page\PageProps;
 use MediaWiki\Page\PageStore;
@@ -57,6 +58,7 @@ class Notes {
 	public function __construct(
 		public readonly Actors $actors,
 		private readonly Items $items,
+		private readonly FeedLookup $feedLookup,
 		private readonly PageStore $pageStore,
 		private readonly PageProps $pageProps,
 		private readonly RevisionLookup $revisionLookup,
@@ -85,15 +87,16 @@ class Notes {
 	 *
 	 * @param ExistingPageRecord[] $categoryPages
 	 * @param int|null $itemId Page id of the item
+	 * @param string|null $language To look at the feeds of that language's translations instead
 	 */
-	public function getPublishingFeed( array $categoryPages, ?int $itemId = null ): ?Feed {
+	public function getPublishingFeed( array $categoryPages, ?int $itemId = null, ?string $language = null ): ?Feed {
 		if ( !$categoryPages ) {
 			return null;
 		}
 		$props = $this->pageProps->getProperties( $categoryPages,
 			[ Hooks::NAME_PROPERTY, Hooks::NAME_PROPERTY . '-category' ] );
 		foreach ( $categoryPages as $page ) {
-			$feed = new Feed( 'category', $page );
+			$feed = new Feed( 'category', $page, $language );
 			if ( $page->getNamespace() === NS_CATEGORY && ( $props[$page->getId()] ?? [] )
 				&& ( $itemId === null || $this->items->has( $feed, $itemId ) )
 			) {
@@ -211,7 +214,7 @@ class Notes {
 			return null;
 		}
 		$handle = $this->actors->getHandleFromActorId( $m[1] );
-		$feed = $handle === null ? null : ( new FeedLookup( $this->pageStore ) )->getFeed( $handle );
+		$feed = $handle === null ? null : $this->feedLookup->getFeed( $handle );
 		return $feed ? [ $feed, $m[2] ] : null;
 	}
 
@@ -236,7 +239,10 @@ class Notes {
 			$paragraph = $this->getRendering( $item->page, false )['paragraph'];
 			$content = ( $paragraph === '' ? '' : '<p>' . htmlspecialchars( $paragraph ) . '</p>' )
 				. '<p><a href="' . htmlspecialchars( $url ) . '">' . htmlspecialchars( $linkText ) . '</a></p>';
-			$published = $this->revisionLookup->getFirstRevision( $item->page )?->getTimestamp();
+			// A translation is news once it is complete, which is when it was recorded
+			$published = $feed->language === null
+				? $this->revisionLookup->getFirstRevision( $item->page )?->getTimestamp()
+				: $this->items->get( $feed, $item->page->getId() )['timestamp'] ?? null;
 			$updated = null;
 		}
 		$note = [
@@ -244,6 +250,8 @@ class Notes {
 			'type' => 'Note',
 			'attributedTo' => $actorId,
 			'content' => $content,
+			// Mastodon takes a note's language from the first key of contentMap
+			'contentMap' => [ LanguageCode::bcp47( $title->getPageLanguage()->getCode() ) => $content ],
 			'url' => $url,
 			'published' => $published !== null ? wfTimestamp( TS::ISO_8601, $published ) : null,
 		];

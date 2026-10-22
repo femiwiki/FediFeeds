@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\FediFeeds;
 
 use MediaWiki\Deferred\DeferredUpdates;
 use MediaWiki\JobQueue\JobQueueGroup;
+use MediaWiki\Page\ExistingPageRecord;
 use MediaWiki\Page\PageStore;
 use MediaWiki\Page\ParserOutputAccess;
 use MediaWiki\Parser\ParserOptions;
@@ -16,6 +17,9 @@ use MediaWiki\Storage\Hook\PageSaveCompleteHook;
  * an item of each publishing category feed it is created in, and a new heading at the unit level
  * of an existing page is an item of the page's section feed if that publishes. A save that
  * changes the text of a section item sends its Update.
+ *
+ * A translation page of Extension:Translate is never an item of those feeds. Once its
+ * translation is complete it is an item of the category feeds of its language instead.
  */
 class DeliveryHooks implements PageSaveCompleteHook {
 
@@ -27,6 +31,7 @@ class DeliveryHooks implements PageSaveCompleteHook {
 		private readonly ParserOutputAccess $parserOutputAccess,
 		private readonly JobQueueGroup $jobQueueGroup,
 		private readonly RevisionLookup $revisionLookup,
+		private readonly Translations $translations,
 	) {
 	}
 
@@ -34,6 +39,9 @@ class DeliveryHooks implements PageSaveCompleteHook {
 	 * A save that creates the page makes category items, and a later save that adds headings
 	 * makes section items. Null edits, reverts and reparses add nothing, though a revert still
 	 * updates the sections it changes.
+	 *
+	 * Translate saves a translation page each time a unit of it is translated, so any save of
+	 * one may be the one that completes it.
 	 *
 	 * @inheritDoc
 	 */
@@ -47,27 +55,52 @@ class DeliveryHooks implements PageSaveCompleteHook {
 			DeferredUpdates::addCallableUpdate(
 				fn () => $this->recordSectionItems( $pageId, $revisionRecord, $adds ) );
 		}
+		if ( $this->translations->isTranslationPage( $wikiPage ) ) {
+			DeferredUpdates::addCallableUpdate( fn () => $this->recordTranslationItems( $pageId, $revisionRecord ) );
+		}
 	}
 
 	private function recordCategoryItems( int $pageId, RevisionRecord $revision ): void {
 		$page = $this->pageStore->getPageById( $pageId );
-		if ( !$page ) {
-			return;
+		// A translation page is not a new page but one translated, which its language's feeds take
+		if ( $page && !$this->translations->isTranslationPage( $page ) ) {
+			$this->recordInCategories( $page, $revision, null );
 		}
+	}
+
+	/**
+	 * Makes a translation page an item of its language's category feeds once its translation is
+	 * complete. The items are recorded once, so a translation that falls behind and is completed
+	 * again sends nothing more.
+	 */
+	private function recordTranslationItems( int $pageId, RevisionRecord $revision ): void {
+		$page = $this->pageStore->getPageById( $pageId );
+		$language = $page ? $this->translations->getLanguage( $page ) : null;
+		if ( $page && $language !== null && $this->translations->isComplete( $page ) ) {
+			$this->recordInCategories( $page, $revision, $language );
+		}
+	}
+
+	/**
+	 * Records the page as an item of the publishing category feeds that the revision puts it in,
+	 * or with a language their feeds of that language's translations, and sends its Create.
+	 */
+	private function recordInCategories( ExistingPageRecord $page, RevisionRecord $revision, ?string $language ): void {
 		// The categories of the new revision's rendering, so categories from templates count
 		$status = $this->parserOutputAccess->getParserOutput( $page, ParserOptions::newFromAnon(), $revision );
 		if ( !$status->isOK() ) {
 			return;
 		}
 		foreach ( $status->getValue()->getCategoryNames() as $name ) {
+			$name = $language === null ? $name : $this->translations->getSourceCategory( $name, $language );
 			$category = $this->pageStore->getExistingPageByText( $name, NS_CATEGORY );
 			if ( !$category ) {
 				continue;
 			}
-			$feed = new Feed( 'category', $category );
+			$feed = new Feed( 'category', $category, $language );
 			// Recorded whether or not anyone follows, so the outbox lists it
 			if ( $this->notes->publishes( $feed )
-				&& $this->items->add( $feed, $pageId, $revision->getTimestamp() ?? wfTimestampNow(), '',
+				&& $this->items->add( $feed, $page->getId(), $revision->getTimestamp() ?? wfTimestampNow(), '',
 					(int)$revision->getId() )
 			) {
 				$this->deliver( $feed, new Item( $page ) );
@@ -83,7 +116,9 @@ class DeliveryHooks implements PageSaveCompleteHook {
 	private function recordSectionItems( int $pageId, RevisionRecord $revision, bool $adds ): void {
 		$page = $this->pageStore->getPageById( $pageId );
 		$parent = $this->revisionLookup->getRevisionById( (int)$revision->getParentId() );
-		if ( !$page || !$parent ) {
+		// A translation page's headings change from the source language's as their units are
+		// translated, which is no news
+		if ( !$page || !$parent || $this->translations->isTranslationPage( $page ) ) {
 			return;
 		}
 		$feed = new Feed( 'section', $page );

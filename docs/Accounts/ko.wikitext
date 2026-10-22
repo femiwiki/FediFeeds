@@ -7,39 +7,41 @@
 <!--T:2 @8c4f0c9c-->
 == 핸들 ==
 
-<!--T:3 @dd98bc1e-->
+<!--T:3 @2c3007d2-->
 * <code>&lt;kind&gt;</code>는 소문자 ASCII 단어 하나 이상을 <code>_</code>로 이은 것으로, [[<tvar name="1">Special:MyLanguage/Feed kinds</tvar>|종류 목록]]에서 고릅니다.
 * <code>&lt;id&gt;</code>는 십진수입니다. 무엇의 번호인지는 종류마다 다르며, 지금 다루는 종류에서는 문서 id입니다.
-* 핸들을 읽을 때는 끝의 <code>_&lt;숫자&gt;</code>를 떼어 내고, 남은 부분이 목록에 있는 이름과 정확히 같은지 봅니다. 같은 것이 없거나 대상이 없으면 계정이 아닙니다.
+* <code>&lt;language&gt;</code>는 [[<tvar name="2">Special:MyLanguage/Feed kinds#Translations</tvar>|번역]]을 내보내는 피드의 언어이고, 이런 피드는 <code>category</code>에만 있습니다. 위키가 아는 언어 코드를 미디어위키가 쓰는 대로 씁니다. 예: <code>en</code>, <code>zh-hans</code>. 코드는 글자 두세 개로 시작하므로 종류의 단어를 코드로 읽는 일이 없습니다. 이 부분이 없는 핸들은 문서 자체의 피드입니다.
+* 핸들을 읽을 때는 끝의 <code>_&lt;숫자&gt;</code>를 떼어 내고, 남은 부분이 목록에 있는 이름과 정확히 같은지 봅니다. 같은 것이 없으면 끝의 <code>_&lt;language&gt;</code>도 떼어 내고 다시 봅니다. 같은 것이 없거나 대상이나 언어가 없으면 계정이 아닙니다.
 
-<!--T:4 @923ed587-->
-예: <code>category_4521@wiki.example.org</code>, <code>section_88@wiki.example.org</code>
+<!--T:4 @d6cf9aea-->
+예: <code>category_4521@wiki.example.org</code>, <code>section_88@wiki.example.org</code>, <code>category_en_4521@wiki.example.org</code>
 
 <!--T:5 @aa0049d3-->
 액터의 <code>name</code>에는 문서 제목을 넣습니다. 그래서 읽는 사람은 숫자 대신 <code>분류:개발 블로그</code>를 봅니다. 문서가 더 알아보기 쉬운 [[#Display name|표시 이름]]을 대신 정할 수도 있습니다.
 
-<!--T:6 @2a02560a-->
+<!--T:6 @03254e40-->
 === 이렇게 정한 까닭 ===
 * 마스토돈은 사용자 이름이 <code>[a-z0-9_]+([.-]+[a-z0-9_]+)*</code>에 맞지 않는 원격 계정을 받지 않습니다([<tvar name="1">https://github.com/mastodon/mastodon/blob/1d67e7de9669a65c5f5fe2ee395341b1bbf9ab4c/app/models/account.rb#L73-L76</tvar> account.rb]). 문서 제목에는 한글, 공백, 쌍점이 들어갈 수 있으니 제목을 핸들로 쓸 수 없습니다.
 * id는 문서를 옮겨도 그대로입니다. 제목을 쓰면 이름을 바꿀 때마다 팔로어를 잃습니다.
 * <code>_</code>는 어디서나 평범한 글자지만 <code>.</code>과 <code>-</code>는 구분자라서 소프트웨어마다 다르게 다룰 수 있습니다.
 * 종류를 앞에 두었기 때문에 <code>category</code>로 검색하면 분류 피드가 한데 모여 나옵니다.
+* 언어는 종류와 id 사이에 두므로 종류는 여전히 맨 앞에, id는 맨 끝에 옵니다. <code>zh-hans</code> 같은 코드는 <code>-</code>를 그대로 쓰는데, 마스토돈의 패턴은 다른 글자 사이의 <code>-</code>를 받아들입니다.
 * 핸들은 위키의 호스트를 쓰고, 액터는 모든 피드가 <code>fedi.example.org</code> 같은 호스트 한 곳을 함께 씁니다. 종류마다 호스트를 따로 두어도 되기는 하지만, 다른 서버는 호스트 하나하나를 별개의 인스턴스로 봅니다. 액터를 위키 호스트 밖에 두면 위키 쿠키가 그 요청에 실리지 않습니다.
 
-<!--T:7 @878f58f1-->
+<!--T:7 @548bb433-->
 == 액터 ==
 {| class="wikitable"
 ! 속성 !! 값
 |-
 | <code>type</code> || <code>Service</code>
 |-
-| <code>id</code> || <code>https://&lt;actor host&gt;/actors/&lt;kind&gt;_&lt;id&gt;</code>. 핸들로 만들고 제목은 쓰지 않습니다
+| <code>id</code> || <code>https://&lt;actor host&gt;/actors/&lt;kind&gt;_&lt;id&gt;</code>. 언어 피드는 그 사이에 언어가 들어갑니다. 핸들로 만들고 제목은 쓰지 않습니다
 |-
 | <code>preferredUsername</code> || 핸들에서 <code>@</code> 앞부분
 |-
-| <code>name</code> || 문서가 그 종류에 정한 [[#Display name|표시 이름]]. 없으면 이름공간을 포함한 문서 제목
+| <code>name</code> || 문서가 그 종류에 정한 [[#Display name|표시 이름]]. 없으면 이름공간을 포함한 문서 제목. 언어 피드는 그 언어로 쓴 언어 이름을 덧붙입니다. 예: <code>Dev blog (English)</code>
 |-
-| <code>summary</code> || 피드가 무엇을 내보내는지 한 문장으로
+| <code>summary</code> || 피드가 무엇을 내보내는지 한 문장으로. 위키의 내용 언어로 쓰고, 언어 피드는 그 언어로 씁니다
 |-
 | <code>url</code> || 위키의 해당 문서
 |-

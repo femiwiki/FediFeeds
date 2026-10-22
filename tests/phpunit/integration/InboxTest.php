@@ -133,7 +133,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$path = $handle === null ? 'inbox' : "$handle/inbox";
 		$class = $handle === null ? InboxHandler::class : FeedInboxHandler::class;
 		return $this->executeHandler(
-			new $class( $services->getService( 'FediFeeds.Notes' ), $services->getPageStore(),
+			new $class( $services->getService( 'FediFeeds.Notes' ), $services->getService( 'FediFeeds.FeedLookup' ),
 				$this->newRemoteKeys(), $this->getFollowers(), $this->getQuotes(), $services->getJobQueueGroup(),
 				$this->getReactions(), $this->getRemoteActors() ),
 			new RequestData( [
@@ -163,6 +163,24 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( 1, $this->getFollowers()->count( $feed ) );
 		$this->runDeferredUpdates();
 		$this->assertSame( 1, $this->getServiceContainer()->getJobQueueGroup()->get( DeliveryJob::TYPE )->getSize() );
+	}
+
+	public function testFollowOfALanguageIsItsOwn() {
+		$base = $this->newCategory();
+		$feed = $base->withLanguage( 'en' );
+		$this->assertSame( 202, $this->post( self::newFollow( $feed ), $feed->getHandle() )->getStatusCode() );
+		$this->assertSame( 1, $this->getFollowers()->count( $feed ) );
+		$this->assertSame( 0, $this->getFollowers()->count( $base ) );
+		$this->runDeferredUpdates();
+		$queue = $this->getServiceContainer()->getJobQueueGroup()->get( DeliveryJob::TYPE );
+		$jobs = iterator_to_array( $queue->getAllQueuedJobs(), false );
+		$this->assertCount( 1, $jobs );
+		$this->assertSame( 'https://fedi.example.org/actors/' . $feed->getHandle(),
+			$jobs[0]->getParams()['activity']['actor'] );
+
+		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE, 'object' => self::newFollow( $feed ) ];
+		$this->assertSame( 202, $this->post( $undo, null )->getStatusCode() );
+		$this->assertSame( 0, $this->getFollowers()->count( $feed ) );
 	}
 
 	public function testSharedInboxTakesTheSameFollow() {
@@ -596,8 +614,8 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->post( self::newFollow( $feed ), $feed->getHandle() );
 		$services = $this->getServiceContainer();
 		$response = $this->executeHandler(
-			new FollowersHandler( $services->getService( 'FediFeeds.Notes' ), $services->getPageStore(),
-				$this->getFollowers() ),
+			new FollowersHandler( $services->getService( 'FediFeeds.Notes' ),
+				$services->getService( 'FediFeeds.FeedLookup' ), $this->getFollowers() ),
 			new RequestData( [ 'pathParams' => [ 'handle' => $feed->getHandle() ] ] )
 		);
 		$this->assertSame( [
@@ -651,7 +669,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 			$url, $m ) );
 		$services = $this->getServiceContainer();
 		$handler = new QuoteAuthorizationHandler( $services->getService( 'FediFeeds.Notes' ),
-			$services->getPageStore(), $this->getQuotes() );
+			$services->getService( 'FediFeeds.FeedLookup' ), $this->getQuotes() );
 		$request = new RequestData( [ 'pathParams' => [ 'handle' => $m[1], 'id' => $m[2] ] ] );
 		try {
 			$response = $this->executeHandler( $handler, $request );

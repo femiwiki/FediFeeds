@@ -52,15 +52,16 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 
 	private function newActorHandler(): ActorHandler {
 		$services = $this->getServiceContainer();
-		return new ActorHandler( $services->getMainConfig(), $services->getPageStore(),
+		return new ActorHandler( $services->getMainConfig(), $services->getService( 'FediFeeds.FeedLookup' ),
 			$services->getTitleFormatter(), $services->getPageProps(), $this->getLocalKeyStore(),
-			$services->getRepoGroup() );
+			$services->getRepoGroup(), $services->getLanguageNameUtils() );
 	}
 
 	private function newWebFingerHandler(): WebFingerHandler {
 		$services = $this->getServiceContainer();
-		return new WebFingerHandler( $services->getMainConfig(), $services->getPageStore(),
-			$services->getTitleFormatter(), $services->getPageProps(), $services->getRepoGroup() );
+		return new WebFingerHandler( $services->getMainConfig(), $services->getService( 'FediFeeds.FeedLookup' ),
+			$services->getTitleFormatter(), $services->getPageProps(), $services->getRepoGroup(),
+			$services->getLanguageNameUtils() );
 	}
 
 	/** Saves the page and returns its id once its page properties are stored. */
@@ -399,6 +400,73 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		], $data['links'][0] );
 	}
 
+	public static function provideLanguageActor(): iterable {
+		yield 'English' => [ 'en', 'Blog (English)', 'Translations into English of new pages in Category:Blog.' ];
+		yield 'Korean' => [ 'ko', 'Blog (한국어)', 'Category:Blog에 새로 만들어지는 문서의 한국어 번역' ];
+		yield 'a code with a script' => [ 'zh-hans', 'Blog (中文（简体）)',
+			'Translations into 中文（简体） of new pages in Category:Blog.' ];
+	}
+
+	/**
+	 * @dataProvider provideLanguageActor
+	 */
+	public function testLanguageActor( string $language, string $name, string $summary ) {
+		$id = $this->savePage( 'Category:Blog', '{{FEDIFEEDSNAME:Blog}}' );
+		$handle = "category_{$language}_$id";
+		$actor = $this->getActor( $handle );
+		$this->assertSame( "https://fedi.example.org/actors/$handle", $actor['id'] );
+		$this->assertSame( 'Service', $actor['type'] );
+		$this->assertSame( $handle, $actor['preferredUsername'] );
+		$this->assertSame( $name, $actor['name'] );
+		$this->assertSame( $summary, $actor['summary'] );
+		$this->assertSame( $this->getActor( "category_$id" )['url'], $actor['url'] );
+		$this->assertSame( "https://fedi.example.org/actors/$handle/inbox", $actor['inbox'] );
+		$this->assertSame( "https://fedi.example.org/actors/$handle/outbox", $actor['outbox'] );
+		$this->assertSame( "https://fedi.example.org/actors/$handle/followers", $actor['followers'] );
+		$this->assertSame( "https://fedi.example.org/actors/$handle#main-key", $actor['publicKey']['id'] );
+		// Mastodon takes a username of this shape only
+		$this->assertMatchesRegularExpression( '/^[a-z0-9_]+([.-]+[a-z0-9_]+)*$/D', $handle );
+	}
+
+	public static function provideLanguageWebFinger(): iterable {
+		yield 'wiki host' => [ 'acct:category_%s_%d@wiki.example.org' ];
+		yield 'actor host' => [ 'acct:category_%s_%d@fedi.example.org' ];
+		yield 'actor id' => [ 'https://fedi.example.org/actors/category_%s_%d' ];
+	}
+
+	/**
+	 * @dataProvider provideLanguageWebFinger
+	 */
+	public function testLanguageWebFinger( string $resource ) {
+		$id = $this->getExistingTestPage( 'Category:Blog' )->getId();
+		foreach ( [ 'en', 'zh-hans' ] as $language ) {
+			$response = $this->executeHandler( $this->newWebFingerHandler(),
+				new RequestData( [ 'queryParams' => [ 'resource' => sprintf( $resource, $language, $id ) ] ] ) );
+			$this->assertSame( 200, $response->getStatusCode() );
+			$data = json_decode( $response->getBody(), true );
+			$this->assertSame( "acct:category_{$language}_$id@wiki.example.org", $data['subject'] );
+			$this->assertSame( "https://fedi.example.org/actors/category_{$language}_$id", $data['links'][0]['href'] );
+		}
+	}
+
+	public static function provideMissingLanguageFeed(): iterable {
+		yield 'unknown language' => [ 'Category:Blog', 'category_xx-yy_%d' ];
+		yield 'language in upper case' => [ 'Category:Blog', 'category_EN_%d' ];
+		yield 'section feed of a language' => [ 'Blog', 'section_en_%d' ];
+		yield 'not a category' => [ 'Blog', 'category_en_%d' ];
+	}
+
+	/**
+	 * @dataProvider provideMissingLanguageFeed
+	 */
+	public function testMissingLanguageFeed( string $title, string $handle ) {
+		$handle = sprintf( $handle, $this->getExistingTestPage( $title )->getId() );
+		$this->assertSame( 404, $this->executeHandlerAndGetHttpException( $this->newActorHandler(),
+			new RequestData( [ 'pathParams' => [ 'handle' => $handle ] ] ) )->getCode() );
+		$this->assertSame( 404, $this->executeHandlerAndGetHttpException( $this->newWebFingerHandler(),
+			new RequestData( [ 'queryParams' => [ 'resource' => "acct:$handle@wiki.example.org" ] ] ) )->getCode() );
+	}
+
 	public function testInstanceActor() {
 		$actor = $this->getActor( 'wiki' );
 		$this->assertSame( [
@@ -424,7 +492,8 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 	public function testInstanceKeyIdIsTheOneFetchesAreSignedWith() {
 		$services = $this->getServiceContainer();
 		$actors = new Actors( $services->getMainConfig(), $services->getTitleFormatter(),
-			RequestContext::getMain(), $services->getPageProps(), $services->getRepoGroup() );
+			RequestContext::getMain(), $services->getPageProps(), $services->getRepoGroup(),
+			$services->getLanguageNameUtils() );
 		$this->assertSame( $this->getActor( 'wiki' )['publicKey']['id'], $actors->getInstanceKeyId() );
 		$this->assertNull( $actors->getHandleFromActorId( 'https://fedi.example.org/actors/wiki' ),
 			'the instance actor is not a feed' );

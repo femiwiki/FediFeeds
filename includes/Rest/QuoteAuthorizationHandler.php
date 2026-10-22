@@ -6,7 +6,6 @@ use MediaWiki\Extension\FediFeeds\Actors;
 use MediaWiki\Extension\FediFeeds\FeedLookup;
 use MediaWiki\Extension\FediFeeds\Notes;
 use MediaWiki\Extension\FediFeeds\Quotes;
-use MediaWiki\Page\PageLookup;
 use MediaWiki\Rest\LocalizedHttpException;
 use MediaWiki\Rest\Response;
 use MediaWiki\Rest\SimpleHandler;
@@ -18,14 +17,11 @@ use Wikimedia\ParamValidator\ParamValidator;
  */
 class QuoteAuthorizationHandler extends SimpleHandler {
 
-	private readonly FeedLookup $feedLookup;
-
 	public function __construct(
 		private readonly Notes $notes,
-		PageLookup $pageLookup,
+		private readonly FeedLookup $feedLookup,
 		private readonly Quotes $quotes,
 	) {
-		$this->feedLookup = new FeedLookup( $pageLookup );
 	}
 
 	public function run( string $handle, int $id ): Response {
