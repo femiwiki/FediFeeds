@@ -8,7 +8,7 @@ use MediaWiki\Extension\FediFeeds\Actors;
 use MediaWiki\Extension\FediFeeds\FeedLookup;
 use MediaWiki\Extension\FediFeeds\Signatures\LocalKeyStore;
 use MediaWiki\FileRepo\RepoGroup;
-use MediaWiki\Page\PageLookup;
+use MediaWiki\Language\LanguageNameUtils;
 use MediaWiki\Page\PageProps;
 use MediaWiki\Rest\LocalizedHttpException;
 use MediaWiki\Rest\Response;
@@ -23,18 +23,18 @@ use Wikimedia\ParamValidator\ParamValidator;
 class ActorHandler extends SimpleHandler {
 
 	private readonly Actors $actors;
-	private readonly FeedLookup $feedLookup;
 
 	public function __construct(
 		Config $config,
-		PageLookup $pageLookup,
+		private readonly FeedLookup $feedLookup,
 		TitleFormatter $titleFormatter,
 		PageProps $pageProps,
 		private readonly LocalKeyStore $localKeyStore,
 		RepoGroup $repoGroup,
+		LanguageNameUtils $languageNameUtils,
 	) {
-		$this->actors = new Actors( $config, $titleFormatter, RequestContext::getMain(), $pageProps, $repoGroup );
-		$this->feedLookup = new FeedLookup( $pageLookup );
+		$this->actors = new Actors( $config, $titleFormatter, RequestContext::getMain(), $pageProps, $repoGroup,
+			$languageNameUtils );
 	}
 
 	public function run( string $handle ): Response {

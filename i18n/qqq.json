@@ -5,6 +5,8 @@
 	"fedifeeds-desc": "{{desc|name=FediFeeds|url=https://github.com/femiwiki/FediFeeds}}",
 	"fedifeeds-summary-category": "Summary of the ActivityPub account that follows a category.\n\nParameters:\n* $1 - the category's title, with namespace",
 	"fedifeeds-summary-section": "Summary of the ActivityPub account that follows the new sections of a page.\n\nParameters:\n* $1 - the page's title, with namespace",
+	"fedifeeds-summary-category-language": "Summary of the ActivityPub account that publishes the translations of a category's new pages into one language, once each translation is complete. Shown in that language.\n\nParameters:\n* $1 - the category's title, with namespace\n* $2 - the name of the language, in itself\n\nSee also:\n* {{msg-mw|fedifeeds-summary-category}}",
+	"fedifeeds-name-language": "{{optional}}\nDisplay name of the ActivityPub account that publishes a feed's translations into one language. Shown in that language.\n\nParameters:\n* $1 - the display name of the feed\n* $2 - the name of the language, in itself",
 	"fedifeeds-rest-no-feed": "Error from the REST API when a handle or WebFinger resource names no feed.\n\nParameters:\n* $1 - the handle or resource asked for",
 	"fedifeeds-rest-no-note": "Error from the REST API when a note path names no item of a feed that publishes notes.\n\nParameters:\n* $1 - the path asked for, such as category_4521/notes/88",
 	"fedifeeds-rest-no-quote-authorization": "Error from the REST API when a path names no quote authorization of a feed, for example because the quote was withdrawn.\n\nParameters:\n* $1 - the path asked for, such as category_4521/quote_authorizations/3",

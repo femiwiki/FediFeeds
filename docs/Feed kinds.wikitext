@@ -43,6 +43,16 @@ Each update is an item, with a path such as "19 October / 14:10". Adding a new d
 <!--T:6-->
 Only a save to an existing page is compared. The headings of a page's first revision are not items, because it has no parent revision. A null edit adds nothing, and neither does a revert, which brings back headings that were there before.
 
+<!--T:11-->
+=== Translations ===
+On a wiki with [<tvar name="1">https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:Translate</tvar> Extension:Translate], a page marked for translation gets a translation page for each language, such as <code>Post/en</code>, which keeps the page's categories. A translation page is never an item of a <code>category</code> feed, and neither is the page in the source language, such as <code>Post/ko</code>, that Translate may make. Otherwise each translation would be a second post, sent as soon as its first unit was saved and mostly in the source language.
+
+<!--T:12-->
+Instead each category has a feed for each language, <code>category_&lt;language&gt;_&lt;id&gt;</code>, named as the category's feed is with the language added, and with followers of its own. A translation page is an item of its language's feed of each category it is in, once, when its translation is complete: every unit, the title included when it is translated, has a translation that is not outdated. This is checked each time Translate saves the translation page, which it does after each unit is translated. A translation that falls behind later, as when the page gains a unit, sends nothing, and completing it again sends nothing either. A category that a translation page names as <code>Category:Posts/en</code>, as <code><nowiki>[[Category:Posts{{#translation:}}]]</nowiki></code> does, counts as <code>Category:Posts</code> when it is that category's translation page. Without Translate no page is a translation page, and the language feeds have no items.
+
+<!--T:13-->
+A translation page has no <code>section</code> items, since its headings change from the source language's as its units are translated.
+
 <!--T:3-->
 == Reserved ==
 These names are kept so that later kinds do not collide. None of them is planned.

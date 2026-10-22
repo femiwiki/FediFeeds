@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\FediFeeds;
 
 use MediaWiki\Config\Config;
 use MediaWiki\FileRepo\RepoGroup;
+use MediaWiki\Language\LanguageNameUtils;
 use MediaWiki\MainConfigNames;
 use MediaWiki\Page\PageProps;
 use MediaWiki\Title\Title;
@@ -54,6 +55,7 @@ class Actors {
 		private readonly MessageLocalizer $messageLocalizer,
 		private readonly PageProps $pageProps,
 		private readonly RepoGroup $repoGroup,
+		private readonly LanguageNameUtils $languageNameUtils,
 	) {
 		$server = $config->get( MainConfigNames::CanonicalServer );
 		$this->actorBase = $config->get( 'FediFeedsActorBase' )
@@ -190,30 +192,60 @@ class Actors {
 	}
 
 	/**
-	 * The display name the page set for the feed's kind, else for every kind, else its title.
+	 * The display name the page set for the feed's kind, else for every kind, else its title. A
+	 * language's feed adds the name of the language, in that language.
 	 */
 	public function getName( Feed $feed ): string {
 		$forKind = Hooks::NAME_PROPERTY . '-' . $feed->kind;
 		$props = $this->pageProps->getProperties( $feed->page, [ $forKind, Hooks::NAME_PROPERTY ] )
 			[$feed->page->getId()] ?? [];
-		return $props[$forKind] ?? $props[Hooks::NAME_PROPERTY]
+		$name = $props[$forKind] ?? $props[Hooks::NAME_PROPERTY]
 			?? $this->titleFormatter->getPrefixedText( $feed->page );
+		if ( $feed->language === null ) {
+			return $name;
+		}
+		return $this->messageLocalizer->msg( 'fedifeeds-name-language' )
+			->inLanguage( $feed->language )
+			->plaintextParams( $name, $this->getLanguageName( $feed->language ) )
+			->text();
+	}
+
+	/**
+	 * The name of the language in itself, which is what a reader of its feed reads
+	 */
+	private function getLanguageName( string $code ): string {
+		return $this->languageNameUtils->getLanguageName( $code, $code ) ?: $code;
+	}
+
+	/**
+	 * One sentence saying what the feed publishes: in the content language, or for a language's
+	 * feed in that language.
+	 */
+	private function getSummary( Feed $feed ): string {
+		$title = $this->titleFormatter->getPrefixedText( $feed->page );
+		if ( $feed->language === null ) {
+			// fedifeeds-summary-category, fedifeeds-summary-section
+			return $this->messageLocalizer->msg( 'fedifeeds-summary-' . $feed->kind )
+				->inContentLanguage()
+				->plaintextParams( $title )
+				->escaped();
+		}
+		// fedifeeds-summary-category-language
+		return $this->messageLocalizer->msg( 'fedifeeds-summary-' . $feed->kind . '-language' )
+			->inLanguage( $feed->language )
+			->plaintextParams( $title, $this->getLanguageName( $feed->language ) )
+			->escaped();
 	}
 
 	public function getActor( Feed $feed, ?string $publicKeyPem ): array {
 		$id = $this->getActorId( $feed->getHandle() );
-		$title = $this->titleFormatter->getPrefixedText( $feed->page );
 		$actor = [
 			'@context' => self::CONTEXT,
 			'id' => $id,
 			'type' => 'Service',
 			'preferredUsername' => $feed->getHandle(),
 			'name' => $this->getName( $feed ),
-			// fedifeeds-summary-category, fedifeeds-summary-section
-			'summary' => $this->messageLocalizer->msg( 'fedifeeds-summary-' . $feed->kind )
-				->inContentLanguage()
-				->plaintextParams( $title )
-				->escaped(),
+			'summary' => $this->getSummary( $feed ),
 			'url' => $this->getPageUrl( $feed ),
 			'inbox' => "$id/inbox",
 			'outbox' => "$id/outbox",

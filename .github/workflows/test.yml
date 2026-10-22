@@ -23,3 +23,6 @@ jobs:
         with:
           stage: ${{ matrix.stage }}
           mediawiki-version: REL1_46
+          # Translate is optional; with it the tests of translation pages run
+          # and phan sees its classes. It requires UniversalLanguageSelector.
+          dependencies: Translate UniversalLanguageSelector

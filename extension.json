@@ -34,12 +34,13 @@
 				"PageStore",
 				"ParserOutputAccess",
 				"JobQueueGroup",
-				"RevisionLookup"
+				"RevisionLookup",
+				"FediFeeds.Translations"
 			]
 		},
 		"pageDisplay": {
 			"class": "MediaWiki\\Extension\\FediFeeds\\PageDisplayHooks",
-			"services": ["FediFeeds.Notes", "PageStore"]
+			"services": ["FediFeeds.Notes", "PageStore", "FediFeeds.Translations"]
 		},
 		"info": {
 			"class": "MediaWiki\\Extension\\FediFeeds\\InfoHooks",
@@ -81,11 +82,12 @@
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\ActorHandler",
 			"services": [
 				"MainConfig",
-				"PageStore",
+				"FediFeeds.FeedLookup",
 				"TitleFormatter",
 				"PageProps",
 				"FediFeeds.LocalKeyStore",
-				"RepoGroup"
+				"RepoGroup",
+				"LanguageNameUtils"
 			]
 		},
 		{
@@ -94,35 +96,44 @@
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\WebFingerHandler",
 			"services": [
 				"MainConfig",
-				"PageStore",
+				"FediFeeds.FeedLookup",
 				"TitleFormatter",
 				"PageProps",
-				"RepoGroup"
+				"RepoGroup",
+				"LanguageNameUtils"
 			]
 		},
 		{
 			"path": "/fedifeeds/actors/{handle}/notes/{item}",
 			"method": "GET",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\NoteHandler",
-			"services": ["FediFeeds.Notes", "PageStore"]
+			"services": ["FediFeeds.Notes", "FediFeeds.FeedLookup"]
 		},
 		{
 			"path": "/fedifeeds/actors/{handle}/quote_authorizations/{id}",
 			"method": "GET",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\QuoteAuthorizationHandler",
-			"services": ["FediFeeds.Notes", "PageStore", "FediFeeds.Quotes"]
+			"services": [
+				"FediFeeds.Notes",
+				"FediFeeds.FeedLookup",
+				"FediFeeds.Quotes"
+			]
 		},
 		{
 			"path": "/fedifeeds/actors/{handle}/outbox",
 			"method": "GET",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\OutboxHandler",
-			"services": ["FediFeeds.Notes", "PageStore"]
+			"services": ["FediFeeds.Notes", "FediFeeds.FeedLookup"]
 		},
 		{
 			"path": "/fedifeeds/actors/{handle}/followers",
 			"method": "GET",
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\FollowersHandler",
-			"services": ["FediFeeds.Notes", "PageStore", "FediFeeds.Followers"]
+			"services": [
+				"FediFeeds.Notes",
+				"FediFeeds.FeedLookup",
+				"FediFeeds.Followers"
+			]
 		},
 		{
 			"path": "/fedifeeds/actors/{handle}/inbox",
@@ -130,7 +141,7 @@
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\FeedInboxHandler",
 			"services": [
 				"FediFeeds.Notes",
-				"PageStore",
+				"FediFeeds.FeedLookup",
 				"FediFeeds.RemoteKeys",
 				"FediFeeds.Followers",
 				"FediFeeds.Quotes",
@@ -145,7 +156,7 @@
 			"class": "MediaWiki\\Extension\\FediFeeds\\Rest\\InboxHandler",
 			"services": [
 				"FediFeeds.Notes",
-				"PageStore",
+				"FediFeeds.FeedLookup",
 				"FediFeeds.RemoteKeys",
 				"FediFeeds.Followers",
 				"FediFeeds.Quotes",

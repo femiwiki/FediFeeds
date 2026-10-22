@@ -5,6 +5,8 @@
 	"fedifeeds-desc": "Lets people on ActivityPub follow feeds of the wiki, such as the new pages of a category",
 	"fedifeeds-summary-category": "New pages in $1.",
 	"fedifeeds-summary-section": "New sections of $1.",
+	"fedifeeds-summary-category-language": "Translations into $2 of new pages in $1.",
+	"fedifeeds-name-language": "$1 ($2)",
 	"fedifeeds-rest-no-feed": "There is no feed named $1.",
 	"fedifeeds-rest-no-note": "There is no note at $1.",
 	"fedifeeds-rest-no-quote-authorization": "There is no quote authorization at $1.",

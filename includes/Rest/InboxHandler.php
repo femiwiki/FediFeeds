@@ -16,7 +16,6 @@ use MediaWiki\Extension\FediFeeds\Reactions;
 use MediaWiki\Extension\FediFeeds\RemoteActors;
 use MediaWiki\Extension\FediFeeds\Signatures\RemoteKeys;
 use MediaWiki\JobQueue\JobQueueGroup;
-use MediaWiki\Page\PageLookup;
 use MediaWiki\Rest\Handler;
 use MediaWiki\Rest\RequestInterface;
 use MediaWiki\Rest\Response;
@@ -28,11 +27,9 @@ class InboxHandler extends Handler {
 
 	private const ROUTE = '/fedifeeds/actors/';
 
-	private readonly FeedLookup $feedLookup;
-
 	public function __construct(
 		private readonly Notes $notes,
-		PageLookup $pageLookup,
+		private readonly FeedLookup $feedLookup,
 		private readonly RemoteKeys $remoteKeys,
 		private readonly Followers $followers,
 		private readonly Quotes $quotes,
@@ -40,7 +37,6 @@ class InboxHandler extends Handler {
 		private readonly Reactions $reactions,
 		private readonly RemoteActors $remoteActors,
 	) {
-		$this->feedLookup = new FeedLookup( $pageLookup );
 	}
 
 	public function execute(): Response {

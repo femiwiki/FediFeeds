@@ -5,6 +5,7 @@
 	"fedifeeds-desc": "ActivityPub 사용자가 분류의 새 문서처럼 위키의 피드를 팔로할 수 있게 합니다",
 	"fedifeeds-summary-category": "$1에 새로 만들어지는 문서",
 	"fedifeeds-summary-section": "$1에 새로 생기는 문단",
+	"fedifeeds-summary-category-language": "$1에 새로 만들어지는 문서의 $2 번역",
 	"fedifeeds-rest-no-feed": "$1(이)라는 피드가 없습니다.",
 	"fedifeeds-rest-no-note": "$1에 노트가 없습니다.",
 	"fedifeeds-rest-no-quote-authorization": "$1에 인용 허가가 없습니다.",

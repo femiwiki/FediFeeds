@@ -2,6 +2,7 @@
 
 namespace MediaWiki\Extension\FediFeeds\Tests;
 
+use MediaWiki\Extension\FediFeeds\FeedLookup;
 use MediaWiki\Extension\FediFeeds\Notes;
 use MediaWiki\Extension\FediFeeds\Rest\NoteHandler;
 use MediaWiki\Extension\FediFeeds\Rest\OutboxHandler;
@@ -39,9 +40,13 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		return $this->getServiceContainer()->getService( 'FediFeeds.Notes' );
 	}
 
+	private function getFeedLookup(): FeedLookup {
+		return $this->getServiceContainer()->getService( 'FediFeeds.FeedLookup' );
+	}
+
 	private function executeNote( string $handle, int|string $item, ?string $accept = null ) {
 		return $this->executeHandler(
-			new NoteHandler( $this->getNotes(), $this->getServiceContainer()->getPageStore() ),
+			new NoteHandler( $this->getNotes(), $this->getFeedLookup() ),
 			new RequestData( [
 				'pathParams' => [ 'handle' => $handle, 'item' => (string)$item ],
 				'headers' => $accept === null ? [] : [ 'Accept' => $accept ],
@@ -51,7 +56,7 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 
 	private function getOutbox( string $handle ): array {
 		$response = $this->executeHandler(
-			new OutboxHandler( $this->getNotes(), $this->getServiceContainer()->getPageStore() ),
+			new OutboxHandler( $this->getNotes(), $this->getFeedLookup() ),
 			new RequestData( [ 'pathParams' => [ 'handle' => $handle ] ] )
 		);
 		$this->assertSame( 200, $response->getStatusCode() );
@@ -77,6 +82,43 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( [ 'https://www.w3.org/ns/activitystreams#Public' ], $note['to'] );
 		$this->assertNotNull( $note['published'] );
 		$this->assertSame( 'Accept', $response->getHeaderLine( 'Vary' ) );
+	}
+
+	public static function provideContentLanguage(): iterable {
+		yield 'Korean' => [ 'ko', 'ko' ];
+		yield 'a code with a script, in BCP 47' => [ 'zh-hans', 'zh-Hans' ];
+	}
+
+	/**
+	 * @dataProvider provideContentLanguage
+	 */
+	public function testNoteCarriesItsLanguage( string $code, string $tag ) {
+		$this->overrideConfigValue( 'LanguageCode', $code );
+		$cat = $this->savePage( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
+		$post = $this->savePage( 'First post', "Hello.\n\n[[Category:Posts]]" );
+		$note = json_decode( $this->executeNote( "category_$cat", $post )->getBody(), true );
+		// Mastodon reads the language from the first key of contentMap
+		$this->assertSame( [ $tag => $note['content'] ], $note['contentMap'] );
+		$this->assertSame( $note['contentMap'],
+			$this->getOutbox( "category_$cat" )['orderedItems'][0]['object']['contentMap'] );
+
+		$text = "{{FEDIFEEDSNAME:Releases|section}}\n\nAbout the releases.\n";
+		$page = $this->savePage( 'Release notes', $text );
+		$this->savePage( 'Release notes', "$text\n== 1.0 ==\nThe first release.\n" );
+		$note = json_decode( $this->executeNote( "section_$page", 'MS4w' )->getBody(), true );
+		$this->assertSame( [ $tag ], array_keys( $note['contentMap'] ) );
+	}
+
+	public function testLanguageFeedHasNoNotesOfThePages() {
+		$cat = $this->savePage( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
+		$post = $this->savePage( 'First post', "Hello.\n\n[[Category:Posts]]" );
+		$this->assertSame( 0, $this->getOutbox( "category_en_$cat" )['totalItems'] );
+		$this->assertSame( 'https://fedi.example.org/actors/category_en_' . $cat . '/outbox',
+			$this->getOutbox( "category_en_$cat" )['id'] );
+		$this->assertSame( 404, $this->executeHandlerAndGetHttpException(
+			new NoteHandler( $this->getNotes(), $this->getFeedLookup() ),
+			new RequestData( [ 'pathParams' => [ 'handle' => "category_en_$cat", 'item' => (string)$post ] ] )
+		)->getCode() );
 	}
 
 	public function testBrowserIsSentToTheNotesPage() {
@@ -142,7 +184,7 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		$cat = $this->savePage( 'Category:Maintenance', 'Pages to fix.' );
 		$post = $this->savePage( 'Broken page', "Text.\n\n[[Category:Maintenance]]" );
 		$ex = $this->executeHandlerAndGetHttpException(
-			new NoteHandler( $this->getNotes(), $this->getServiceContainer()->getPageStore() ),
+			new NoteHandler( $this->getNotes(), $this->getFeedLookup() ),
 			new RequestData( [ 'pathParams' => [ 'handle' => "category_$cat", 'item' => (string)$post ] ] )
 		);
 		$this->assertSame( 404, $ex->getCode() );
@@ -153,7 +195,7 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		$cat = $this->savePage( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
 		$other = $this->savePage( 'Unrelated page', 'Text.' );
 		$ex = $this->executeHandlerAndGetHttpException(
-			new NoteHandler( $this->getNotes(), $this->getServiceContainer()->getPageStore() ),
+			new NoteHandler( $this->getNotes(), $this->getFeedLookup() ),
 			new RequestData( [ 'pathParams' => [ 'handle' => "category_$cat", 'item' => (string)$other ] ] )
 		);
 		$this->assertSame( 404, $ex->getCode() );
@@ -214,7 +256,7 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		// A section removed from the page has no note
 		$this->savePage( 'Release notes', "$text\n== 2026 ==\nNothing yet.\n" );
 		$ex = $this->executeHandlerAndGetHttpException(
-			new NoteHandler( $this->getNotes(), $this->getServiceContainer()->getPageStore() ),
+			new NoteHandler( $this->getNotes(), $this->getFeedLookup() ),
 			new RequestData( [ 'pathParams' => [ 'handle' => "section_$page", 'item' => 'Q2Fmw6kgJiBjby4' ] ] )
 		);
 		$this->assertSame( 404, $ex->getCode() );
@@ -229,7 +271,7 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 		// 1.0 was there when the page was created; the others are not the one spelling of 1.1
 		foreach ( [ 'MS4w', 'MS4x=', 'MS4x.', (string)$page ] as $item ) {
 			$ex = $this->executeHandlerAndGetHttpException(
-				new NoteHandler( $this->getNotes(), $this->getServiceContainer()->getPageStore() ),
+				new NoteHandler( $this->getNotes(), $this->getFeedLookup() ),
 				new RequestData( [ 'pathParams' => [ 'handle' => "section_$page", 'item' => $item ] ] )
 			);
 			$this->assertSame( 404, $ex->getCode(), $item );
