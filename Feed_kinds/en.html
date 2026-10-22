@@ -303,6 +303,18 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			<ul id="toc-section-sublist" class="vector-toc-list">
 			</ul>
 		</li>
+		<li id="toc-Translations"
+			class="vector-toc-list-item vector-toc-level-2">
+			<a class="vector-toc-link" href="#Translations">
+				<div class="vector-toc-text">
+					<span class="vector-toc-numb">1.2</span>
+					<span>Translations</span>
+				</div>
+			</a>
+			
+			<ul id="toc-Translations-sublist" class="vector-toc-list">
+			</ul>
+		</li>
 	</ul>
 	</li>
 	<li id="toc-Reserved"
@@ -563,6 +575,11 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <p>Each update is an item, with a path such as "19 October / 14:10". Adding a new day with its first update makes one item, the update, and the day is its context. The <code>14:10</code> under 19 October is a different item from the one under 18 October. <code>==== Added ====</code> is part of its update's note. Two updates in the same minute make the path "19 October / 14:10" twice, and the second is item number 2 of that path.
 </p><p>Only a save to an existing page is compared. The headings of a page's first revision are not items, because it has no parent revision. A null edit adds nothing, and neither does a revert, which brings back headings that were there before.
 </p>
+<div class="mw-heading mw-heading3"><h3 id="Translations">Translations</h3></div>
+<p>On a wiki with <a class="external text" href="https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:Translate">Extension:Translate</a>, a page marked for translation gets a translation page for each language, such as <code>Post/en</code>, which keeps the page's categories. A translation page is never an item of a <code>category</code> feed, and neither is the page in the source language, such as <code>Post/ko</code>, that Translate may make. Otherwise each translation would be a second post, sent as soon as its first unit was saved and mostly in the source language.
+</p><p>Instead each category has a feed for each language, <code>category_&lt;language&gt;_&lt;id&gt;</code>, named as the category's feed is with the language added, and with followers of its own. A translation page is an item of its language's feed of each category it is in, once, when its translation is complete: every unit, the title included when it is translated, has a translation that is not outdated. This is checked each time Translate saves the translation page, which it does after each unit is translated. A translation that falls behind later, as when the page gains a unit, sends nothing, and completing it again sends nothing either. A category that a translation page names as <code>Category:Posts/en</code>, as <code>[[Category:Posts{{#translation:}}]]</code> does, counts as <code>Category:Posts</code> when it is that category's translation page. Without Translate no page is a translation page, and the language feeds have no items.
+</p><p>A translation page has no <code>section</code> items, since its headings change from the source language's as its units are translated.
+</p>
 <div class="mw-heading mw-heading2"><h2 id="Reserved">Reserved</h2></div>
 <p>These names are kept so that later kinds do not collide. None of them is planned.
 </p>
@@ -635,7 +652,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 19 October 2026, at 16:18.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 22 October 2026, at 16:10.</li>
 </ul>
 
 	<ul id="footer-places">

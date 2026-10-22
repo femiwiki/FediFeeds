@@ -565,11 +565,13 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <meta property="mw:PageProp/toc" />
 <div class="mw-heading mw-heading2"><h2 id="Handles">Handles</h2></div>
 <div class="mw-highlight mw-highlight-lang-text mw-content-ltr" dir="ltr"><pre><span></span>&lt;kind&gt;_&lt;id&gt;@&lt;wiki host&gt;
+&lt;kind&gt;_&lt;language&gt;_&lt;id&gt;@&lt;wiki host&gt;
 </pre></div>
 <ul><li><code>&lt;kind&gt;</code> is one or more lowercase ASCII words joined with <code>_</code>, taken from the <a href="./Feed_kinds.html" title="Special:MyLanguage/Feed kinds">list of kinds</a>.</li>
 <li><code>&lt;id&gt;</code> is a decimal number. What it numbers depends on the kind; for the kinds in scope it is a page id.</li>
-<li>To parse a handle, strip the trailing <code>_&lt;digits&gt;</code> and match what is left against the list exactly. Anything that does not match, or whose target does not exist, is not an account.</li></ul>
-<p>Examples: <code>category_4521@wiki.example.org</code>, <code>section_88@wiki.example.org</code>.
+<li><code>&lt;language&gt;</code> names the language of a feed of <a href="./Feed_kinds.html#Translations" title="Special:MyLanguage/Feed kinds">translations</a>, which only <code>category</code> has: a language code the wiki knows, as MediaWiki writes it, such as <code>en</code> or <code>zh-hans</code>. A code starts with two or three letters, so no word of a kind is taken for one. A handle without it is the feed of the pages themselves.</li>
+<li>To parse a handle, strip the trailing <code>_&lt;digits&gt;</code> and match what is left against the list exactly. If nothing matches, strip a trailing <code>_&lt;language&gt;</code> too and match again. Anything that does not match, or whose target or language does not exist, is not an account.</li></ul>
+<p>Examples: <code>category_4521@wiki.example.org</code>, <code>section_88@wiki.example.org</code>, <code>category_en_4521@wiki.example.org</code>.
 </p><p>The title of the page is shown as the actor's <code>name</code>, so readers see <code>분류:개발 블로그</code>, not a number. The page can set a friendlier <a href="#Display_name">display name</a> instead.
 </p>
 <div class="mw-heading mw-heading3"><h3 id="Why_this_shape">Why this shape</h3></div>
@@ -577,6 +579,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <li>Ids survive a page move. A title would not, and followers would be lost on every rename.</li>
 <li><code>_</code> is an ordinary character everywhere, while <code>.</code> and <code>-</code> are separators that some software may treat differently.</li>
 <li>The kind comes first so that searching for <code>category</code> lists the category feeds together.</li>
+<li>The language sits between the kind and the id, so the kind still comes first and the handle still ends in the id. A code such as <code>zh-hans</code> keeps its <code>-</code>, which Mastodon's pattern allows between other characters.</li>
 <li>All feeds share one actor host, such as <code>fedi.example.org</code>, while handles keep the wiki's own host. Separate hosts per kind would work, but other servers treat each host as a separate instance. Keeping actors off the wiki host means wiki cookies are never sent with their requests.</li></ul>
 <div class="mw-heading mw-heading2"><h2 id="Actor">Actor</h2></div>
 <table class="wikitable">
@@ -590,7 +593,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 </td></tr>
 <tr>
 <td><code>id</code></td>
-<td><code>https://&lt;actor host&gt;/actors/&lt;kind&gt;_&lt;id&gt;</code>, built from the handle, never from the title
+<td><code>https://&lt;actor host&gt;/actors/&lt;kind&gt;_&lt;id&gt;</code>, with the language between for a language's feed, built from the handle, never from the title
 </td></tr>
 <tr>
 <td><code>preferredUsername</code></td>
@@ -598,11 +601,11 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 </td></tr>
 <tr>
 <td><code>name</code></td>
-<td>The page's <a href="#Display_name">display name</a> for the kind, or else its title with namespace
+<td>The page's <a href="#Display_name">display name</a> for the kind, or else its title with namespace. A language's feed adds the language's name in that language, as in <code>Dev blog (English)</code>
 </td></tr>
 <tr>
 <td><code>summary</code></td>
-<td>One sentence saying what the feed publishes
+<td>One sentence saying what the feed publishes, in the wiki's content language, or for a language's feed in that language
 </td></tr>
 <tr>
 <td><code>url</code></td>
@@ -697,7 +700,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 21 October 2026, at 00:02.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 22 October 2026, at 16:10.</li>
 </ul>
 
 	<ul id="footer-places">
