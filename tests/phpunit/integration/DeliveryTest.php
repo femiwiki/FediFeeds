@@ -341,6 +341,22 @@ class DeliveryTest extends MediaWikiIntegrationTestCase {
 		$this->assertCount( 2, $this->getDeliveries() );
 	}
 
+	public function testBareLinkNumbersAreNoUpdate() {
+		$feed = $this->newSectionFeed();
+		$this->savePage( 'Release notes', self::RELEASES . "\n== 1.1 ==\nSee [https://example.org/1.1].\n" );
+		// Linking above renumbers the bare link from [1] to [2], which the note does not show
+		$this->savePage( 'Release notes', "{{FEDIFEEDSNAME:Releases|section}}\n\n== 1.2 ==\n"
+			. "See [https://example.org/1.2].\n\n== 1.0 ==\nThe first release.\n\n"
+			. "== 1.1 ==\nSee [https://example.org/1.1].\n" );
+		$deliveries = $this->getDeliveries();
+		$this->assertSame( [ 'Create', 'Create' ], array_map(
+			static fn ( $delivery ) => $delivery['activity']['type'], $deliveries ) );
+		$this->assertStringContainsString(
+			'See <a href="https://example.org/1.1">https://example.org/1.1</a>.',
+			$deliveries[0]['activity']['object']['content'] );
+		$this->assertSame( [ '1.2', '1.1' ], $this->getKeys( $feed ) );
+	}
+
 	public function testChangePastTheCutIsNoUpdate() {
 		$this->newSectionFeed();
 		$long = str_repeat( 'word ', 150 );

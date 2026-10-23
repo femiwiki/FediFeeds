@@ -589,7 +589,8 @@ class Notes {
 	}
 
 	/**
-	 * An element's text as HTML, keeping only links to absolute URLs, and as plain text.
+	 * An element's text as HTML, keeping only links to absolute URLs, and as plain text. A
+	 * numbered bare link shows its URL.
 	 *
 	 * @return array{0: string, 1: string}
 	 */
@@ -613,6 +614,12 @@ class Notes {
 			$href = $child->tagName === 'a' ? $child->getAttribute( 'href' ) : '';
 			if ( preg_match( '#^(https?:)?//#i', $href ) ) {
 				$href = str_starts_with( $href, '//' ) ? "https:$href" : $href;
+				// A bare external link reads [1], [2] and so on, counted over the whole page,
+				// so it says nothing out of context and changes whenever a link is added above
+				if ( preg_match( '/(^|\s)autonumber(\s|$)/', $child->getAttribute( 'class' ) ) ) {
+					$innerHtml = htmlspecialchars( $href );
+					$innerText = $href;
+				}
 				$html .= '<a href="' . htmlspecialchars( $href ) . '">' . $innerHtml . '</a>';
 			} else {
 				$html .= $innerHtml;
