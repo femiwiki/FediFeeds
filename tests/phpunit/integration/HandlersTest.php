@@ -411,6 +411,7 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 	 * @dataProvider provideLanguageActor
 	 */
 	public function testLanguageActor( string $language, string $name, string $summary ) {
+		$this->overrideConfigValue( 'ULSLanguageDetection', false );
 		$id = $this->savePage( 'Category:Blog', '{{FEDIFEEDSNAME:Blog}}' );
 		$handle = "category_{$language}_$id";
 		$actor = $this->getActor( $handle );
@@ -419,7 +420,8 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( $handle, $actor['preferredUsername'] );
 		$this->assertSame( $name, $actor['name'] );
 		$this->assertSame( $summary, $actor['summary'] );
-		$this->assertSame( $this->getActor( "category_$id" )['url'], $actor['url'] );
+		$this->assertSame( 'https://wiki.example.org/index.php?title=Category:Blog&uselang=' . $language, $actor['url'],
+			'the page shows its interface in the language' );
 		$this->assertSame( "https://fedi.example.org/actors/$handle/inbox", $actor['inbox'] );
 		$this->assertSame( "https://fedi.example.org/actors/$handle/outbox", $actor['outbox'] );
 		$this->assertSame( "https://fedi.example.org/actors/$handle/followers", $actor['followers'] );

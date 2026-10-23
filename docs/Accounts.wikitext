@@ -49,7 +49,7 @@ The title of the page is shown as the actor's <code>name</code>, so readers see 
 |-
 | <code>summary</code> || One sentence saying what the feed publishes, in the wiki's content language, or for a language's feed in that language
 |-
-| <code>url</code> || The page on the wiki
+| <code>url</code> || The page on the wiki, for a language's feed with <code>uselang</code> set to that language unless the wiki picks the interface language from the browser
 |-
 | <code>icon</code> || An <code>Image</code>: a raster thumbnail of the [[#Display name|icon]] the page set for the kind, or else for every kind. Without one, or when that file is missing or cannot be thumbnailed, an image of the wiki, the same for every feed, such as its touch icon or logo. Only a raster image such as PNG is used there, since Mastodon does not show SVG avatars. Left out when the wiki has none
 |-
