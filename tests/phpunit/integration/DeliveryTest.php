@@ -80,6 +80,55 @@ class DeliveryTest extends MediaWikiIntegrationTestCase {
 		$this->assertCount( 1, $this->getDeliveries() );
 	}
 
+	public function testHashtags() {
+		$feed = $this->newFeed( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
+		$this->follow( $feed, 'https://remote.example/users/a', 'https://remote.example/inbox' );
+		ConvertibleTimestamp::setFakeTime( '20261024090000' );
+		$text = "Hello.\n\n{{FEDIFEEDSTAGS:OpenTofu|#미디어위키|two words|opentofu|123}}\n\n[[Category:Posts]]";
+		$post = $this->savePage( 'Tagged post', $text );
+		$created = $this->getDeliveries()[0]['activity']['object'];
+		$this->assertSame( [ '#OpenTofu', '#미디어위키' ], array_column( $created['tag'], 'name' ),
+			'a tag with a space, one that differs only in case, and one of digits are left out' );
+		$this->assertSame( [ 'Hashtag', 'Hashtag' ], array_column( $created['tag'], 'type' ) );
+		$this->assertStringContainsString( 'class="mention hashtag" rel="tag">#<span>OpenTofu</span></a>',
+			$created['content'] );
+		$this->assertStringContainsString( htmlspecialchars( $created['tag'][0]['href'] ), $created['content'] );
+		$this->assertArrayNotHasKey( 'updated', $created );
+
+		// An edit that leaves the tags as they are sends nothing
+		$this->savePage( 'Tagged post', "Hello again.\n\n{{FEDIFEEDSTAGS:OpenTofu|미디어위키}}\n\n[[Category:Posts]]" );
+		$this->assertCount( 1, $this->getDeliveries() );
+
+		ConvertibleTimestamp::setFakeTime( '20261024091500' );
+		$this->savePage( 'Tagged post', "Hello again.\n\n{{FEDIFEEDSTAGS:OpenTofu|미디어위키}}\n"
+			. "{{FEDIFEEDSTAGS:ActivityPub}}\n\n[[Category:Posts]]" );
+		$deliveries = $this->getDeliveries();
+		$this->assertCount( 2, $deliveries );
+		$update = $deliveries[1]['activity'];
+		$this->assertSame( 'Update', $update['type'] );
+		$this->assertSame( $created['id'], $update['object']['id'] );
+		$this->assertSame( [ '#OpenTofu', '#미디어위키', '#ActivityPub' ],
+			array_column( $update['object']['tag'], 'name' ) );
+		$this->assertSame( '2026-10-24T09:15:00Z', $update['object']['updated'] );
+		$this->assertSame( $created['published'], $update['object']['published'] );
+
+		ConvertibleTimestamp::setFakeTime( '20261024093000' );
+		$this->savePage( 'Tagged post', "Hello again.\n\n[[Category:Posts]]" );
+		$deliveries = $this->getDeliveries();
+		$this->assertCount( 3, $deliveries );
+		$this->assertArrayNotHasKey( 'tag', $deliveries[2]['activity']['object'], 'removing the tags is news too' );
+		$this->assertStringNotContainsString( 'hashtag', $deliveries[2]['activity']['object']['content'] );
+		$this->assertTrue( $this->getItems()->has( $feed, $post ) );
+	}
+
+	public function testTagsOfAPageThatIsNoItemSendNothing() {
+		$feed = $this->newFeed( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
+		$this->follow( $feed, 'https://remote.example/users/a', 'https://remote.example/inbox' );
+		$this->savePage( 'Old page', 'Hello.' );
+		$this->savePage( 'Old page', "Hello.\n\n{{FEDIFEEDSTAGS:OpenTofu}}\n\n[[Category:Posts]]" );
+		$this->assertSame( [], $this->getDeliveries() );
+	}
+
 	public function testCategoryFromATemplateCounts() {
 		$feed = $this->newFeed( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
 		$this->savePage( 'Template:Post', '[[Category:Posts]]' );

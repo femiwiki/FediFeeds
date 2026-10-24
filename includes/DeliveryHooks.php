@@ -8,6 +8,7 @@ use MediaWiki\Page\ExistingPageRecord;
 use MediaWiki\Page\PageStore;
 use MediaWiki\Page\ParserOutputAccess;
 use MediaWiki\Parser\ParserOptions;
+use MediaWiki\Parser\ParserOutput;
 use MediaWiki\Revision\RevisionLookup;
 use MediaWiki\Revision\RevisionRecord;
 use MediaWiki\Storage\Hook\PageSaveCompleteHook;
@@ -16,7 +17,8 @@ use MediaWiki\Storage\Hook\PageSaveCompleteHook;
  * Records the items a save makes and sends their Create to the feed's followers: a new page is
  * an item of each publishing category feed it is created in, and a new heading at the unit level
  * of an existing page is an item of the page's section feed if that publishes. A save that
- * changes the text of a section item sends its Update.
+ * changes the text of a section item sends its Update, and so does one that changes the hashtags
+ * of a page that is a category item.
  *
  * A translation page of Extension:Translate is never an item of those feeds. Once its
  * translation is complete it is an item of the category feeds of its language instead.
@@ -54,6 +56,7 @@ class DeliveryHooks implements PageSaveCompleteHook {
 			$adds = !$editResult->isRevert();
 			DeferredUpdates::addCallableUpdate(
 				fn () => $this->recordSectionItems( $pageId, $revisionRecord, $adds ) );
+			DeferredUpdates::addCallableUpdate( fn () => $this->updateTags( $pageId, $revisionRecord ) );
 		}
 		if ( $this->translations->isTranslationPage( $wikiPage ) ) {
 			DeferredUpdates::addCallableUpdate( fn () => $this->recordTranslationItems( $pageId, $revisionRecord ) );
@@ -91,19 +94,68 @@ class DeliveryHooks implements PageSaveCompleteHook {
 		if ( !$status->isOK() ) {
 			return;
 		}
-		foreach ( $status->getValue()->getCategoryNames() as $name ) {
-			$name = $language === null ? $name : $this->translations->getSourceCategory( $name, $language );
-			$category = $this->pageStore->getExistingPageByText( $name, NS_CATEGORY );
-			if ( !$category ) {
-				continue;
-			}
-			$feed = new Feed( 'category', $category, $language );
+		foreach ( $this->getCategoryFeeds( $status->getValue(), $language ) as $feed ) {
 			// Recorded whether or not anyone follows, so the outbox lists it
 			if ( $this->notes->publishes( $feed )
 				&& $this->items->add( $feed, $page->getId(), $revision->getTimestamp() ?? wfTimestampNow(), '',
 					(int)$revision->getId() )
 			) {
 				$this->deliver( $feed, new Item( $page ) );
+			}
+		}
+	}
+
+	/**
+	 * The category feeds of the rendering's categories, or with a language their feeds of that
+	 * language's translations
+	 *
+	 * @return Feed[]
+	 */
+	private function getCategoryFeeds( ParserOutput $output, ?string $language ): array {
+		$feeds = [];
+		foreach ( $output->getCategoryNames() as $name ) {
+			$name = $language === null ? $name : $this->translations->getSourceCategory( $name, $language );
+			$category = $this->pageStore->getExistingPageByText( $name, NS_CATEGORY );
+			if ( $category ) {
+				$feeds[] = new Feed( 'category', $category, $language );
+			}
+		}
+		return $feeds;
+	}
+
+	/**
+	 * Sends an Update of the page's note in each category feed it is an item of, as of the
+	 * revision, when the revision changed its hashtags. A translation page's are its own.
+	 */
+	private function updateTags( int $pageId, RevisionRecord $revision ): void {
+		// Checked before anything is parsed, so a page that is no category item costs one query
+		if ( !$this->items->isCategoryItem( $pageId ) ) {
+			return;
+		}
+		$page = $this->pageStore->getPageById( $pageId );
+		$parent = $this->revisionLookup->getRevisionById( (int)$revision->getParentId() );
+		if ( !$page || !$parent ) {
+			return;
+		}
+		$language = null;
+		if ( $this->translations->isTranslationPage( $page ) ) {
+			$language = $this->translations->getLanguage( $page );
+			if ( $language === null ) {
+				return;
+			}
+		}
+		$options = ParserOptions::newFromAnon();
+		$newStatus = $this->parserOutputAccess->getParserOutput( $page, $options, $revision );
+		$parentStatus = $this->parserOutputAccess->getParserOutput( $page, $options, $parent );
+		if ( !$newStatus->isOK() || !$parentStatus->isOK()
+			|| Hooks::getTags( $newStatus->getValue() ) === Hooks::getTags( $parentStatus->getValue() )
+		) {
+			return;
+		}
+		$revId = (int)$revision->getId();
+		foreach ( $this->getCategoryFeeds( $newStatus->getValue(), $language ) as $feed ) {
+			if ( $this->items->setRevision( $feed, $pageId, '', $revId, '' ) ) {
+				$this->deliver( $feed, new Item( $page ), $revId );
 			}
 		}
 	}

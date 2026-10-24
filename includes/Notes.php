@@ -14,6 +14,7 @@ use MediaWiki\Page\ParserOutputAccess;
 use MediaWiki\Parser\ParserOptions;
 use MediaWiki\Parser\ParserOutput;
 use MediaWiki\Revision\RevisionLookup;
+use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Title\Title;
 use MediaWiki\Title\TitleFormatter;
 use Wikimedia\Timestamp\TimestampFormat as TS;
@@ -44,6 +45,7 @@ class Notes {
 			'interactionTarget' => [ '@id' => 'gts:interactionTarget', '@type' => '@id' ],
 			'QuoteRequest' => self::FEP_044F . 'QuoteRequest',
 			'QuoteAuthorization' => self::FEP_044F . 'QuoteAuthorization',
+			'Hashtag' => 'https://www.w3.org/ns/activitystreams#Hashtag',
 		],
 	];
 
@@ -51,7 +53,7 @@ class Notes {
 	 * The current rendering of the page read last, kept because an outbox reads one page's
 	 * sections once per item
 	 *
-	 * @var array{rev: int, full: bool, paragraph: string, sections: array<string,array>}|null
+	 * @var array{rev: int, full: bool, paragraph: string, tags: string[], sections: array<string,array>}|null
 	 */
 	private ?array $rendering = null;
 
@@ -222,6 +224,8 @@ class Notes {
 		$actorId = $this->actors->getActorId( $feed->getHandle() );
 		$title = Title::newFromPageIdentity( $item->page );
 		$linkText = $this->titleFormatter->getPrefixedText( $item->page );
+		// Only a page's own note carries its hashtags, as its sections may be about anything
+		$tags = [];
 		if ( $feed->kind === 'section' ) {
 			$record = $this->items->get( $feed, $item->page->getId(), $item->key );
 			// The revision the section appeared in, so the link shows what followers were told
@@ -237,14 +241,21 @@ class Notes {
 		} else {
 			$url = $title->getFullURL( $this->actors->getLanguageQuery( $feed ) + [ 'utm_source' => 'fediverse' ],
 				false, PROTO_CANONICAL );
-			$paragraph = $this->getRendering( $item->page, false )['paragraph'];
+			$rendering = $this->getRendering( $item->page, false );
+			$paragraph = $rendering['paragraph'];
+			$tags = array_map( [ $this, 'getHashtag' ], $rendering['tags'] );
 			$content = ( $paragraph === '' ? '' : '<p>' . htmlspecialchars( $paragraph ) . '</p>' )
-				. '<p><a href="' . htmlspecialchars( $url ) . '">' . htmlspecialchars( $linkText ) . '</a></p>';
+				. '<p><a href="' . htmlspecialchars( $url ) . '">' . htmlspecialchars( $linkText ) . '</a></p>'
+				. ( $tags ? '<p>' . implode( ' ', array_column( $tags, 'html' ) ) . '</p>' : '' );
+			$record = $this->items->get( $feed, $item->page->getId() );
 			// A translation is news once it is complete, which is when it was recorded
 			$published = $feed->language === null
 				? $this->revisionLookup->getFirstRevision( $item->page )?->getTimestamp()
-				: $this->items->get( $feed, $item->page->getId() )['timestamp'] ?? null;
-			$updated = null;
+				: $record['timestamp'] ?? null;
+			// The revision is a later one once an edit changed the hashtags
+			$rev = $record['rev'] ?? 0;
+			$changed = $rev ? ( $this->revisionLookup->getTimestampFromId( $rev ) ?: null ) : null;
+			$updated = $changed !== null && $changed !== $published ? $changed : null;
 		}
 		$note = [
 			'id' => $this->getNoteId( $feed, $item ),
@@ -258,6 +269,9 @@ class Notes {
 		];
 		if ( $updated !== null ) {
 			$note['updated'] = wfTimestamp( TS::ISO_8601, $updated );
+		}
+		if ( $tags ) {
+			$note['tag'] = array_column( $tags, 'object' );
 		}
 		$note += [
 			'to' => [ self::PUBLIC ],
@@ -408,7 +422,23 @@ class Notes {
 	}
 
 	/**
-	 * The page's current rendering: its first paragraph, and with $sections the section
+	 * A hashtag as the content links it, the way Mastodon marks one, and as a Hashtag object.
+	 * The link searches the wiki for the tag.
+	 *
+	 * @return array{html: string, object: array}
+	 */
+	private function getHashtag( string $tag ): array {
+		$href = SpecialPage::getTitleFor( 'Search' )->getFullURL( [ 'search' => $tag, 'fulltext' => 1 ], false,
+			PROTO_CANONICAL );
+		return [
+			'html' => '<a href="' . htmlspecialchars( $href ) . '" class="mention hashtag" rel="tag">#<span>'
+				. htmlspecialchars( $tag ) . '</span></a>',
+			'object' => [ 'type' => 'Hashtag', 'href' => $href, 'name' => "#$tag" ],
+		];
+	}
+
+	/**
+	 * The page's current rendering: its first paragraph, its hashtags, and with $sections the section
 	 * feed's items it has, by key, each with its path and content blocks.
 	 *
 	 * A path that occurs n times holds the items with ordinals 1 to n. Ordinals count in the
@@ -418,7 +448,7 @@ class Notes {
 	 *
 	 * @param ExistingPageRecord $page
 	 * @param bool $sections
-	 * @return array{rev: int, full: bool, paragraph: string, sections: array<string,array>}
+	 * @return array{rev: int, full: bool, paragraph: string, tags: string[], sections: array<string,array>}
 	 */
 	private function getRendering( ExistingPageRecord $page, bool $sections ): array {
 		$rev = $page->getLatest();
@@ -426,12 +456,13 @@ class Notes {
 		if ( $cached !== null && $cached['rev'] === $rev && ( $cached['full'] || !$sections ) ) {
 			return $cached;
 		}
-		$rendering = [ 'rev' => $rev, 'full' => $sections, 'paragraph' => '', 'sections' => [] ];
+		$rendering = [ 'rev' => $rev, 'full' => $sections, 'paragraph' => '', 'tags' => [], 'sections' => [] ];
 		$status = $this->parserOutputAccess->getParserOutput( $page, ParserOptions::newFromAnon() );
 		if ( !$status->isOK() ) {
 			return $rendering;
 		}
 		$output = $status->getValue();
+		$rendering['tags'] = Hooks::getTags( $output );
 		$doc = self::loadDocument( $output );
 		foreach ( $doc->getElementsByTagName( 'p' ) as $p ) {
 			$text = trim( preg_replace( '/\s+/u', ' ', $p->textContent ) );
