@@ -434,7 +434,8 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		yield 'every kind' => [ "{{FEDIFEEDSNAME:블로그}}\n{{FEDIFEEDSNAME:Blog|lang=en}}", 'en', 'Blog' ];
 		yield 'the kind' => [ "{{FEDIFEEDSNAME:블로그}}\n{{FEDIFEEDSNAME:Blog|category|lang=en}}", 'en', 'Blog' ];
 		yield 'the kind wins' => [
-			"{{FEDIFEEDSNAME:Posts|lang=en}}\n{{FEDIFEEDSNAME:Blog|lang = EN|category}}", 'en', 'Blog' ];
+			"{{FEDIFEEDSNAME:블로그}}\n{{FEDIFEEDSNAME:Posts|lang=en}}\n{{FEDIFEEDSNAME:Blog|lang = EN|category}}",
+			'en', 'Blog' ];
 		yield 'another language' => [ "{{FEDIFEEDSNAME:블로그}}\n{{FEDIFEEDSNAME:Blog|lang=en}}", 'ja',
 			'블로그 (日本語)' ];
 		yield 'not a code' => [ "{{FEDIFEEDSNAME:블로그}}\n{{FEDIFEEDSNAME:Blog|lang=e n}}", 'en',
