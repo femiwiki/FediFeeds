@@ -48,6 +48,7 @@ class Actors {
 	private string $server;
 	private UrlUtils $urlUtils;
 	private ?array $wikiIcon;
+	private bool $linksNameLanguage;
 
 	public function __construct(
 		Config $config,
@@ -68,6 +69,10 @@ class Actors {
 			UrlUtils::CANONICAL_SERVER => $server,
 		] );
 		$this->wikiIcon = $this->findWikiIcon( $config );
+		// UniversalLanguageSelector shows readers with no account the interface in their browser's
+		// language unless the wiki turned that off, and a link that names a language would override it
+		$this->linksNameLanguage = !$config->has( 'ULSLanguageDetection' )
+			|| !$config->get( 'ULSLanguageDetection' );
 	}
 
 	/**
@@ -188,7 +193,17 @@ class Actors {
 	}
 
 	public function getPageUrl( Feed $feed ): string {
-		return Title::newFromPageIdentity( $feed->page )->getFullURL( '', false, PROTO_CANONICAL );
+		return Title::newFromPageIdentity( $feed->page )
+			->getFullURL( $this->getLanguageQuery( $feed ), false, PROTO_CANONICAL );
+	}
+
+	/**
+	 * The query that shows the wiki's interface in a language's feed's language, for readers who
+	 * follow its links but have no account to keep that choice in, when the wiki would not pick
+	 * their language for them
+	 */
+	public function getLanguageQuery( Feed $feed ): array {
+		return $feed->language === null || !$this->linksNameLanguage ? [] : [ 'uselang' => $feed->language ];
 	}
 
 	/**

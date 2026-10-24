@@ -185,13 +185,21 @@ class TranslationsTest extends MediaWikiIntegrationTestCase {
 		[ $feed, ] = $this->setUpTranslatablePost();
 		$this->translate( 'Post/1/en', 'This is the first paragraph.' );
 		$this->translate( 'Post/2/en', 'This is the second paragraph.' );
+		$this->overrideConfigValue( 'ULSLanguageDetection', false );
 		$notes = $this->getServiceContainer()->getService( 'FediFeeds.Notes' );
 		$english = $notes->getOutbox( $feed->withLanguage( 'en' ) );
 		$this->assertSame( 1, $english['totalItems'] );
-		$this->assertSame( 'https://wiki.example.org/index.php?title=Post/en&utm_source=fediverse',
-			$english['orderedItems'][0]['object']['url'] );
+		$this->assertSame( 'https://wiki.example.org/index.php?title=Post/en&uselang=en&utm_source=fediverse',
+			$english['orderedItems'][0]['object']['url'],
+			'the link names the language when the wiki does not pick one from the browser' );
 		$this->assertSame( 1, $notes->getOutbox( $feed )['totalItems'], 'only the page itself' );
 		$this->assertSame( 0, $notes->getOutbox( $feed->withLanguage( 'ja' ) )['totalItems'] );
+
+		$this->overrideConfigValue( 'ULSLanguageDetection', true );
+		$notes = $this->getServiceContainer()->getService( 'FediFeeds.Notes' );
+		$this->assertSame( 'https://wiki.example.org/index.php?title=Post/en&utm_source=fediverse',
+			$notes->getOutbox( $feed->withLanguage( 'en' ) )['orderedItems'][0]['object']['url'],
+			'the browser\'s language is left to pick the interface' );
 	}
 
 	/** The note ids that the page's HTML head links */

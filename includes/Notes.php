@@ -235,7 +235,8 @@ class Notes {
 			$changed = $rev ? ( $this->revisionLookup->getTimestampFromId( $rev ) ?: null ) : null;
 			$updated = $changed !== null && $changed !== $published ? $changed : null;
 		} else {
-			$url = $title->getFullURL( [ 'utm_source' => 'fediverse' ], false, PROTO_CANONICAL );
+			$url = $title->getFullURL( $this->actors->getLanguageQuery( $feed ) + [ 'utm_source' => 'fediverse' ],
+				false, PROTO_CANONICAL );
 			$paragraph = $this->getRendering( $item->page, false )['paragraph'];
 			$content = ( $paragraph === '' ? '' : '<p>' . htmlspecialchars( $paragraph ) . '</p>' )
 				. '<p><a href="' . htmlspecialchars( $url ) . '">' . htmlspecialchars( $linkText ) . '</a></p>';
