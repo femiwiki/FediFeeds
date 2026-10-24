@@ -4,6 +4,8 @@ namespace MediaWiki\Extension\FediFeeds;
 
 use stdClass;
 use Wikimedia\Rdbms\IConnectionProvider;
+use Wikimedia\Rdbms\IExpression;
+use Wikimedia\Rdbms\LikeValue;
 use Wikimedia\Rdbms\SelectQueryBuilder;
 use Wikimedia\Timestamp\TimestampFormat as TS;
 
@@ -129,6 +131,23 @@ class Items {
 			->select( '1' )
 			->from( 'fedifeeds_item' )
 			->where( [ 'fi_feed' => $handles, 'fi_page' => $pageId ] )
+			->caller( __METHOD__ )->fetchField();
+	}
+
+	/**
+	 * Whether the page is an item of any category feed, of the pages or of a language's
+	 * translations
+	 */
+	public function isCategoryItem( int $pageId ): bool {
+		$dbr = $this->dbProvider->getReplicaDatabase();
+		return (bool)$dbr->newSelectQueryBuilder()
+			->select( '1' )
+			->from( 'fedifeeds_item' )
+			->where( [
+				'fi_page' => $pageId,
+				'fi_key' => '',
+				$dbr->expr( 'fi_feed', IExpression::LIKE, new LikeValue( 'category_', $dbr->anyString() ) ),
+			] )
 			->caller( __METHOD__ )->fetchField();
 	}
 

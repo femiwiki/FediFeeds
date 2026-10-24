@@ -170,6 +170,27 @@ class TranslationsTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( 1, $this->getItems()->count( $english ) );
 	}
 
+	public function testTranslationHasItsOwnTags() {
+		$category = $this->savePage( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
+		$feed = new Feed( 'category', $category );
+		$this->follow( $feed->withLanguage( 'en' ), 'https://en.example/inbox' );
+		$post = $this->savePage( 'Post', "<languages />\n<translate>\n첫 문단입니다.\n\n{{FEDIFEEDSTAGS:미디어위키}}\n"
+			. "</translate>\n\n[[Category:Posts]]" );
+		$this->markForTranslation( $post );
+		$this->translate( 'Post/1/en', 'This is the first paragraph.' );
+		$this->translate( 'Post/2/en', '{{FEDIFEEDSTAGS:MediaWiki}}' );
+		$deliveries = $this->getDeliveries();
+		$this->assertCount( 1, $deliveries );
+		$this->assertSame( [ '#MediaWiki' ], array_column( $deliveries[0]['activity']['object']['tag'], 'name' ) );
+
+		$this->translate( 'Post/2/en', '{{FEDIFEEDSTAGS:MediaWiki|ActivityPub}}' );
+		$deliveries = $this->getDeliveries();
+		$this->assertCount( 2, $deliveries );
+		$this->assertSame( 'Update', $deliveries[1]['activity']['type'] );
+		$this->assertSame( [ '#MediaWiki', '#ActivityPub' ],
+			array_column( $deliveries[1]['activity']['object']['tag'], 'name' ) );
+	}
+
 	public function testTranslatedCategoryStandsForItsPage() {
 		$category = $this->savePage( 'Category:Posts', "{{FEDIFEEDSNAME:Posts}}\n<translate>\n글 모음입니다.\n</translate>" );
 		$this->markForTranslation( $category );

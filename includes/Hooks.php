@@ -4,11 +4,13 @@ namespace MediaWiki\Extension\FediFeeds;
 
 use MediaWiki\Hook\ParserFirstCallInitHook;
 use MediaWiki\Parser\Parser;
+use MediaWiki\Parser\ParserOutput;
 use MediaWiki\Parser\Sanitizer;
 use MediaWiki\Title\Title;
 
 /**
- * Registers {{FEDIFEEDSNAME:}}, which sets the display name of a page's feeds
+ * Registers {{FEDIFEEDSNAME:}}, which sets the display name of a page's feeds, and
+ * {{FEDIFEEDSTAGS:}}, which sets the hashtags of the page's notes
  */
 class Hooks implements ParserFirstCallInitHook {
 
@@ -24,6 +26,9 @@ class Hooks implements ParserFirstCallInitHook {
 	/** The page property holding the heading level of the items of the page's section feed */
 	public const SECTION_UNIT_PROPERTY = 'fedifeeds-section-unit';
 
+	/** The page property holding the hashtags of the page's notes, without "#", one per line */
+	public const TAGS_PROPERTY = 'fedifeeds-tags';
+
 	/** The heading level of a section feed's items when the page sets none */
 	public const DEFAULT_SECTION_UNIT = 2;
 
@@ -31,6 +36,45 @@ class Hooks implements ParserFirstCallInitHook {
 	public function onParserFirstCallInit( $parser ) {
 		// Written {{FEDIFEEDSNAME:...}} like {{DISPLAYTITLE:...}}, without a hash
 		$parser->setFunctionHook( 'fedifeedsname', [ self::class, 'renderName' ], Parser::SFH_NO_HASH );
+		$parser->setFunctionHook( 'fedifeedstags', [ self::class, 'renderTags' ], Parser::SFH_NO_HASH );
+	}
+
+	/**
+	 * Adds the hashtags to those of the page's notes, kept as a page property, and outputs
+	 * nothing. A tag that Mastodon would not read as one, such as one with a space, is left out,
+	 * and so is one that differs from an earlier one only in case.
+	 *
+	 * @param Parser $parser
+	 * @param string ...$tags With or without "#"
+	 * @return string
+	 */
+	public static function renderTags( Parser $parser, string ...$tags ): string {
+		$output = $parser->getOutput();
+		$kept = self::getTags( $output );
+		foreach ( $tags as $tag ) {
+			$tag = ltrim( trim( Sanitizer::stripAllTags( $parser->killMarkers(
+				$parser->recursiveTagParseFully( $tag ) ) ) ), '#' );
+			// Letters, digits and underscores, with at least one letter, as Mastodon's hashtags are
+			if ( preg_match( '/^[\p{L}\p{M}\p{N}_]*\p{L}[\p{L}\p{M}\p{N}_]*$/uD', $tag )
+				&& !in_array( mb_strtolower( $tag ), array_map( 'mb_strtolower', $kept ), true )
+			) {
+				$kept[] = $tag;
+			}
+		}
+		if ( $kept ) {
+			$output->setUnsortedPageProperty( self::TAGS_PROPERTY, implode( "\n", $kept ) );
+		}
+		return '';
+	}
+
+	/**
+	 * The hashtags a rendering set with {{FEDIFEEDSTAGS:}}, without "#"
+	 *
+	 * @return string[]
+	 */
+	public static function getTags( ParserOutput $output ): array {
+		$tags = (string)$output->getPageProperty( self::TAGS_PROPERTY );
+		return $tags === '' ? [] : explode( "\n", $tags );
 	}
 
 	/**
