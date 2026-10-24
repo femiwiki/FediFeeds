@@ -558,7 +558,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 					
 					
 					<div id="mw-content-text" class="mw-body-content"><div class="mw-pt-translate-header noprint" dir="ltr" lang="en"><a href="https://github.com/femiwiki/FediFeeds/edit/main/docs/Accounts/en.wikitext" title="Special:Translate">Translate this page</a></div><div class="mw-content-ltr mw-parser-output" lang="en" dir="ltr"><div class="mw-pt-languages noprint navigation-not-searchable" lang="en" dir="ltr"><div class="mw-pt-languages-label">Other languages:</div><ul class="mw-pt-languages-list"><li><a href="../Accounts.html" class="mw-pt-languages-ui mw-pt-progress mw-pt-progress--complete" title="Accounts (100% translated)" lang="en" dir="ltr">English</a></li>
-<li><a href="../Accounts/ko.html" class="mw-pt-progress mw-pt-progress--complete" title="계정 (100% translated)" lang="ko" dir="ltr">한국어</a></li></ul></div>
+<li><a href="../Accounts/ko.html" class="mw-pt-progress mw-pt-progress--high" title="계정 (92% translated)" lang="ko" dir="ltr">한국어</a></li></ul></div>
 <p>Every feed is its own actor. Nobody declares or configures an account: the handle names the feed, and the account exists as long as the thing it follows exists. Because an account is a page or a category and never a person, there is nothing to impersonate.
 </p>
 <meta property="mw:PageProp/toc" />
@@ -631,6 +631,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <li><code>{{FEDIFEEDSNAME:&lt;name&gt;|&lt;kind&gt;}}</code> applies to that kind only, and wins over the form without a kind. A category page that is also followed for its sections can name the two feeds apart this way.</li>
 <li><code>section-unit=&lt;n&gt;</code>, where n is 1 to 6, sets the <a href="../Feed_kinds/en.html#section" title="Special:MyLanguage/Feed kinds">unit</a> of the page's <code>section</code> feed: each heading with this many equals signs is one note. It can come before or after the kind.</li>
 <li><code>icon=&lt;file&gt;</code> sets the actor's <code>icon</code> to a thumbnail of the file, 400 pixels wide, with or without the file namespace: <code>{{FEDIFEEDSNAME:Dev blog|icon=File:Example.png}}</code>. An SVG file works too, as its thumbnail is a PNG. It applies to the same feeds as the name, can come in any position, and is listed among the file's usage. A call that sets no name sets no icon either.</li>
+<li><code>lang=&lt;code&gt;</code> makes the name that of the feeds of that language only, used as it is instead of the name with the language added: <code>{{FEDIFEEDSNAME:Dev blog|lang=en}}</code>. It can be combined with a kind, which wins over the form without one, and sets no icon or unit.</li>
 <li>The name is plain text: markup is dropped. An empty name, or a kind that is not in the <a href="../Feed_kinds/en.html" title="Special:MyLanguage/Feed kinds">list of kinds</a>, sets nothing. When the page sets the same one twice, the last wins.</li></ul>
 <p>The display name changes only <code>name</code>. The handle, the id and the <code>summary</code> keep the page id and the title, so followers stay through a rename and the summary still says where the items come from.
 </p>
@@ -699,7 +700,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 24 October 2026, at 00:38.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 24 October 2026, at 17:11.</li>
 </ul>
 
 	<ul id="footer-places">

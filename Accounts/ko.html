@@ -557,8 +557,8 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 					<div id="contentSub" lang="ko" dir="ltr"><div id="mw-content-subtitle" lang="ko" dir="ltr"></div></div>
 					
 					
-					<div id="mw-content-text" class="mw-body-content"><div class="mw-pt-translate-header noprint" dir="ltr" lang="ko">이 문서는 <a href="../Accounts.html" title="Accounts">Accounts</a> 문서를 <span class="plainlinks"><a rel="nofollow" class="external text" href="https://github.com/femiwiki/FediFeeds/edit/main/docs/Accounts/ko.wikitext">번역한 것</a></span>이며 번역은 100% 완료했습니다.</div><div class="mw-content-ltr mw-parser-output" lang="ko" dir="ltr"><div class="mw-pt-languages noprint navigation-not-searchable" lang="ko" dir="ltr"><div class="mw-pt-languages-label">다른 언어:</div><ul class="mw-pt-languages-list"><li><a href="../Accounts.html" class="mw-pt-progress mw-pt-progress--complete" title="Accounts (100% 번역함)" lang="en" dir="ltr">English</a></li>
-<li><span class="mw-pt-languages-ui mw-pt-languages-selected mw-pt-progress mw-pt-progress--complete" lang="ko" dir="ltr">한국어</span></li></ul></div>
+					<div id="mw-content-text" class="mw-body-content"><div class="mw-pt-translate-header noprint" dir="ltr" lang="ko">이 문서는 <a href="../Accounts.html" title="Accounts">Accounts</a> 문서를 <span class="plainlinks"><a rel="nofollow" class="external text" href="https://github.com/femiwiki/FediFeeds/edit/main/docs/Accounts/ko.wikitext">번역한 것</a></span>이며 번역은 92% 완료했습니다.</div><div class="mw-pt-translate-header" dir="ltr" lang="ko"><span class="mw-translate-fuzzy">오래된 번역은 이렇게 표시됩니다.</span></div><div class="mw-content-ltr mw-parser-output" lang="ko" dir="ltr"><div class="mw-pt-languages noprint navigation-not-searchable" lang="ko" dir="ltr"><div class="mw-pt-languages-label">다른 언어:</div><ul class="mw-pt-languages-list"><li><a href="../Accounts.html" class="mw-pt-progress mw-pt-progress--complete" title="Accounts (100% 번역함)" lang="en" dir="ltr">English</a></li>
+<li><span class="mw-pt-languages-ui mw-pt-languages-selected mw-pt-progress mw-pt-progress--high" lang="ko" dir="ltr">한국어</span></li></ul></div>
 <p>피드는 저마다 하나의 액터입니다. 계정을 누가 선언하거나 설정하지 않습니다. 핸들이 곧 피드를 가리키고, 계정은 그 핸들이 따르는 대상이 있는 동안 존재합니다. 계정은 언제나 문서나 분류이고 사람이 아니므로 사칭할 대상도 없습니다.
 </p><p><span id="Handles"></span>
 </p>
@@ -624,7 +624,9 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <td><a href="#Keys">키</a> 참고
 </td></tr></tbody></table>
 <p>브라우저로 액터 id를 열면 303으로 문서에 보냅니다. 마스토돈은 액터의 <code>url</code>이 id와 같은 호스트에 있을 때만 받아들이므로, 프로필 링크가 id 그대로이기 때문입니다. 요청의 <code>Accept</code>에 <code>text/html</code>이 있고 <code>application/activity+json</code>도 <code>application/ld+json</code>도 없으면 브라우저로 봅니다. <code>Accept</code>가 없거나 <code>*/*</code>뿐인 요청을 비롯한 나머지는 JSON을 받습니다. 두 답 모두 <code>Vary: Accept</code>를 붙입니다.
-</p><p><span id="Display&#95;name"></span>
+</p>
+<div class="mw-translate-fuzzy">
+<p><span id="Display&#95;name"></span>
 </p>
 <div class="mw-heading mw-heading2"><h2 id="표시_이름"><span id=".ED.91.9C.EC.8B.9C_.EC.9D.B4.EB.A6.84"></span>표시 이름</h2></div>
 <p>팔로하는 문서는 자기 위키텍스트에 매직 워드를 넣어 표시 이름을 정합니다.
@@ -633,7 +635,9 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <li><code>{{FEDIFEEDSNAME:&lt;name&gt;|&lt;kind&gt;}}</code>는 그 종류에만 적용되고, 종류를 적지 않은 형식보다 우선합니다. 문단으로도 팔로하는 분류 문서는 이렇게 두 피드에 이름을 따로 붙일 수 있습니다.</li>
 <li>n이 1에서 6 사이인 <code>section-unit=&lt;n&gt;</code>은 그 문서 <code>section</code> 피드의 <a href="../Feed_kinds/ko.html#section" title="Special:MyLanguage/Feed kinds">단위</a>를 정합니다. 등호가 이만큼인 제목 하나하나가 노트 하나입니다. 종류 앞에 써도 되고 뒤에 써도 됩니다.</li>
 <li><code>icon=&lt;file&gt;</code>은 액터의 <code>icon</code>을 그 파일의 너비 400픽셀 섬네일로 정합니다. 파일 이름공간은 붙여도 되고 빼도 됩니다. 예: <code>{{FEDIFEEDSNAME:Dev blog|icon=File:Example.png}}</code>. SVG 파일의 섬네일은 PNG이므로 SVG 파일도 쓸 수 있습니다. 이름과 같은 피드에 적용되고, 어느 자리에 써도 되며, 파일의 사용 목록에 그 문서가 나옵니다. 이름을 정하지 않는 호출은 아이콘도 정하지 않습니다.</li>
+<li><code>lang=&lt;code&gt;</code>는 그 이름을 그 언어의 피드에만 씁니다. 이름 뒤에 언어 이름을 붙이지 않고 그대로 씁니다. 예: <code>{{FEDIFEEDSNAME:Dev blog|lang=en}}</code>. 종류와 함께 쓸 수 있고, 종류를 붙인 것이 붙이지 않은 것보다 앞섭니다. 아이콘이나 단위는 정하지 않습니다.</li>
 <li>이름은 일반 텍스트이고 마크업은 버립니다. 이름이 비었거나 종류가 <a href="../Feed_kinds/ko.html" title="Special:MyLanguage/Feed kinds">종류 목록</a>에 없으면 아무것도 정하지 않습니다. 문서가 같은 것을 두 번 정하면 뒤의 것을 씁니다.</li></ul>
+</div>
 <p>표시 이름은 <code>name</code>만 바꿉니다. 핸들과 id, <code>summary</code>는 여전히 문서 id와 제목을 쓰므로, 이름을 바꿔도 팔로어가 그대로 남고 소개 문장은 계속 글이 어디서 오는지 알려 줍니다.
 </p>
 <div class="mw-heading mw-heading2"><h2 id="웹핑거"><span id=".EC.9B.B9.ED.95.91.EA.B1.B0"></span>웹핑거</h2></div>
@@ -703,7 +707,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer"  lang="ko" dir="ltr">
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 24일 (토) 00:38에 마지막으로 편집되었습니다.</li>
+	<li id="footer-info-lastmod"> 이 문서는 2026년 10월 24일 (토) 17:11에 마지막으로 편집되었습니다.</li>
 </ul>
 
 	<ul id="footer-places">
