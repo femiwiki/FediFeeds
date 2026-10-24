@@ -208,12 +208,22 @@ class Actors {
 
 	/**
 	 * The display name the page set for the feed's kind, else for every kind, else its title. A
-	 * language's feed adds the name of the language, in that language.
+	 * language's feed takes the name the page set for that language as it is, and otherwise adds
+	 * the name of the language, in that language.
 	 */
 	public function getName( Feed $feed ): string {
 		$forKind = Hooks::NAME_PROPERTY . '-' . $feed->kind;
-		$props = $this->pageProps->getProperties( $feed->page, [ $forKind, Hooks::NAME_PROPERTY ] )
-			[$feed->page->getId()] ?? [];
+		$names = [ $forKind, Hooks::NAME_PROPERTY ];
+		if ( $feed->language !== null ) {
+			array_unshift( $names, "$forKind@{$feed->language}", Hooks::NAME_PROPERTY . "@{$feed->language}" );
+		}
+		$props = $this->pageProps->getProperties( $feed->page, $names )[$feed->page->getId()] ?? [];
+		if ( $feed->language !== null ) {
+			$own = $props["$forKind@{$feed->language}"] ?? $props[Hooks::NAME_PROPERTY . "@{$feed->language}"] ?? null;
+			if ( $own !== null ) {
+				return $own;
+			}
+		}
 		$name = $props[$forKind] ?? $props[Hooks::NAME_PROPERTY]
 			?? $this->titleFormatter->getPrefixedText( $feed->page );
 		if ( $feed->language === null ) {

@@ -3,6 +3,7 @@
 namespace MediaWiki\Extension\FediFeeds;
 
 use MediaWiki\Hook\ParserFirstCallInitHook;
+use MediaWiki\MediaWikiServices;
 use MediaWiki\Parser\Parser;
 use MediaWiki\Parser\ParserOutput;
 use MediaWiki\Parser\Sanitizer;
@@ -14,7 +15,10 @@ use MediaWiki\Title\Title;
  */
 class Hooks implements ParserFirstCallInitHook {
 
-	/** The page property holding the display name for every kind, or with "-<kind>" for one */
+	/**
+	 * The page property holding the display name for every kind, or with "-<kind>" for one, and
+	 * with "@<language>" after either for the feeds of that language
+	 */
 	public const NAME_PROPERTY = 'fedifeeds-name';
 
 	/**
@@ -84,7 +88,8 @@ class Hooks implements ParserFirstCallInitHook {
 	 * @param Parser $parser
 	 * @param string $name
 	 * @param string ...$args In any order: a kind from FeedLookup::KINDS, or none for every
-	 *  kind, icon=<file>, with or without the file namespace, and section-unit=<1 to 6>
+	 *  kind, icon=<file>, with or without the file namespace, section-unit=<1 to 6>, and
+	 *  lang=<language code>, which makes the name that of the kind's feeds in the language only
 	 * @return string
 	 */
 	public static function renderName( Parser $parser, string $name = '', string ...$args ): string {
@@ -93,12 +98,15 @@ class Hooks implements ParserFirstCallInitHook {
 		$kind = '';
 		$unit = null;
 		$icon = null;
+		$language = null;
 		foreach ( $args as $arg ) {
 			$arg = trim( $arg );
 			if ( preg_match( '/^section-unit\s*=\s*(.*)$/D', $arg, $m ) ) {
 				$unit = trim( $m[1] );
 			} elseif ( preg_match( '/^icon\s*=\s*(.*)$/D', $arg, $m ) ) {
 				$icon = trim( $m[1] );
+			} elseif ( preg_match( '/^lang\s*=\s*(.*)$/D', $arg, $m ) ) {
+				$language = strtolower( trim( $m[1] ) );
 			} elseif ( $arg !== '' ) {
 				$kind = $arg;
 			}
@@ -108,6 +116,13 @@ class Hooks implements ParserFirstCallInitHook {
 		}
 		$output = $parser->getOutput();
 		$suffix = $kind === '' ? '' : '-' . $kind;
+		if ( $language !== null ) {
+			// A language's name only; the icon and the unit stay those of every language
+			if ( MediaWikiServices::getInstance()->getLanguageNameUtils()->isValidCode( $language ) ) {
+				$output->setUnsortedPageProperty( self::NAME_PROPERTY . $suffix . '@' . $language, $name );
+			}
+			return '';
+		}
 		$output->setUnsortedPageProperty( self::NAME_PROPERTY . $suffix, $name );
 		$file = $icon === null ? null : Title::newFromText( $icon, NS_FILE );
 		if ( $file && $file->inNamespace( NS_FILE ) && $file->getDBkey() !== '' ) {
