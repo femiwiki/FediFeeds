@@ -430,6 +430,27 @@ class HandlersTest extends MediaWikiIntegrationTestCase {
 		$this->assertMatchesRegularExpression( '/^[a-z0-9_]+([.-]+[a-z0-9_]+)*$/D', $handle );
 	}
 
+	public static function provideLanguageName(): iterable {
+		yield 'every kind' => [ "{{FEDIFEEDSNAME:블로그}}\n{{FEDIFEEDSNAME:Blog|lang=en}}", 'en', 'Blog' ];
+		yield 'the kind' => [ "{{FEDIFEEDSNAME:블로그}}\n{{FEDIFEEDSNAME:Blog|category|lang=en}}", 'en', 'Blog' ];
+		yield 'the kind wins' => [
+			"{{FEDIFEEDSNAME:Posts|lang=en}}\n{{FEDIFEEDSNAME:Blog|lang = EN|category}}", 'en', 'Blog' ];
+		yield 'another language' => [ "{{FEDIFEEDSNAME:블로그}}\n{{FEDIFEEDSNAME:Blog|lang=en}}", 'ja',
+			'블로그 (日本語)' ];
+		yield 'not a code' => [ "{{FEDIFEEDSNAME:블로그}}\n{{FEDIFEEDSNAME:Blog|lang=e n}}", 'en',
+			'블로그 (English)' ];
+	}
+
+	/**
+	 * @dataProvider provideLanguageName
+	 */
+	public function testLanguageName( string $text, string $language, string $name ) {
+		$id = $this->savePage( 'Category:Blog', $text );
+		$this->assertSame( $name, $this->getActor( "category_{$language}_$id" )['name'] );
+		$this->assertSame( '블로그', $this->getActor( "category_$id" )['name'],
+			'the name for a language leaves the feed of every language alone' );
+	}
+
 	public static function provideLanguageWebFinger(): iterable {
 		yield 'wiki host' => [ 'acct:category_%s_%d@wiki.example.org' ];
 		yield 'actor host' => [ 'acct:category_%s_%d@fedi.example.org' ];
