@@ -97,7 +97,8 @@ class Follow extends Maintenance {
 			return null;
 		}
 		$jrd = json_decode( $request->getContent(), true );
-		foreach ( is_array( $jrd['links'] ?? null ) ? $jrd['links'] : [] as $link ) {
+		$links = is_array( $jrd ) && is_array( $jrd['links'] ?? null ) ? $jrd['links'] : [];
+		foreach ( $links as $link ) {
 			if ( is_array( $link ) && ( $link['rel'] ?? null ) === Jrd::REL_SELF
 				&& in_array( explode( ';', (string)( $link['type'] ?? '' ) )[0], self::ACTIVITY_TYPES, true )
 				&& is_string( $link['href'] ?? null ) && str_starts_with( $link['href'], 'https://' )
