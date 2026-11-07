@@ -551,8 +551,9 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 					<div id="contentSub" lang="ko" dir="ltr"><div id="mw-content-subtitle" lang="ko" dir="ltr"></div></div>
 					
 					
-					<div id="mw-content-text" class="mw-body-content"><div class="mw-pt-translate-header noprint" dir="ltr" lang="ko">이 문서는 <a href="../Activities.html" title="Activities">Activities</a> 문서를 <span class="plainlinks"><a rel="nofollow" class="external text" href="https://github.com/femiwiki/FediFeeds/edit/main/docs/Activities/ko.wikitext">번역한 것</a></span>이며 번역은 100% 완료했습니다.</div><div class="mw-content-ltr mw-parser-output" lang="ko" dir="ltr"><div class="mw-pt-languages noprint navigation-not-searchable" lang="ko" dir="ltr"><div class="mw-pt-languages-label">다른 언어:</div><ul class="mw-pt-languages-list"><li><a href="../Activities.html" class="mw-pt-progress mw-pt-progress--complete" title="Activities (100% 번역함)" lang="en" dir="ltr">English</a></li>
-<li><span class="mw-pt-languages-ui mw-pt-languages-selected mw-pt-progress mw-pt-progress--complete" lang="ko" dir="ltr">한국어</span></li></ul></div>
+					<div id="mw-content-text" class="mw-body-content"><div class="mw-pt-translate-header noprint" dir="ltr" lang="ko">이 문서는 <a href="../Activities.html" title="Activities">Activities</a> 문서를 <span class="plainlinks"><a rel="nofollow" class="external text" href="https://github.com/femiwiki/FediFeeds/edit/main/docs/Activities/ko.wikitext">번역한 것</a></span>이며 번역은 90% 완료했습니다.</div><div class="mw-pt-translate-header" dir="ltr" lang="ko"><span class="mw-translate-fuzzy">오래된 번역은 이렇게 표시됩니다.</span></div><div class="mw-content-ltr mw-parser-output" lang="ko" dir="ltr"><div class="mw-pt-languages noprint navigation-not-searchable" lang="ko" dir="ltr"><div class="mw-pt-languages-label">다른 언어:</div><ul class="mw-pt-languages-list"><li><a href="../Activities.html" class="mw-pt-progress mw-pt-progress--complete" title="Activities (100% 번역함)" lang="en" dir="ltr">English</a></li>
+<li><span class="mw-pt-languages-ui mw-pt-languages-selected mw-pt-progress mw-pt-progress--high" lang="ko" dir="ltr">한국어</span></li></ul></div>
+<div class="mw-translate-fuzzy">
 <meta property="mw:PageProp/toc" />
 <div class="mw-heading mw-heading2"><h2 id="보내는_것"><span id=".EB.B3.B4.EB.82.B4.EB.8A.94_.EA.B2.83"></span>보내는 것</h2></div>
 <ul><li>항목이 생기면 <code>Note</code>를 담은 <code>Create</code></li>
@@ -560,6 +561,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <li><code>Create</code>로 보낸 항목이 없어지면 <code>Delete</code>. 문서가 삭제되거나 문단이 지워진 경우 등</li>
 <li>보낸 적 없는 항목에는 아무것도 보내지 않습니다.</li>
 <li><code>QuoteRequest</code>에 답하는 <code>Accept</code>. <code>result</code>는 <code>QuoteAuthorization</code></li></ul>
+</div>
 <p><code>Note</code>에는 글을 평범한 HTML로 넣고 항목 링크를 붙입니다. 위키텍스트는 넣지 않습니다. <code>category</code>에서 글은 문서의 첫 단락입니다. <code>section</code>에서는 문단 자체입니다. 제목은 흔히 시각뿐이라 알려 주는 게 적기 때문입니다.
 </p><p>팔로어가 없는 피드는 아무것도 보내지 않습니다. 서버에 <code>sharedInbox</code>가 있으면 그리로 보내므로, 팔로어가 많은 서버라도 요청은 한 번만 받습니다.
 </p>
@@ -578,6 +580,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <div class="mw-heading mw-heading2"><h2 id="Outbox">Outbox</h2></div>
 <p>outbox는 최근 항목 20개의 <code>Create</code> 액티비티를 최근 것부터 담은 <code>OrderedCollection</code>입니다. 항목은 생길 때 기록하며, 피드에 팔로어가 없어도 기록합니다. 순서는 그 시각을 따릅니다.
 </p>
+<div class="mw-translate-fuzzy">
 <div class="mw-heading mw-heading2"><h2 id="받는_것"><span id=".EB.B0.9B.EB.8A.94_.EA.B2.83"></span>받는 것</h2></div>
 <ul><li><code>Follow</code>는 받아서 그 피드에 저장합니다. <code>Follow</code>의 <code>Undo</code>가 오면 지웁니다.</li>
 <li>우리 노트에 온 좋아요(<code>Like</code>)와 공유(<code>Announce</code>)는 그 항목에 저장하며, 액터와 항목과 종류마다 하나만 셉니다. <code>content</code>가 있는 <code>Like</code>와 <code>EmojiReact</code>도 좋아요로 셉니다. 그 <code>Undo</code>가 오면 지웁니다. 다른 대상에 온 것은 받고 버립니다.</li>
@@ -586,6 +589,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <li>아무것도 팔로하거나 인용하거나 좋아요나 공유를 하지 않은 액터의 <code>Delete</code>는 서명을 확인하기 전에 버립니다.</li>
 <li>정보를 캐시한 액터가 자기 액터 문서를 담아 보낸 <code>Update</code>로 그 정보를 새로 고칩니다. 다른 <code>Update</code>는 버리며, 정보를 캐시하지 않은 액터의 것은 서명을 확인하기 전에 버립니다.</li>
 <li>액터 자신의 <code>Delete</code>, 곧 대상이 액터의 id이거나 그 id의 <code>Tombstone</code>인 것이 오면 그 액터가 남긴 것을 지웁니다. 모든 피드의 팔로어에서 빼고, 인용 허가와 좋아요, 공유, 캐시한 정보와 키도 지웁니다. 이 일은 답한 뒤 잡이 합니다. 스스로 삭제한 계정은 키도 더 내주지 않으므로, 서명이 맞지 않으면 잡이 먼저 액터를 받아 보고 404나 410으로 답할 때만 지웁니다.</li></ul>
+</div>
 <p>저장한 좋아요와 공유에는 피드와 항목, 액터 id, 액티비티 id를 남깁니다. 그래서 액터마다 한 번만 세고, <code>Undo</code>나 <code>Delete</code>가 오면 찾아 지울 수 있습니다. <code>Undo</code>는 취소한 액티비티의 id로 찾고, 없으면 그 종류와 대상으로 찾습니다. 항목이 있는 문서의 <code>action=info</code>는 <code><a rel="nofollow" class="external free" href="https://wiki.example.org/index.php?title=Post&amp;action=info">https://wiki.example.org/index.php?title=Post&amp;action=info</a></code>처럼, 그 모든 항목의 노트가 공유되고 좋아요를 받은 횟수를 보여 줍니다. 횟수마다 그 뒤에 가장 최근에 반응한 계정 열 개를 프로필 링크로 보여 주고, 나머지는 "외 N명"처럼 수로 쓴 다음 <code>Special:FediFeedsReactions/Post</code>(한국어 별칭 <code>특수:ActivityPub반응</code>)로 가는 링크를 붙입니다. 이 특수 문서는 문서의 노트가 받은 좋아요와 공유를 모두 50개씩 보여 주며, 노트별로 묶습니다. <code>section</code> 노트는 제목 경로 아래에, <code>category</code> 노트는 그 분류 아래에 둡니다. 줄마다 종류와 계정과 시각을 쓰고, 최근 것이 먼저 옵니다.
 </p><p>계정 이름을 보여 주려고, 좋아요나 공유를 한 액터마다 그 정보를 캐시합니다. 액터 id, <code>preferredUsername@host</code> 꼴의 핸들, 표시 이름, 프로필 주소(<code>url</code>, 없으면 id), 읽은 시각입니다. 이 정보는 서명을 확인하려고 받아 온 액터 문서에서 가져옵니다. 그런 문서가 없거나 정보가 일주일보다 오래되었으면 잡이 문서를 읽습니다. 좋아요와 공유는 공개된 활동이므로, 다른 서버가 글에 좋아요나 공유를 한 계정을 보여 주듯이 정보를 읽은 계정은 모두 이름을 보여 줍니다. 정보를 아직 읽지 않은 계정은 수로만 세다가, 정보를 읽으면 이름을 보여 줍니다. 아바타는 보여 주지 않습니다. 액터의 <code>Delete</code>가 오면 그 좋아요와 공유, 캐시한 정보를 지웁니다.
 </p><p>그 밖의 요청은 모두 HTTP 서명으로 확인합니다. 원격 키는 캐시합니다. 캐시가 없으면 요청마다 PHP 워커 하나가 다른 서버에서 키를 받아 올 때까지 붙잡혀 있게 됩니다.

@@ -553,14 +553,15 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 					
 					
 					<div id="mw-content-text" class="mw-body-content"><div class="mw-content-ltr mw-parser-output" lang="en" dir="ltr"><div class="mw-pt-languages noprint navigation-not-searchable" lang="en" dir="ltr"><div class="mw-pt-languages-label">Other languages:</div><ul class="mw-pt-languages-list"><li><span class="mw-pt-languages-ui mw-pt-languages-selected mw-pt-progress mw-pt-progress--complete" lang="en" dir="ltr">English</span></li>
-<li><a href="./Activities/ko.html" class="mw-pt-progress mw-pt-progress--complete" title="액티비티 (100% translated)" lang="ko" dir="ltr">한국어</a></li></ul></div>
+<li><a href="./Activities/ko.html" class="mw-pt-progress mw-pt-progress--high" title="액티비티 (90% translated)" lang="ko" dir="ltr">한국어</a></li></ul></div>
 <meta property="mw:PageProp/toc" />
 <div class="mw-heading mw-heading2"><h2 id="Sent">Sent</h2></div>
 <ul><li><code>Create</code> with a <code>Note</code> when an item appears.</li>
 <li><code>Update</code> when an item that was sent as <code>Create</code> changes.</li>
 <li><code>Delete</code> when an item that was sent as <code>Create</code> goes away, for example when the page is deleted or the section removed.</li>
 <li>Nothing for items that were never sent.</li>
-<li><code>Accept</code> of a <code>QuoteRequest</code>, with a <code>QuoteAuthorization</code> as its <code>result</code>.</li></ul>
+<li><code>Accept</code> of a <code>QuoteRequest</code>, with a <code>QuoteAuthorization</code> as its <code>result</code>.</li>
+<li><code>Follow</code> of each account in <code>$wgFediFeedsAutoFollow</code>, once per feed, when the feed gets an item, whether or not anyone follows the feed. It is recorded in the <code>fedifeeds_following</code> table and not sent again, even if the account stops following back. Otherwise a feed follows nothing. This is for a bridge that bridges the accounts following it, such as Bridgy Fed, which bridges an account to Bluesky once it follows <code>@bsky.brid.gy@bsky.brid.gy</code>.</li></ul>
 <p>The <code>Note</code> carries text as plain HTML and a link to the item, never wikitext. For <code>category</code> the text is the page's first paragraph. For <code>section</code> it is the section itself, because a heading is often just a time and says little.
 </p><p>A feed with no followers sends nothing. Delivery goes to a server's <code>sharedInbox</code> when it has one, so a server with many followers gets one request.
 </p>
@@ -582,6 +583,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 <div class="mw-heading mw-heading2"><h2 id="Received">Received</h2></div>
 <ul><li><code>Follow</code> is accepted and stored against the feed it names. <code>Undo</code> of a <code>Follow</code> removes it.</li>
 <li><code>Like</code> and <code>Announce</code> of one of our notes are stored against its item, once per actor, item and kind. A <code>Like</code> with <code>content</code> and an <code>EmojiReact</code> count as likes. <code>Undo</code> of one removes it. Those of anything else are accepted and dropped.</li>
+<li><code>Accept</code> and <code>Reject</code> of a feed's <code>Follow</code> are accepted and dropped, since nothing is stored about what a feed follows.</li>
 <li>Replies, meaning a <code>Create</code> whose <code>inReplyTo</code> is one of our notes, are accepted and dropped.</li>
 <li><code>QuoteRequest</code> for one of our notes is authorized. <code>Undo</code> of it, or <code>Delete</code> of the quoting post, removes the authorization.</li>
 <li>A <code>Delete</code> for an actor that neither follows, quotes, likes nor shares anything is dropped before its signature is checked.</li>
@@ -622,7 +624,7 @@ RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready","user.option
 			
 <footer id="footer" class="mw-footer" >
 	<ul id="footer-info">
-	<li id="footer-info-lastmod"> This page was last edited on 24 October 2026, at 02:01.</li>
+	<li id="footer-info-lastmod"> This page was last edited on 7 November 2026, at 06:52.</li>
 </ul>
 
 	<ul id="footer-places">
