@@ -7,7 +7,7 @@
 * <code>Delete</code> when an item that was sent as <code>Create</code> goes away, for example when the page is deleted or the section removed.
 * Nothing for items that were never sent.
 * <code>Accept</code> of a <code>QuoteRequest</code>, with a <code>QuoteAuthorization</code> as its <code>result</code>.
-* <code>Follow</code> of each account in <code>$wgFediFeedsAutoFollow</code>, once per feed, when the feed gets an item, whether or not anyone follows the feed. It is recorded in the <code>fedifeeds_following</code> table and not sent again, even if the account stops following back. An administrator can also send a <code>Follow</code>, or an <code>Undo</code> of one, with <code>maintenance/Follow.php</code>. Otherwise a feed follows nothing. This is for a bridge that bridges the accounts following it, such as Bridgy Fed, which bridges an account to Bluesky once it follows <code>@bsky.brid.gy@bsky.brid.gy</code>.
+* <code>Follow</code> of each account in <code>$wgFediFeedsAutoFollow</code>, once per feed, when the feed gets an item, whether or not anyone follows the feed. It is recorded in the <code>fedifeeds_following</code> table and not sent again, even if the account stops following back. Otherwise a feed follows nothing. This is for a bridge that bridges the accounts following it, such as Bridgy Fed, which bridges an account to Bluesky once it follows <code>@bsky.brid.gy@bsky.brid.gy</code>.
 
 <!--T:2-->
 The <code>Note</code> carries text as plain HTML and a link to the item, never wikitext. For <code>category</code> the text is the page's first paragraph. For <code>section</code> it is the section itself, because a heading is often just a time and says little.

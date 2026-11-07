@@ -8,27 +8,21 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use MediaWiki\Extension\FediFeeds\Following;
 use MediaWiki\Extension\FediFeeds\FollowJob;
-use MediaWiki\Extension\FediFeeds\Maintenance\Follow;
 use MediaWiki\Http\GuzzleHttpRequest;
 use MediaWiki\Http\HttpRequestFactory;
-use MediaWiki\Tests\Maintenance\MaintenanceBaseTestCase;
+use MediaWikiIntegrationTestCase;
 
 /**
- * @covers \MediaWiki\Extension\FediFeeds\Maintenance\Follow
  * @covers \MediaWiki\Extension\FediFeeds\Following
  * @covers \MediaWiki\Extension\FediFeeds\FollowJob
  * @group Database
  */
-class FollowTest extends MaintenanceBaseTestCase {
+class FollowingTest extends MediaWikiIntegrationTestCase {
 
 	private const REMOTE = 'https://bridge.example.net/bridge';
 
 	/** @var array Requests the remote server got, as Guzzle's history keeps them */
 	private array $history = [];
-
-	protected function getMaintenanceClass() {
-		return Follow::class;
-	}
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -78,9 +72,7 @@ class FollowTest extends MaintenanceBaseTestCase {
 			self::actorResponse(),
 			new Response( 202 )
 		);
-		$this->maintenance->loadWithArgv( [ $handle, '@bridge@bridge.example.net' ] );
-		$this->maintenance->execute();
-		$this->expectOutputString( "Sent Follow of " . self::REMOTE . " from $handle.\n" );
+		$this->assertSame( self::REMOTE, $this->getFollowing()->send( $handle, '@bridge@bridge.example.net' ) );
 
 		$this->assertCount( 3, $this->history );
 		$this->assertSame(
@@ -125,36 +117,5 @@ class FollowTest extends MaintenanceBaseTestCase {
 		$this->respond( self::actorResponse(), new Response( 401 ) );
 		$this->assertFalse( ( new FollowJob( [ 'feed' => $handle, 'account' => self::REMOTE ] ) )->run() );
 		$this->assertFalse( $this->getFollowing()->has( $handle, self::REMOTE ) );
-	}
-
-	public function testUndoesTheFollowOfAnActorId() {
-		$handle = $this->getHandle();
-		$this->respond( self::actorResponse(), new Response( 202 ), self::actorResponse(), new Response( 202 ) );
-		$this->getFollowing()->send( $handle, self::REMOTE );
-		$this->history = [];
-		$this->maintenance->loadWithArgv( [ $handle, self::REMOTE, '--undo' ] );
-		$this->maintenance->execute();
-		$this->expectOutputString( "Sent Undo of " . self::REMOTE . " from $handle.\n" );
-
-		$this->assertCount( 2, $this->history );
-		$actor = "https://fedi.example.org/actors/$handle";
-		$activity = json_decode( (string)$this->history[1]['request']->getBody(), true );
-		$this->assertSame( 'Undo', $activity['type'] );
-		$this->assertSame( "$actor#follows/" . sha1( self::REMOTE ) . '/undo', $activity['id'] );
-		$this->assertSame( [
-			'id' => "$actor#follows/" . sha1( self::REMOTE ),
-			'type' => 'Follow',
-			'actor' => $actor,
-			'object' => self::REMOTE,
-		], $activity['object'] );
-		$this->assertFalse( $this->getFollowing()->has( $handle, self::REMOTE ) );
-	}
-
-	public function testRefusesAnUnknownFeed() {
-		$this->respond();
-		$this->maintenance->loadWithArgv( [ 'category_999999', self::REMOTE ] );
-		$this->expectCallToFatalError();
-		$this->expectOutputRegex( '/No such feed: category_999999/' );
-		$this->maintenance->execute();
 	}
 }

@@ -37,8 +37,8 @@ class Following {
 	}
 
 	/**
-	 * Whether the feed has sent a follow of the account, as written in $autoFollow or given to
-	 * maintenance/Follow.php. A leading @ of user@host is ignored.
+	 * Whether the feed has sent a follow of the account, as written in $autoFollow. A leading
+	 * @ of user@host is ignored.
 	 */
 	public function has( string $handle, string $account ): bool {
 		$account = ltrim( $account, '@' );
@@ -50,15 +50,14 @@ class Following {
 	}
 
 	/**
-	 * Sends the feed's Follow of the account, or with $undo its Undo, and records it.
+	 * Sends the feed's Follow of the account and records it.
 	 *
 	 * @param string $handle The feed's handle
 	 * @param string $account user@host, or an actor id
-	 * @param bool $undo
 	 * @return string The id of the actor followed
 	 * @throws RuntimeException When the account is not found or the delivery fails
 	 */
-	public function send( string $handle, string $account, bool $undo = false ): string {
+	public function send( string $handle, string $account ): string {
 		$account = ltrim( $account, '@' );
 		$url = str_starts_with( $account, 'https://' ) ? $account : $this->resolve( $account );
 		if ( $url === null ) {
@@ -78,18 +77,15 @@ class Following {
 			'actor' => $actorId,
 			'object' => $target,
 		];
-		$activity = $undo
-			? [ 'id' => $follow['id'] . '/undo', 'type' => 'Undo', 'actor' => $actorId, 'object' => $follow ]
-			: $follow;
 		$job = new DeliveryJob( [
 			'inbox' => $inbox,
 			'keyId' => "$actorId#main-key",
-			'activity' => [ '@context' => 'https://www.w3.org/ns/activitystreams' ] + $activity,
+			'activity' => [ '@context' => 'https://www.w3.org/ns/activitystreams' ] + $follow,
 		] );
 		if ( !$job->run() ) {
 			throw new RuntimeException( $job->getLastError() );
 		}
-		$undo ? $this->remove( $handle, $account ) : $this->add( $handle, $account );
+		$this->add( $handle, $account );
 		return $target;
 	}
 
@@ -99,13 +95,6 @@ class Following {
 			->insertInto( 'fedifeeds_following' )
 			->ignore()
 			->row( [ 'fg_feed' => $handle, 'fg_account' => $account, 'fg_timestamp' => $dbw->timestamp() ] )
-			->caller( __METHOD__ )->execute();
-	}
-
-	private function remove( string $handle, string $account ): void {
-		$this->dbProvider->getPrimaryDatabase()->newDeleteQueryBuilder()
-			->deleteFrom( 'fedifeeds_following' )
-			->where( [ 'fg_feed' => $handle, 'fg_account' => $account ] )
 			->caller( __METHOD__ )->execute();
 	}
 
