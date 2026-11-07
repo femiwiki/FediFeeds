@@ -37,8 +37,8 @@ class Following {
 	}
 
 	/**
-	 * Whether the feed has sent a follow of the account, as written in $autoFollow. A leading
-	 * @ of user@host is ignored.
+	 * Whether the feed has sent a follow of the account, as written in $autoFollow. A
+	 * leading @ of user@host is ignored.
 	 */
 	public function has( string $handle, string $account ): bool {
 		$account = ltrim( $account, '@' );
