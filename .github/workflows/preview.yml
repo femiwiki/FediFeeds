@@ -1,5 +1,6 @@
 ---
 name: Preview
+# Outside the required gate: publishes a docs preview, checks nothing
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
