@@ -7,6 +7,7 @@
 * <code>Delete</code> when an item that was sent as <code>Create</code> goes away, for example when the page is deleted or the section removed.
 * Nothing for items that were never sent.
 * <code>Accept</code> of a <code>QuoteRequest</code>, with a <code>QuoteAuthorization</code> as its <code>result</code>.
+* <code>Follow</code> of a remote account, and <code>Undo</code> of it, only when an administrator runs <code>maintenance/Follow.php</code>. A feed follows nothing by itself. This is for a bridge that bridges the accounts following it, such as Bridgy Fed, which bridges an account to Bluesky once it follows <code>@bsky.brid.gy@bsky.brid.gy</code>.
 
 <!--T:2-->
 The <code>Note</code> carries text as plain HTML and a link to the item, never wikitext. For <code>category</code> the text is the page's first paragraph. For <code>section</code> it is the section itself, because a heading is often just a time and says little.
@@ -48,6 +49,7 @@ The outbox is an <code>OrderedCollection</code> of <code>Create</code> activitie
 == Received ==
 * <code>Follow</code> is accepted and stored against the feed it names. <code>Undo</code> of a <code>Follow</code> removes it.
 * <code>Like</code> and <code>Announce</code> of one of our notes are stored against its item, once per actor, item and kind. A <code>Like</code> with <code>content</code> and an <code>EmojiReact</code> count as likes. <code>Undo</code> of one removes it. Those of anything else are accepted and dropped.
+* <code>Accept</code> and <code>Reject</code> of a feed's <code>Follow</code> are accepted and dropped, since nothing is stored about what a feed follows.
 * Replies, meaning a <code>Create</code> whose <code>inReplyTo</code> is one of our notes, are accepted and dropped.
 * <code>QuoteRequest</code> for one of our notes is authorized. <code>Undo</code> of it, or <code>Delete</code> of the quoting post, removes the authorization.
 * A <code>Delete</code> for an actor that neither follows, quotes, likes nor shares anything is dropped before its signature is checked.
