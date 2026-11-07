@@ -308,5 +308,42 @@
 			}
 		],
 		"pk": ["fa_id"]
+	},
+	{
+		"name": "fedifeeds_following",
+		"comment": "Remote accounts a feed sent a Follow of",
+		"columns": [
+			{
+				"name": "fg_id",
+				"type": "integer",
+				"options": { "unsigned": true, "notnull": true, "autoincrement": true }
+			},
+			{
+				"name": "fg_feed",
+				"comment": "Handle of the feed, such as category_4521",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "fg_account",
+				"comment": "The account followed as it was given: user@host, or an actor id",
+				"type": "binary",
+				"options": { "notnull": true, "length": 255 }
+			},
+			{
+				"name": "fg_timestamp",
+				"comment": "When the Follow was sent",
+				"type": "mwtimestamp",
+				"options": { "notnull": true }
+			}
+		],
+		"indexes": [
+			{
+				"name": "fg_feed_account",
+				"columns": ["fg_feed", "fg_account"],
+				"unique": true
+			}
+		],
+		"pk": ["fg_id"]
 	}
 ]

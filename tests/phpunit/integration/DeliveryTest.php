@@ -6,6 +6,7 @@ use MediaWiki\CommentStore\CommentStoreComment;
 use MediaWiki\Content\WikitextContent;
 use MediaWiki\Extension\FediFeeds\DeliveryJob;
 use MediaWiki\Extension\FediFeeds\Feed;
+use MediaWiki\Extension\FediFeeds\FollowJob;
 use MediaWiki\Extension\FediFeeds\Items;
 use MediaWiki\Extension\FediFeeds\Notes;
 use MediaWiki\Storage\EditResult;
@@ -78,6 +79,27 @@ class DeliveryTest extends MediaWikiIntegrationTestCase {
 		$this->savePage( 'First post', "Hello.\n\n[[Category:Posts]]" );
 		$this->savePage( 'First post', "Hello again.\n\n[[Category:Posts]]" );
 		$this->assertCount( 1, $this->getDeliveries() );
+	}
+
+	public function testFirstItemQueuesTheAutoFollows() {
+		$this->overrideConfigValue( 'FediFeedsAutoFollow', [ 'bot@bridge.example', 'https://other.example/bot' ] );
+		$feed = $this->newFeed( 'Category:Posts', '{{FEDIFEEDSNAME:Posts}}' );
+		$this->getDb()->newInsertQueryBuilder()
+			->insertInto( 'fedifeeds_following' )
+			->row( [ 'fg_feed' => $feed->getHandle(), 'fg_account' => 'https://other.example/bot',
+				'fg_timestamp' => $this->getDb()->timestamp() ] )
+			->caller( __METHOD__ )->execute();
+
+		// Without followers too, and only for what the feed has not followed yet
+		$this->savePage( 'First post', "Hello.\n\n[[Category:Posts]]" );
+		$this->assertSame( [], $this->getDeliveries() );
+		$queue = $this->getServiceContainer()->getJobQueueGroup()->get( FollowJob::TYPE );
+		$params = [];
+		foreach ( $queue->getAllQueuedJobs() as $job ) {
+			$params[] = $job->getParams();
+		}
+		$this->assertSame( [ [ 'feed' => $feed->getHandle(), 'account' => 'bot@bridge.example' ] ],
+			array_map( static fn ( $p ) => [ 'feed' => $p['feed'], 'account' => $p['account'] ], $params ) );
 	}
 
 	public function testHashtags() {
