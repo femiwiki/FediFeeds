@@ -6,6 +6,8 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
+use MediaWiki\Extension\FediFeeds\Following;
+use MediaWiki\Extension\FediFeeds\FollowJob;
 use MediaWiki\Extension\FediFeeds\Maintenance\Follow;
 use MediaWiki\Http\GuzzleHttpRequest;
 use MediaWiki\Http\HttpRequestFactory;
@@ -13,6 +15,8 @@ use MediaWiki\Tests\Maintenance\MaintenanceBaseTestCase;
 
 /**
  * @covers \MediaWiki\Extension\FediFeeds\Maintenance\Follow
+ * @covers \MediaWiki\Extension\FediFeeds\Following
+ * @covers \MediaWiki\Extension\FediFeeds\FollowJob
  * @group Database
  */
 class FollowTest extends MaintenanceBaseTestCase {
@@ -95,11 +99,39 @@ class FollowTest extends MaintenanceBaseTestCase {
 			'object' => self::REMOTE,
 		], json_decode( (string)$post->getBody(), true ) );
 		$this->assertStringContainsString( "keyId=\"$actor#main-key\"", $post->getHeaderLine( 'Signature' ) );
+		$this->assertTrue( $this->getFollowing()->has( $handle, 'bridge@bridge.example.net' ),
+			'the follow is recorded without the leading @' );
+	}
+
+	private function getFollowing(): Following {
+		return $this->getServiceContainer()->getService( 'FediFeeds.Following' );
+	}
+
+	public function testJobSendsAFollowOnce() {
+		$handle = $this->getHandle();
+		$this->respond( self::actorResponse(), new Response( 202 ) );
+		$job = new FollowJob( [ 'feed' => $handle, 'account' => self::REMOTE ] );
+		$this->assertTrue( $job->run() );
+		$this->assertCount( 2, $this->history );
+		$this->assertTrue( $this->getFollowing()->has( $handle, self::REMOTE ) );
+
+		// Recorded, it fetches and sends nothing
+		$this->assertTrue( ( new FollowJob( [ 'feed' => $handle, 'account' => self::REMOTE ] ) )->run() );
+		$this->assertCount( 2, $this->history );
+	}
+
+	public function testJobRetriesARefusedFollow() {
+		$handle = $this->getHandle();
+		$this->respond( self::actorResponse(), new Response( 401 ) );
+		$this->assertFalse( ( new FollowJob( [ 'feed' => $handle, 'account' => self::REMOTE ] ) )->run() );
+		$this->assertFalse( $this->getFollowing()->has( $handle, self::REMOTE ) );
 	}
 
 	public function testUndoesTheFollowOfAnActorId() {
 		$handle = $this->getHandle();
-		$this->respond( self::actorResponse(), new Response( 202 ) );
+		$this->respond( self::actorResponse(), new Response( 202 ), self::actorResponse(), new Response( 202 ) );
+		$this->getFollowing()->send( $handle, self::REMOTE );
+		$this->history = [];
 		$this->maintenance->loadWithArgv( [ $handle, self::REMOTE, '--undo' ] );
 		$this->maintenance->execute();
 		$this->expectOutputString( "Sent Undo of " . self::REMOTE . " from $handle.\n" );
@@ -115,6 +147,7 @@ class FollowTest extends MaintenanceBaseTestCase {
 			'actor' => $actor,
 			'object' => self::REMOTE,
 		], $activity['object'] );
+		$this->assertFalse( $this->getFollowing()->has( $handle, self::REMOTE ) );
 	}
 
 	public function testRefusesAnUnknownFeed() {
