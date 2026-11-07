@@ -4,6 +4,7 @@ use MediaWiki\Context\RequestContext;
 use MediaWiki\Extension\FediFeeds\Actors;
 use MediaWiki\Extension\FediFeeds\FeedLookup;
 use MediaWiki\Extension\FediFeeds\Followers;
+use MediaWiki\Extension\FediFeeds\Following;
 use MediaWiki\Extension\FediFeeds\Items;
 use MediaWiki\Extension\FediFeeds\Notes;
 use MediaWiki\Extension\FediFeeds\Quotes;
@@ -23,6 +24,15 @@ return [
 	},
 	'FediFeeds.Followers' => static function ( MediaWikiServices $services ): Followers {
 		return new Followers( $services->getConnectionProvider() );
+	},
+	'FediFeeds.Following' => static function ( MediaWikiServices $services ): Following {
+		return new Following(
+			$services->getConnectionProvider(),
+			$services->getHttpRequestFactory(),
+			$services->getService( 'FediFeeds.RemoteKeys' ),
+			$services->getService( 'FediFeeds.Notes' )->actors,
+			(array)$services->getMainConfig()->get( 'FediFeedsAutoFollow' ),
+		);
 	},
 	'FediFeeds.Items' => static function ( MediaWikiServices $services ): Items {
 		return new Items( $services->getConnectionProvider() );

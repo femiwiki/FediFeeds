@@ -35,7 +35,8 @@
 				"ParserOutputAccess",
 				"JobQueueGroup",
 				"RevisionLookup",
-				"FediFeeds.Translations"
+				"FediFeeds.Translations",
+				"FediFeeds.Following"
 			]
 		},
 		"pageDisplay": {
@@ -64,6 +65,7 @@
 	},
 	"JobClasses": {
 		"fedifeedsDeliver": "MediaWiki\\Extension\\FediFeeds\\DeliveryJob",
+		"fedifeedsFollow": "MediaWiki\\Extension\\FediFeeds\\FollowJob",
 		"fedifeedsFetchActor": "MediaWiki\\Extension\\FediFeeds\\FetchActorJob",
 		"fedifeedsPurgeActor": "MediaWiki\\Extension\\FediFeeds\\PurgeActorJob"
 	},
@@ -170,6 +172,10 @@
 		"FediFeedsActorBase": {
 			"value": null,
 			"description": "URL that a handle is appended to for the actor id, such as \"https://fedi.example.org/actors/\". The web server has to route it to the REST route /fedifeeds/actors/{handle}. Null uses that REST route directly."
+		},
+		"FediFeedsAutoFollow": {
+			"value": [],
+			"description": "Accounts that every feed follows once it has an item, as user@host or as actor ids, such as [\"bsky.brid.gy@bsky.brid.gy\"] for Bridgy Fed, which bridges the accounts that follow it to Bluesky. A job sends each feed's Follow once, when the feed gets an item, and records it in fedifeeds_following, so it is not sent again if the account stops following back. Taking an account out sends no Undo."
 		},
 		"FediFeedsIcon": {
 			"value": null,

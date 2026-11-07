@@ -34,6 +34,7 @@ class DeliveryHooks implements PageSaveCompleteHook {
 		private readonly JobQueueGroup $jobQueueGroup,
 		private readonly RevisionLookup $revisionLookup,
 		private readonly Translations $translations,
+		private readonly Following $following,
 	) {
 	}
 
@@ -216,6 +217,9 @@ class DeliveryHooks implements PageSaveCompleteHook {
 	 * which is none without followers.
 	 */
 	private function deliver( Feed $feed, Item $item, ?int $updatedIn = null ): void {
+		if ( $updatedIn === null ) {
+			$this->autoFollow( $feed );
+		}
 		$inboxes = $this->followers->getInboxes( $feed );
 		if ( !$inboxes ) {
 			return;
@@ -229,5 +233,22 @@ class DeliveryHooks implements PageSaveCompleteHook {
 			$jobs[] = new DeliveryJob( [ 'inbox' => $inbox, 'keyId' => "$actorId#main-key", 'activity' => $activity ] );
 		}
 		$this->jobQueueGroup->lazyPush( $jobs );
+	}
+
+	/**
+	 * Queues the feed's Follow of each account in $wgFediFeedsAutoFollow that it has not sent
+	 * yet, which is for a feed's first item, whether or not anyone follows the feed.
+	 */
+	private function autoFollow( Feed $feed ): void {
+		$handle = $feed->getHandle();
+		$jobs = [];
+		foreach ( $this->following->autoFollow as $account ) {
+			if ( !$this->following->has( $handle, $account ) ) {
+				$jobs[] = new FollowJob( [ 'feed' => $handle, 'account' => $account ] );
+			}
+		}
+		if ( $jobs ) {
+			$this->jobQueueGroup->lazyPush( $jobs );
+		}
 	}
 }
