@@ -86,13 +86,8 @@ class InboxHandler extends Handler {
 					$this->followers->remove( $feed, $actor );
 				}
 				// A withdrawn quote request, given as itself or by its id
-				$request = self::getId( $object );
-				if ( !$feed && $request !== null
-					&& ( !is_array( $object ) || $objectType === 'QuoteRequest' )
-				) {
-					foreach ( $this->quotes->removeByRequest( $actor, $request ) as $post ) {
-						$this->reactions->removeByActivity( $actor, $post );
-					}
+				if ( !$feed && ( !is_array( $object ) || $objectType === 'QuoteRequest' ) ) {
+					$this->undoQuoteRequest( $object, $actor );
 				}
 				// A withdrawn Like or Announce, given as itself or by its id
 				if ( !$feed && ( $objectType === null || isset( Reactions::ACTIVITY_TYPES[$objectType] ) ) ) {
@@ -109,8 +104,7 @@ class InboxHandler extends Handler {
 				// A deleted quoting post loses its authorization; a deleted actor was handled above
 				$object = self::getId( $activity['object'] ?? null );
 				if ( $object !== null ) {
-					$this->quotes->removeByPost( $actor, $object );
-					$this->reactions->removeByActivity( $actor, $object );
+					$this->removeQuote( $actor, $object );
 				}
 				return $this->accepted();
 			default:
@@ -121,6 +115,27 @@ class InboxHandler extends Handler {
 				// Replies and the rest are taken and dropped, as are reactions to what is not ours
 				return $this->accepted();
 		}
+	}
+
+	/**
+	 * Removes what the signer's quote request, given as itself or by its id, authorized.
+	 *
+	 * @param mixed $request
+	 * @param string $actor The signer
+	 */
+	private function undoQuoteRequest( mixed $request, string $actor ): void {
+		$id = self::getId( $request );
+		foreach ( $id !== null ? $this->quotes->removeByRequest( $actor, $id ) : [] as $post ) {
+			$this->reactions->removeByActivity( $actor, $post );
+		}
+	}
+
+	/**
+	 * Removes the authorization of the signer's quoting post, and the quote it counted as.
+	 */
+	private function removeQuote( string $actor, string $post ): void {
+		$this->quotes->removeByPost( $actor, $post );
+		$this->reactions->removeByActivity( $actor, $post );
 	}
 
 	/**
