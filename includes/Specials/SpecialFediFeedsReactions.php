@@ -10,7 +10,7 @@ use MediaWiki\Title\Title;
 use Wikimedia\Rdbms\IConnectionProvider;
 
 /**
- * Special:FediFeedsReactions/<page> lists the Likes and Announces of the page's notes
+ * Special:FediFeedsReactions/<page> lists the Likes, Announces and quotes of the page's notes
  */
 class SpecialFediFeedsReactions extends SpecialPage {
 
@@ -49,7 +49,7 @@ class SpecialFediFeedsReactions extends SpecialPage {
 		);
 		$counts = $this->reactions->countForPage( $page->getId() );
 		$out->addHTML( $this->msg( 'fedifeeds-reactions-totals' )
-			->numParams( $counts[Reactions::ANNOUNCE], $counts[Reactions::LIKE] )->parseAsBlock() );
+			->numParams( $counts[Reactions::ANNOUNCE], $counts[Reactions::LIKE], $counts[Reactions::QUOTE] )->parseAsBlock() );
 
 		$pager = new ReactionsPager( $this->getContext(), $this->getLinkRenderer(), $this->dbProvider,
 			$this->pageStore, $page->getId() );

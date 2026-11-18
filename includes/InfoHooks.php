@@ -10,7 +10,7 @@ use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Title\Title;
 
 /**
- * Shows on action=info how many Announces and Likes the notes of a page's items got, and the
+ * Shows on action=info how many Announces, Likes and quotes the notes of a page's items got, and the
  * accounts that gave them most recently
  */
 class InfoHooks implements InfoActionHook {
@@ -48,9 +48,12 @@ class InfoHooks implements InfoActionHook {
 			}
 		}
 		$actorCounts = array_sum( $counts ) ? $this->reactions->countActorsForPage( $pageId ) : $counts;
-		foreach ( [ Reactions::ANNOUNCE => 'fedifeeds-info-announces', Reactions::LIKE => 'fedifeeds-info-likes' ]
-			as $type => $label
-		) {
+		$labels = [
+			Reactions::ANNOUNCE => 'fedifeeds-info-announces',
+			Reactions::LIKE => 'fedifeeds-info-likes',
+			Reactions::QUOTE => 'fedifeeds-info-quotes',
+		];
+		foreach ( $labels as $type => $label ) {
 			$pageInfo['header-basic'][] = [
 				$context->msg( $label ),
 				$this->getValue( $context, $title, $type, $counts[$type], $actorCounts[$type] ),

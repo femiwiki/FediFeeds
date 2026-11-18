@@ -90,7 +90,9 @@ class InboxHandler extends Handler {
 				if ( !$feed && $request !== null
 					&& ( !is_array( $object ) || $objectType === 'QuoteRequest' )
 				) {
-					$this->quotes->removeByRequest( $actor, $request );
+					foreach ( $this->quotes->removeByRequest( $actor, $request ) as $post ) {
+						$this->reactions->removeByActivity( $actor, $post );
+					}
 				}
 				// A withdrawn Like or Announce, given as itself or by its id
 				if ( !$feed && ( $objectType === null || isset( Reactions::ACTIVITY_TYPES[$objectType] ) ) ) {
@@ -108,6 +110,7 @@ class InboxHandler extends Handler {
 				$object = self::getId( $activity['object'] ?? null );
 				if ( $object !== null ) {
 					$this->quotes->removeByPost( $actor, $object );
+					$this->reactions->removeByActivity( $actor, $object );
 				}
 				return $this->accepted();
 			default:
@@ -246,6 +249,8 @@ class InboxHandler extends Handler {
 		if ( $this->notes->interactions ) {
 			$id = $this->quotes->add( $feed, $this->notes->getItemId( $feed, $item ), $actor, $post, $request );
 			$answer['result'] = $this->notes->getQuoteAuthorizationId( $feed, $id );
+			// Counted with the Likes and Announces, so that action=info and the special page show it
+			$this->reactions->add( $feed, $item->page->getId(), $item->key, Reactions::QUOTE, $actor, $post );
 		} else {
 			$answer['id'] = "$actorId#rejects/quote_requests/" . sha1( $request );
 			$answer['type'] = 'Reject';

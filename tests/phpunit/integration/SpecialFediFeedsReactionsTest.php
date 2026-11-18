@@ -76,7 +76,7 @@ class SpecialFediFeedsReactionsTest extends SpecialPageTestBase {
 	public function testGroupsByNoteAndNamesCachedAccounts() {
 		$this->setUpReactions();
 		[ $html ] = $this->executeSpecialPage( 'Post', null, 'qqx' );
-		$this->assertStringContainsString( '(fedifeeds-reactions-totals: 1, 3)', $html );
+		$this->assertStringContainsString( '(fedifeeds-reactions-totals: 1, 3, 0)', $html );
 		$this->assertSame( [
 			'Part(fedifeeds-reactions-path-separator)Sub' => [ '(fedifeeds-reactions-like) Alice' ],
 			'(fedifeeds-reactions-section-nth: B, 2)' => [
