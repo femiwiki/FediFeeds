@@ -5,6 +5,7 @@ namespace MediaWiki\Extension\FediFeeds\Tests;
 use MediaWiki\Context\RequestContext;
 use MediaWiki\Extension\FediFeeds\Feed;
 use MediaWiki\Extension\FediFeeds\InfoHooks;
+use MediaWiki\Extension\FediFeeds\Item;
 use MediaWiki\Extension\FediFeeds\Items;
 use MediaWiki\Extension\FediFeeds\Reactions;
 use MediaWiki\Extension\FediFeeds\RemoteActors;
@@ -14,6 +15,7 @@ use MediaWikiIntegrationTestCase;
 /**
  * @covers \MediaWiki\Extension\FediFeeds\InfoHooks
  * @covers \MediaWiki\Extension\FediFeeds\Items
+ * @covers \MediaWiki\Extension\FediFeeds\Notes
  * @covers \MediaWiki\Extension\FediFeeds\Reactions
  * @covers \MediaWiki\Extension\FediFeeds\RemoteActors
  * @group Database
@@ -21,6 +23,9 @@ use MediaWikiIntegrationTestCase;
 class InfoTest extends MediaWikiIntegrationTestCase {
 
 	private const REMOTE = 'https://remote.example/users/';
+
+	/** The modules that the last getRows() added */
+	private array $modules = [];
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -52,7 +57,9 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 		$pageInfo = [ 'header-basic' => [] ];
 		$services = $this->getServiceContainer();
 		( new InfoHooks( $this->getItems(), $this->getReactions(), $this->getRemoteActors(),
-			$services->getLinkRenderer() ) )->onInfoAction( $context, $pageInfo );
+			$services->getLinkRenderer(), $services->getService( 'FediFeeds.Notes' ), $services->getPageStore() )
+		)->onInfoAction( $context, $pageInfo );
+		$this->modules = $context->getOutput()->getModules();
 		$rows = [];
 		foreach ( $pageInfo['header-basic'] as [ $label, $value ] ) {
 			$rows[$label->getKey()] = $value;
@@ -66,7 +73,7 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 	 * @return array<string,string>
 	 */
 	private function getTotals( string $title ): array {
-		return array_map( static fn ( $value ) => explode( '(colon-separator)', $value )[0],
+		return array_map( static fn ( $value ) => preg_split( '/\((?:colon|pipe)-separator\)/', $value )[0],
 			$this->getRows( $title ) );
 	}
 
@@ -186,9 +193,11 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 		$reactions->add( $category, $pageId, '', Reactions::ANNOUNCE, self::REMOTE . 'b', '' );
 		$reactions->add( $category, $pageId, '', Reactions::LIKE, self::REMOTE . 'c', '' );
 		$rows = $this->getRows( 'Post', 'ko' );
-		$this->assertMatchesRegularExpression( '#^2회: <a [^>]+>가</a> 외 1명 \(<a [^>]+>모두 보기</a>\)$#',
+		$this->assertMatchesRegularExpression(
+			'#^2회: <a [^>]+>가</a> 외 1명 \(<a [^>]+>모두 보기</a>\) \| <a [^>]+>내 계정으로 공유하기</a>$#',
 			$rows['fedifeeds-info-announces'] );
-		$this->assertMatchesRegularExpression( '#^1회: 1명 \(<a [^>]+>모두 보기</a>\)$#',
+		$this->assertMatchesRegularExpression(
+			'#^1회: 1명 \(<a [^>]+>모두 보기</a>\) \| <a [^>]+>내 계정으로 좋아요하기</a>$#',
 			$rows['fedifeeds-info-likes'] );
 	}
 
@@ -209,5 +218,31 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( [ 'user12', 'user11', 'user10', 'user9', 'user8', 'user7', 'user6', 'user5',
 			'user4', 'user3' ], $m[1] );
 		$this->assertStringContainsString( '(fedifeeds-info-others: 2)', $likes );
+	}
+
+	public function testLinksToGiveAReactionFromTheReadersServer() {
+		[ $category, $pageId ] = $this->newCategoryItem();
+		$noteId = $this->getServiceContainer()->getService( 'FediFeeds.Notes' )
+			->getNoteId( $category, new Item( $this->getServiceContainer()->getPageStore()->getPageById( $pageId ) ) );
+		$rows = $this->getRows( 'Post' );
+		foreach ( [ 'announces' => 'announce', 'likes' => 'like' ] as $row => $type ) {
+			$this->assertStringEndsWith( '(pipe-separator)<a href="#" role="button" class="ext-fedifeeds-interact" '
+				. 'data-note="' . htmlspecialchars( $noteId ) . "\">(fedifeeds-info-interact-$type)</a>",
+				$rows["fedifeeds-info-$row"] );
+		}
+		$this->assertSame( [ 'ext.fediFeeds.interact' ], $this->modules );
+	}
+
+	public function testNoLinksWithoutANote() {
+		[ $category, $pageId ] = $this->newCategoryItem();
+		$this->getReactions()->add( $category, $pageId, '', Reactions::LIKE, self::REMOTE . 'a', '' );
+		// The category stops publishing, so its note is gone though its reactions stay
+		$this->editPage( 'Category:Posts', 'Text' );
+		$this->runDeferredUpdates();
+		// Drop the page properties that the services cached
+		$this->resetServices();
+		$this->assertSame( self::totals( 0, 1 ), $this->getTotals( 'Post' ) );
+		$this->assertStringNotContainsString( 'ext-fedifeeds-interact', implode( '', $this->getRows( 'Post' ) ) );
+		$this->assertSame( [], $this->modules );
 	}
 }

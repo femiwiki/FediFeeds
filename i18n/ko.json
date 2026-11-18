@@ -32,5 +32,9 @@
 	"fedifeeds-reactions-section-unknown": "제목 경로가 긴 문단",
 	"fedifeeds-reactions-time": "시각",
 	"fedifeeds-reactions-type": "반응",
-	"fedifeeds-reactions-account": "계정"
+	"fedifeeds-reactions-account": "계정",
+	"fedifeeds-info-interact-announce": "내 계정으로 공유하기",
+	"fedifeeds-info-interact-like": "내 계정으로 좋아요하기",
+	"fedifeeds-interact-prompt": "연합우주 계정이 있는 서버 주소(예: mastodon.social)나 계정 핸들을 입력하면, 그 서버에서 이 문서의 글을 열어 공유하거나 좋아요할 수 있습니다.",
+	"fedifeeds-interact-invalid": "서버 주소가 아닙니다."
 }

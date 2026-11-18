@@ -277,4 +277,20 @@ class NotesTest extends MediaWikiIntegrationTestCase {
 			$this->assertSame( 404, $ex->getCode(), $item );
 		}
 	}
+
+	public function testNewestNoteOfAPage() {
+		$text = "{{FEDIFEEDSNAME:Releases|section}}\n\nAbout the releases.\n";
+		$page = $this->savePage( 'Release notes', $text );
+		$record = $this->getServiceContainer()->getPageStore()->getPageById( $page );
+		$this->assertNull( $this->getNotes()->getNewestNoteId( $record ) );
+
+		$this->savePage( 'Release notes', "$text\n== 2026 ==\nThe first release.\n" );
+		$this->savePage( 'Release notes', "$text\n== 2026 ==\nThe first release.\n\n== Café & co. ==\nDone.\n" );
+		$actor = "https://fedi.example.org/actors/section_$page";
+		$this->assertSame( "$actor/notes/Q2Fmw6kgJiBjby4", $this->getNotes()->getNewestNoteId( $record ) );
+
+		// A section removed from the page has no note, so the one before it is the newest
+		$this->savePage( 'Release notes', "$text\n== 2026 ==\nThe first release.\n" );
+		$this->assertSame( "$actor/notes/MjAyNg", $this->getNotes()->getNewestNoteId( $record ) );
+	}
 }

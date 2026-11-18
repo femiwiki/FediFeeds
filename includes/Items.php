@@ -121,6 +121,27 @@ class Items {
 	}
 
 	/**
+	 * The items of the page in any feed, newest first.
+	 *
+	 * @return array{feed: string, key: string}[]
+	 */
+	public function getRecentOfPage( int $pageId, int $limit ): array {
+		$rows = $this->dbProvider->getReplicaDatabase()->newSelectQueryBuilder()
+			->select( [ 'fi_feed', 'fi_key' ] )
+			->from( 'fedifeeds_item' )
+			->where( [ 'fi_page' => $pageId ] )
+			->orderBy( [ 'fi_timestamp', 'fi_id' ], SelectQueryBuilder::SORT_DESC )
+			->limit( $limit )
+			->caller( __METHOD__ )->fetchResultSet();
+		$items = [];
+		foreach ( $rows as $row ) {
+			'@phan-var stdClass $row';
+			$items[] = [ 'feed' => (string)$row->fi_feed, 'key' => (string)$row->fi_key ];
+		}
+		return $items;
+	}
+
+	/**
 	 * Whether any of the feeds recorded an item of the page.
 	 *
 	 * @param int $pageId
