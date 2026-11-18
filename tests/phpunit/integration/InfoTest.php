@@ -96,10 +96,11 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 		return $actor;
 	}
 
-	private static function totals( int $announces, int $likes ): array {
+	private static function totals( int $announces, int $likes, int $quotes = 0 ): array {
 		return [
 			'fedifeeds-info-announces' => "(fedifeeds-info-times: $announces)",
 			'fedifeeds-info-likes' => "(fedifeeds-info-times: $likes)",
+			'fedifeeds-info-quotes' => "(fedifeeds-info-times: $quotes)",
 		];
 	}
 
@@ -149,7 +150,8 @@ class InfoTest extends MediaWikiIntegrationTestCase {
 		$reactions->add( $category, $pageId, '', Reactions::ANNOUNCE, self::REMOTE . 'a', '' );
 		$reactions->add( $section, $pageId, "A\n1", Reactions::LIKE, self::REMOTE . 'a', '' );
 		$reactions->add( $section, $pageId, "B\n1", Reactions::ANNOUNCE, self::REMOTE . 'c', '' );
-		$this->assertSame( self::totals( 2, 3 ), $this->getTotals( 'Post' ) );
+		$reactions->add( $section, $pageId, "B\n1", Reactions::QUOTE, self::REMOTE . 'c', self::REMOTE . 'c/1' );
+		$this->assertSame( self::totals( 2, 3, 1 ), $this->getTotals( 'Post' ) );
 		// The category's own page holds no item
 		$this->assertSame( [], $this->getRows( 'Category:Posts' ) );
 	}

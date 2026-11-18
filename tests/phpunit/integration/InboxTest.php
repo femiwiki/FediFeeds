@@ -385,7 +385,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		// An Announce may embed the note rather than name it
 		$announce = self::newReaction( 'Announce', [ 'id' => $noteId, 'type' => 'Note' ] );
 		$this->assertSame( 202, $this->post( $announce, $feed->getHandle() )->getStatusCode() );
-		$this->assertSame( [ 'like' => 1, 'announce' => 1 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 1, 'announce' => 1, 'quote' => 0 ], $this->countReactions( $pageId ) );
 		$this->newSelectQueryBuilder()
 			->select( [ 'fr_actor', 'fr_activity' ] )
 			->from( 'fedifeeds_reaction' )
@@ -403,7 +403,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->keys['signer'] = 'https://other.example/users/b';
 		$this->post( self::newReaction( 'EmojiReact', $noteId, 'https://other.example/users/b' )
 			+ [ 'content' => '👍' ], null );
-		$this->assertSame( [ 'like' => 2, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 2, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	public function testDuplicatesCountOnce() {
@@ -413,7 +413,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->post( self::newReaction( 'EmojiReact', $noteId ) + [ 'content' => '👍' ], null );
 		$this->post( self::newReaction( 'Announce', $noteId ), null );
 		$this->post( self::newReaction( 'Announce', $noteId ), null );
-		$this->assertSame( [ 'like' => 1, 'announce' => 1 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 1, 'announce' => 1, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	public function testUndoRemovesTheReaction() {
@@ -422,11 +422,11 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->post( self::newReaction( 'Announce', $noteId ), null );
 		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE, 'object' => self::newReaction( 'Like', $noteId ) ];
 		$this->assertSame( 202, $this->post( $undo, null )->getStatusCode() );
-		$this->assertSame( [ 'like' => 0, 'announce' => 1 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 0, 'announce' => 1, 'quote' => 0 ], $this->countReactions( $pageId ) );
 		// Named by its id only
 		$undo['object'] = self::REMOTE . '#announce/1';
 		$this->post( $undo, null );
-		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	public function testUndoFallsBackToTheKindAndObject() {
@@ -437,7 +437,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE,
 			'object' => [ 'id' => self::REMOTE . '#other', 'type' => 'Like', 'object' => $noteId ] ];
 		$this->post( $undo, null );
-		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	public function testUndoTouchesOnlyTheSignersReaction() {
@@ -450,7 +450,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 			'object' => self::newReaction( 'Like', $noteId ),
 		];
 		$this->post( $undo, null );
-		$this->assertSame( [ 'like' => 1, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 1, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	public function testReactionsToWhatIsNotOursAreDropped() {
@@ -466,14 +466,14 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		foreach ( $objects as $object ) {
 			$this->assertSame( 202, $this->post( self::newReaction( 'Like', $object ), null )->getStatusCode() );
 		}
-		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	public function testReactionWithABadSignature() {
 		[ , $pageId, $noteId ] = $this->newItemNote();
 		$this->keys['signer'] = 'https://other.example/users/b';
 		$this->assertSame( 401, $this->post( self::newReaction( 'Like', $noteId ), null )->getStatusCode() );
-		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	private function runPurgeJobs(): void {
@@ -488,7 +488,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$delete = [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ];
 		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
 		$this->runPurgeJobs();
-		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	public function testUnverifiedDeleteOfAReactorPurgesOnlyWhenTheActorIsGone() {
@@ -501,12 +501,12 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->installMockHttp( $this->makeFakeHttpRequest( '{}', 200 ) );
 		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
 		$this->runPurgeJobs();
-		$this->assertSame( [ 'like' => 1, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 1, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 
 		$this->installMockHttp( $this->makeFakeHttpRequest( '', 410 ) );
 		$this->post( $delete, null );
 		$this->runPurgeJobs();
-		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	private static function newActorDocument( string $name = 'A' ): array {
@@ -601,7 +601,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 			'object' => [ 'id' => 'https://remote.example/notes/9', 'type' => 'Tombstone' ] ];
 		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
 		$this->runPurgeJobs();
-		$this->assertSame( [ 'like' => 1, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 1, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 
 	public function testFollowOfNoFeed() {
@@ -678,6 +678,12 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		}
 		$this->assertSame( 'application/activity+json', $response->getHeaderLine( 'Content-Type' ) );
 		return json_decode( $response->getBody(), true );
+	}
+
+	/** How many quotes the notes of 'First post' got, as action=info counts them */
+	private function countQuotes(): int {
+		$page = $this->getServiceContainer()->getPageStore()->getPageByText( 'First post' )->getId();
+		return $this->countReactions( $page )['quote'];
 	}
 
 	/** Quotes a note and returns the note and the URL of its authorization. */
@@ -757,6 +763,8 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$deliveries = $this->getDeliveries();
 		$this->assertCount( 2, $deliveries );
 		$this->assertSame( $url, $deliveries[1]['activity']['result'] );
+		// The same post counts once
+		$this->assertSame( 1, $this->countQuotes() );
 	}
 
 	public static function provideDroppedQuoteRequest(): iterable {
@@ -828,11 +836,13 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 	public function testWithdrawalRemovesTheAuthorization( callable $withdrawal ) {
 		$feed = $this->newCategory();
 		[ $note, $url ] = $this->quote( $feed );
+		$this->assertSame( 1, $this->countQuotes() );
 		$this->assertSame( 202, $this->post( $withdrawal( $note ), null )->getStatusCode() );
 		// A Delete of the actor is purged by a job
 		$this->runPurges();
 		$this->assertSame( 404, $this->getQuoteAuthorization( $url ) );
 		$this->assertFalse( $this->getQuotes()->isQuoter( self::REMOTE ) );
+		$this->assertSame( 0, $this->countQuotes() );
 	}
 
 	public function testWithdrawalByAnotherActorKeepsTheAuthorization() {
@@ -844,6 +854,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( 202, $this->post( $undo, null )->getStatusCode() );
 		$this->assertSame( 202, $this->post( $delete, null )->getStatusCode() );
 		$this->assertSame( $url, $this->getQuoteAuthorization( $url )['id'] );
+		$this->assertSame( 1, $this->countQuotes() );
 	}
 
 	public function testDeleteFromAQuoterIsVerified() {
@@ -897,7 +908,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 			$this->assertSame( 202, $this->post( $activity, null )->getStatusCode() );
 			$this->assertSame( 202, $this->post( $activity, $feed->getHandle() )->getStatusCode() );
 		}
-		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 		$this->assertSame( 0, $this->countRows( 'fedifeeds_reaction' ) );
 		$this->assertSame( 0, $this->countRows( 'fedifeeds_actor' ) );
 		$this->assertSame( 0, $this->countFetchJobs() );
@@ -911,6 +922,7 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->assertSame( 202, $this->post( self::newQuoteRequest( $note ), null )->getStatusCode() );
 		$this->assertFalse( $this->getQuotes()->isQuoter( self::REMOTE ) );
 		$this->assertSame( 0, $this->countRows( 'fedifeeds_quote' ) );
+		$this->assertSame( 0, $this->countRows( 'fedifeeds_reaction' ) );
 
 		$deliveries = $this->getDeliveries();
 		$this->assertCount( 1, $deliveries );
@@ -956,19 +968,21 @@ class InboxTest extends MediaWikiIntegrationTestCase {
 		$this->post( self::newReaction( 'Like', $noteId ), null );
 		$this->post( self::newReaction( 'Announce', $noteId ), null );
 		[ $note, $url ] = $this->quote( $feed );
-		$this->assertSame( [ 'like' => 1, 'announce' => 1 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 1, 'announce' => 1, 'quote' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( 1, $this->countQuotes() );
 
 		$this->turnInteractionsOff();
 		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE, 'object' => self::newReaction( 'Like', $noteId ) ];
 		$this->assertSame( 202, $this->post( $undo, null )->getStatusCode() );
-		$this->assertSame( [ 'like' => 0, 'announce' => 1 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 0, 'announce' => 1, 'quote' => 0 ], $this->countReactions( $pageId ) );
 		$undo = [ 'type' => 'Undo', 'actor' => self::REMOTE, 'object' => self::newQuoteRequest( $note ) ];
 		$this->assertSame( 202, $this->post( $undo, null )->getStatusCode() );
 		$this->assertSame( 404, $this->getQuoteAuthorization( $url ) );
+		$this->assertSame( 0, $this->countQuotes() );
 
 		// A Delete of the actor purges the rest
 		$this->post( [ 'type' => 'Delete', 'actor' => self::REMOTE, 'object' => self::REMOTE ], null );
 		$this->runPurgeJobs();
-		$this->assertSame( [ 'like' => 0, 'announce' => 0 ], $this->countReactions( $pageId ) );
+		$this->assertSame( [ 'like' => 0, 'announce' => 0, 'quote' => 0 ], $this->countReactions( $pageId ) );
 	}
 }

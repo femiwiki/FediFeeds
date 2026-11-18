@@ -6,13 +6,15 @@ use stdClass;
 use Wikimedia\Rdbms\IConnectionProvider;
 
 /**
- * The Likes and Announces that remote actors gave the notes of the feeds' items, one per actor,
- * item and kind
+ * The Likes, Announces and authorized quotes that remote actors gave the notes of the feeds'
+ * items, one per actor, item and kind
  */
 class Reactions {
 
 	public const LIKE = 'like';
 	public const ANNOUNCE = 'announce';
+	/** A quote of the note that Quotes authorized, named by the quoting post's id */
+	public const QUOTE = 'quote';
 
 	/** The longest actor or activity id that is kept, in bytes */
 	public const MAX_ID_LENGTH = 255;
@@ -37,9 +39,10 @@ class Reactions {
 	 * @param Feed $feed
 	 * @param int $pageId The item's page id
 	 * @param string $key The item's key
-	 * @param string $type self::LIKE or self::ANNOUNCE
+	 * @param string $type self::LIKE, self::ANNOUNCE or self::QUOTE
 	 * @param string $actor Id of the remote actor
-	 * @param string $activityId Id of the Like or Announce, which an Undo may name it by
+	 * @param string $activityId Id of the Like or Announce, which an Undo may name it by, or of
+	 *  the quoting post
 	 * @return bool Whether it was new
 	 */
 	public function add(
@@ -66,7 +69,7 @@ class Reactions {
 	}
 
 	/**
-	 * Removes the actor's reaction that the activity id names.
+	 * Removes the actor's reaction that the activity id, or for a quote the post id, names.
 	 *
 	 * @return bool Whether there was one
 	 */
@@ -122,10 +125,10 @@ class Reactions {
 	/**
 	 * How many actors gave the notes of the page's items each kind, across every feed.
 	 *
-	 * @return array{like: int, announce: int}
+	 * @return array{like: int, announce: int, quote: int}
 	 */
 	public function countActorsForPage( int $pageId ): array {
-		$counts = [ self::LIKE => 0, self::ANNOUNCE => 0 ];
+		$counts = [ self::LIKE => 0, self::ANNOUNCE => 0, self::QUOTE => 0 ];
 		$rows = $this->dbProvider->getReplicaDatabase()->newSelectQueryBuilder()
 			->select( [ 'fr_type', 'count' => 'COUNT(DISTINCT fr_actor)' ] )
 			->from( 'fedifeeds_reaction' )
@@ -144,10 +147,10 @@ class Reactions {
 	/**
 	 * How many of each kind the notes of the page's items got, across every feed.
 	 *
-	 * @return array{like: int, announce: int}
+	 * @return array{like: int, announce: int, quote: int}
 	 */
 	public function countForPage( int $pageId ): array {
-		$counts = [ self::LIKE => 0, self::ANNOUNCE => 0 ];
+		$counts = [ self::LIKE => 0, self::ANNOUNCE => 0, self::QUOTE => 0 ];
 		$rows = $this->dbProvider->getReplicaDatabase()->newSelectQueryBuilder()
 			->select( [ 'fr_type', 'count' => 'COUNT(*)' ] )
 			->from( 'fedifeeds_reaction' )

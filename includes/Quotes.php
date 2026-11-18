@@ -66,12 +66,22 @@ class Quotes {
 
 	/**
 	 * Removes what the actor's request authorized, for an Undo of the request.
+	 *
+	 * @return string[] The ids of the posts that lost their authorization
 	 */
-	public function removeByRequest( string $actor, string $request ): void {
-		$this->dbProvider->getPrimaryDatabase()->newDeleteQueryBuilder()
+	public function removeByRequest( string $actor, string $request ): array {
+		$dbw = $this->dbProvider->getPrimaryDatabase();
+		$conds = [ 'fq_actor' => $actor, 'fq_request' => $request ];
+		$posts = $dbw->newSelectQueryBuilder()
+			->select( 'fq_post' )
+			->from( 'fedifeeds_quote' )
+			->where( $conds )
+			->caller( __METHOD__ )->fetchFieldValues();
+		$dbw->newDeleteQueryBuilder()
 			->deleteFrom( 'fedifeeds_quote' )
-			->where( [ 'fq_actor' => $actor, 'fq_request' => $request ] )
+			->where( $conds )
 			->caller( __METHOD__ )->execute();
+		return array_map( 'strval', $posts );
 	}
 
 	/**
