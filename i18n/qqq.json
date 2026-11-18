@@ -37,5 +37,10 @@
 	"fedifeeds-reactions-path-separator": "{{optional}}\nBetween the headings of a heading path on [[Special:FediFeedsReactions]].",
 	"fedifeeds-reactions-time": "{{Identical|Time}}\nColumn heading on [[Special:FediFeedsReactions]].",
 	"fedifeeds-reactions-type": "Column heading on [[Special:FediFeedsReactions]]: whether the row is an Announce, a Like or a quote.",
-	"fedifeeds-reactions-account": "{{Identical|Account}}\nColumn heading on [[Special:FediFeedsReactions]]."
+	"fedifeeds-reactions-account": "{{Identical|Account}}\nColumn heading on [[Special:FediFeedsReactions]].",
+	"fedifeeds-info-interact-announce": "Link after the total of {{msg-mw|fedifeeds-info-announces}} on action=info. It asks for the reader's fediverse server and opens the page's newest note there, where the reader can announce (boost) it.",
+	"fedifeeds-info-interact-like": "Link after the total of {{msg-mw|fedifeeds-info-likes}} on action=info. It asks for the reader's fediverse server and opens the page's newest note there, where the reader can like it.",
+	"fedifeeds-interact-prompt": "Text of the dialog that {{msg-mw|fedifeeds-info-interact-announce}} and {{msg-mw|fedifeeds-info-interact-like}} open, above a text box.",
+	"fedifeeds-interact-placeholder": "{{optional}}\nPlaceholder of the text box in the dialog: an example server address.",
+	"fedifeeds-interact-invalid": "Shown when what the reader typed in the dialog of {{msg-mw|fedifeeds-interact-prompt}} names no server."
 }

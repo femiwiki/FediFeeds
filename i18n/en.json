@@ -37,5 +37,10 @@
 	"fedifeeds-reactions-path-separator": " › ",
 	"fedifeeds-reactions-time": "Time",
 	"fedifeeds-reactions-type": "Reaction",
-	"fedifeeds-reactions-account": "Account"
+	"fedifeeds-reactions-account": "Account",
+	"fedifeeds-info-interact-announce": "Announce from your account",
+	"fedifeeds-info-interact-like": "Like from your account",
+	"fedifeeds-interact-prompt": "Enter the server of your fediverse account, such as mastodon.social, or your handle. The post of this page opens there, to be announced or liked.",
+	"fedifeeds-interact-placeholder": "mastodon.social",
+	"fedifeeds-interact-invalid": "This is not the address of a server."
 }

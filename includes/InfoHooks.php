@@ -6,23 +6,30 @@ use MediaWiki\Actions\Hook\InfoActionHook;
 use MediaWiki\Context\IContextSource;
 use MediaWiki\Html\Html;
 use MediaWiki\Linker\LinkRenderer;
+use MediaWiki\Page\PageStore;
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Title\Title;
 
 /**
  * Shows on action=info how many Announces, Likes and quotes the notes of a page's items got, and the
- * accounts that gave them most recently
+ * accounts that gave them most recently, with links that send a reader to their own server to
+ * give an Announce or a Like
  */
 class InfoHooks implements InfoActionHook {
 
 	/** How many accounts are named after each total */
 	public const NAMED = 10;
 
+	/** The id of the page's newest note, for the links to a reader's own server */
+	private ?string $noteId = null;
+
 	public function __construct(
 		private readonly Items $items,
 		private readonly Reactions $reactions,
 		private readonly RemoteActors $remoteActors,
 		private readonly LinkRenderer $linkRenderer,
+		private readonly Notes $notes,
+		private readonly PageStore $pageStore,
 	) {
 	}
 
@@ -34,6 +41,11 @@ class InfoHooks implements InfoActionHook {
 			return;
 		}
 		$counts = $this->reactions->countForPage( $pageId );
+		$page = $this->pageStore->getPageById( $pageId );
+		$this->noteId = $page ? $this->notes->getNewestNoteId( $page ) : null;
+		if ( $this->noteId !== null ) {
+			$context->getOutput()->addModules( 'ext.fediFeeds.interact' );
+		}
 		// A reaction is only recorded for an item, so counts mean the page has one. Otherwise
 		// look in its own section feed and the category feeds it is in now.
 		if ( !array_sum( $counts ) ) {
@@ -63,9 +75,34 @@ class InfoHooks implements InfoActionHook {
 
 	/**
 	 * The total, then the cached accounts that gave the reaction last, how many others
-	 * did, and a link to the full list, as HTML.
+	 * did, and a link to the full list, as HTML. A link to give the reaction from the reader's
+	 * own server follows.
 	 */
 	private function getValue(
+		IContextSource $context, Title $title, string $type, int $total, int $actors
+	): string {
+		return $this->getReactions( $context, $title, $type, $total, $actors )
+			. $this->getInteractLink( $context, $type );
+	}
+
+	/**
+	 * A link that the ext.fediFeeds.interact module makes ask for the reader's server, or
+	 * nothing if the page has no note to send or the reaction is not one a reader gives.
+	 */
+	private function getInteractLink( IContextSource $context, string $type ): string {
+		if ( $this->noteId === null || !in_array( $type, [ Reactions::ANNOUNCE, Reactions::LIKE ], true ) ) {
+			return '';
+		}
+		return $context->msg( 'pipe-separator' )->escaped() . Html::element( 'a', [
+			'href' => '#',
+			'role' => 'button',
+			'class' => 'ext-fedifeeds-interact',
+			'data-note' => $this->noteId,
+		// fedifeeds-info-interact-announce, fedifeeds-info-interact-like
+		], $context->msg( "fedifeeds-info-interact-$type" )->text() );
+	}
+
+	private function getReactions(
 		IContextSource $context, Title $title, string $type, int $total, int $actors
 	): string {
 		$html = $context->msg( 'fedifeeds-info-times' )->numParams( $total )->escaped();

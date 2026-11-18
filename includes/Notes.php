@@ -185,6 +185,23 @@ class Notes {
 	}
 
 	/**
+	 * The id of the newest note of the page that getItem() still has, in any feed.
+	 */
+	public function getNewestNoteId( ExistingPageRecord $page ): ?string {
+		foreach ( $this->items->getRecentOfPage( $page->getId(), self::LIMIT ) as $recorded ) {
+			$feed = $this->feedLookup->getFeed( $recorded['feed'] );
+			if ( !$feed ) {
+				continue;
+			}
+			$item = $this->getItem( $feed, $this->getItemId( $feed, new Item( $page, $recorded['key'] ) ) );
+			if ( $item ) {
+				return $this->getNoteId( $feed, $item );
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * The feed and item of a note id of this wiki, if getItem() has the item.
 	 *
 	 * @return array{0: Feed, 1: Item}|null

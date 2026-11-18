@@ -49,7 +49,9 @@
 				"FediFeeds.Items",
 				"FediFeeds.Reactions",
 				"FediFeeds.RemoteActors",
-				"LinkRenderer"
+				"LinkRenderer",
+				"FediFeeds.Notes",
+				"PageStore"
 			]
 		},
 		"schema": {
@@ -62,6 +64,21 @@
 		"PageSaveComplete": "delivery",
 		"InfoAction": "info",
 		"LoadExtensionSchemaUpdates": "schema"
+	},
+	"ResourceModules": {
+		"ext.fediFeeds.interact": {
+			"packageFiles": ["ext.fediFeeds.interact.js"],
+			"messages": [
+				"fedifeeds-interact-prompt",
+				"fedifeeds-interact-placeholder",
+				"fedifeeds-interact-invalid"
+			],
+			"dependencies": ["oojs-ui-windows", "mediawiki.storage"]
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "resources",
+		"remoteExtPath": "FediFeeds/resources"
 	},
 	"JobClasses": {
 		"fedifeedsDeliver": "MediaWiki\\Extension\\FediFeeds\\DeliveryJob",
