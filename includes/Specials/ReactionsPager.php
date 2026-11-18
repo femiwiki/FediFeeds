@@ -105,9 +105,12 @@ class ReactionsPager extends IndexPager {
 			$this->group = (int)$row->fi_id;
 		}
 		$lang = $this->getLanguage();
-		// fedifeeds-reactions-announce, fedifeeds-reactions-like
-		$type = $this->msg( 'fedifeeds-reactions-' . ( $row->fr_type === Reactions::ANNOUNCE ? 'announce' : 'like' ) )
-			->escaped();
+		// fedifeeds-reactions-announce, fedifeeds-reactions-like, fedifeeds-reactions-quote
+		$type = $this->msg( 'fedifeeds-reactions-' . match ( $row->fr_type ) {
+			Reactions::ANNOUNCE => 'announce',
+			Reactions::QUOTE => 'quote',
+			default => 'like',
+		} )->escaped();
 		$account = $row->fa_actor !== null
 			? InfoHooks::makeActorLink( RemoteActors::toArray( $row ) )
 			: Html::element( 'span', [ 'class' => 'mw-fedifeeds-reactions-uncached' ],
